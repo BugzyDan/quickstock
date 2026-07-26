@@ -2503,6 +2503,24 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertIn(owner_sale, sales)
         self.assertNotIn(other_sale, sales)
 
+    def test_customer_directory_is_paginated(self):
+        owner = self._make_user("customer-pagination-owner")
+        Customer.objects.bulk_create(
+            Customer(owner=owner, name=f"Customer {index:02d}")
+            for index in range(30)
+        )
+
+        self.client.force_login(owner)
+        first_page = self.client.get(reverse("customer_list"))
+        second_page = self.client.get(reverse("customer_list"), {"page": 2})
+
+        self.assertEqual(first_page.status_code, 200)
+        self.assertEqual(second_page.status_code, 200)
+        self.assertEqual(len(first_page.context["customers"]), 25)
+        self.assertEqual(len(second_page.context["customers"]), 5)
+        self.assertEqual(first_page.context["page_size"], 25)
+        self.assertEqual(first_page.context["page_obj"].paginator.count, 30)
+
     def test_legacy_inventory_api_post_requires_csrf(self):
         owner = self._make_user("legacy-inventory-csrf")
         self._make_location(owner, "Main Branch")

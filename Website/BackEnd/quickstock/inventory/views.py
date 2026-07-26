@@ -5061,7 +5061,7 @@ def transfer_stock_view(request):
 @role_required(["admin", "manager", "cashier"])
 def customer_list(request):
     query = request.GET.get('q', '')
-    customers = _customer_queryset_for_user(request.user)
+    customers = _customer_queryset_for_user(request.user).order_by("name", "id")
     
     if query:
         customers = customers.filter(
@@ -5072,8 +5072,23 @@ def customer_list(request):
             models.Q(business_address__icontains=query)
         )
 
+    try:
+        page_size = int(request.GET.get("page_size", 25))
+    except (TypeError, ValueError):
+        page_size = 25
+    if page_size not in {10, 25, 50, 100}:
+        page_size = 25
+
+    paginator = Paginator(customers, page_size)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    page_query_params = request.GET.copy()
+    page_query_params.pop("page", None)
+
     context = {
-        'customers': customers,
+        'customers': page_obj,
+        'page_obj': page_obj,
+        'page_size': page_size,
+        'page_query_params': page_query_params.urlencode(),
         'query': query,
     }
     return render(request, 'inventory/customer_list.html', context)

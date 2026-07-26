@@ -21863,6 +21863,42 @@ body.page-customer-list .customer-directory-empty-icon {
     font-size: 2.5rem;
 }
 
+body.page-customer-list .customer-directory-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 0 0;
+    border-top: 1px solid rgba(203, 213, 225, 0.75);
+    margin-top: 18px;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+body.page-customer-list .customer-directory-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid rgba(191, 219, 254, 0.95);
+    border-radius: 12px;
+    background: rgba(239, 246, 255, 0.96);
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+body.page-customer-list .customer-directory-page-link:hover,
+body.page-customer-list .customer-directory-page-link:focus-visible {
+    border-color: rgba(59, 130, 246, 0.8);
+    background: #dbeafe;
+}
+
+body.page-customer-list .customer-directory-page-status {
+    color: #334155;
+}
+
 body.page-add-customer .customer-create-shell {
     max-width: 1220px;
 }
@@ -22168,6 +22204,16 @@ body.page-add-customer .customer-create-checklist {
 
     body.page-customer-list .customer-directory-actions-cell {
         white-space: normal;
+    }
+
+    body.page-customer-list .customer-directory-pagination {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    body.page-customer-list .customer-directory-page-link {
+        width: 100%;
     }
 
     body.page-add-customer .customer-create-panel {

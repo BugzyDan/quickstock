@@ -66,6 +66,12 @@
 
         <form method="get" class="search-area ops-toolbar ops-toolbar-inline">
             <input type="text" name="q" value="{{ query|default:'' }}" class="search-input" placeholder="Search by name, email, phone, or address...">
+            <select name="page_size" class="search-input">
+                <option value="10" {% if page_size == 10 %}selected{% endif %}>10 per page</option>
+                <option value="25" {% if page_size == 25 %}selected{% endif %}>25 per page</option>
+                <option value="50" {% if page_size == 50 %}selected{% endif %}>50 per page</option>
+                <option value="100" {% if page_size == 100 %}selected{% endif %}>100 per page</option>
+            </select>
             <button type="submit" class="customer-directory-filter-btn">Filter</button>
             {% if query %}
                 <a href="{% url 'customer_list' %}" class="ops-clear-link">Clear</a>
@@ -133,6 +139,19 @@
                     </tbody>
                 </table>
             </div>
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav class="customer-directory-pagination" aria-label="Customer directory pages">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if page_query_params %}&{{ page_query_params }}{% endif %}" class="customer-directory-page-link">Previous</a>
+                    {% endif %}
+                    <span class="customer-directory-page-status">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if page_query_params %}&{{ page_query_params }}{% endif %}" class="customer-directory-page-link">Next</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
         </div>
     </main>
 
