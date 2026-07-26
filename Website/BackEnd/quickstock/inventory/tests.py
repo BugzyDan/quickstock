@@ -2519,6 +2519,48 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(post_response.status_code, 403)
 
+    def test_customer_lifecycle_writes_required_audit_logs(self):
+        owner = self._make_user("customer-audit-owner")
+        self.client.force_login(owner)
+
+        create_response = self.client.post(
+            reverse("add_customer"),
+            data={
+                "name": "Audit Customer",
+                "email": "audit@example.com",
+                "phone": "876-000-0000",
+                "physical_address": "Kingston",
+                "business_address": "Downtown Kingston",
+                "notes": "Initial profile",
+                "new_note": "",
+            },
+        )
+        customer = Customer.objects.get(owner=owner, name="Audit Customer")
+        update_response = self.client.post(
+            reverse("edit_customer", args=[customer.pk]),
+            data={
+                "name": "Audit Customer Updated",
+                "email": "audit-updated@example.com",
+                "phone": "876-000-1111",
+                "physical_address": "Kingston",
+                "business_address": "New Kingston",
+                "notes": "Updated profile",
+                "new_note": "Called to confirm billing address.",
+            },
+        )
+        delete_response = self.client.post(reverse("delete_customer", args=[customer.pk]))
+
+        self.assertEqual(create_response.status_code, 302)
+        self.assertEqual(update_response.status_code, 302)
+        self.assertEqual(delete_response.status_code, 302)
+        messages = set(
+            AuditLog.objects.filter(user=owner, action="customer").values_list("message", flat=True)
+        )
+        self.assertIn("Customer created", messages)
+        self.assertIn("Customer updated", messages)
+        self.assertIn("Customer deleted", messages)
+        self.assertFalse(Customer.objects.filter(pk=customer.pk).exists())
+
 
     def test_api_sales_creates_sale_atomically_and_deducts_stock(self):
         owner = self._make_user("sales-owner")

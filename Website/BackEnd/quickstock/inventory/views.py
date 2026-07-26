@@ -2742,9 +2742,17 @@ def add_customer(request):
     if request.method == "POST":
         form = CustomerForm(request.POST)
         if form.is_valid():
-            customer = form.save(commit=False)
-            customer.owner = owner
-            customer.save()
+            with transaction.atomic():
+                customer = form.save(commit=False)
+                customer.owner = owner
+                customer.save()
+                _log_action(
+                    request.user,
+                    "customer",
+                    "Customer created",
+                    {"customer_id": customer.id, "customer_name": customer.name},
+                    required=True,
+                )
             return redirect('customer_list')
     else:
         form = CustomerForm()
@@ -2769,14 +2777,22 @@ def edit_customer(request, pk):
     if request.method == 'POST':
         form = CustomerForm(request.POST, instance=customer)
         if form.is_valid():
-            customer = form.save()
-            new_note = form.cleaned_data.get("new_note")
-            if new_note:
-                CustomerNote.objects.create(
-                    customer=customer,
-                    owner=customer.owner,
-                    created_by=request.user,
-                    body=new_note,
+            with transaction.atomic():
+                customer = form.save()
+                new_note = form.cleaned_data.get("new_note")
+                if new_note:
+                    CustomerNote.objects.create(
+                        customer=customer,
+                        owner=customer.owner,
+                        created_by=request.user,
+                        body=new_note,
+                    )
+                _log_action(
+                    request.user,
+                    "customer",
+                    "Customer updated",
+                    {"customer_id": customer.id, "customer_name": customer.name, "note_added": bool(new_note)},
+                    required=True,
                 )
             messages.success(request, f"Customer '{customer.name}' updated successfully!")
             return redirect('customer_detail', pk=customer.pk)
@@ -2797,7 +2813,18 @@ def delete_customer(request, pk):
     customer = get_object_or_404(_customer_queryset_for_user(request.user), pk=pk)
     if request.method == 'POST':
         try:
-            customer.delete()
+            customer_id = customer.id
+            customer_name = customer.name
+            with transaction.atomic():
+                customer.delete()
+                _log_action(
+                    request.user,
+                    "customer",
+                    "Customer deleted",
+                    {"customer_id": customer_id, "customer_name": customer_name},
+                    severity="warn",
+                    required=True,
+                )
         except ProtectedError:
             _archive_record(customer, request.user, "Customer retained because financial history is protected.")
             _log_action(
