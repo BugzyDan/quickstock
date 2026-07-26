@@ -2503,6 +2503,22 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertIn(owner_sale, sales)
         self.assertNotIn(other_sale, sales)
 
+    def test_legacy_inventory_api_post_requires_csrf(self):
+        owner = self._make_user("legacy-inventory-csrf")
+        self._make_location(owner, "Main Branch")
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(owner)
+
+        get_response = csrf_client.get(reverse("api_inventory"))
+        post_response = csrf_client.post(
+            reverse("api_inventory"),
+            data={"sku": "SHOULD-NOT-MUTATE"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(post_response.status_code, 403)
+
 
     def test_api_sales_creates_sale_atomically_and_deducts_stock(self):
         owner = self._make_user("sales-owner")

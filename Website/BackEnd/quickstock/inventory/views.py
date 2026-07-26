@@ -2811,7 +2811,6 @@ def delete_customer(request, pk):
         return redirect('customer_list')
     return render(request, 'inventory/customer_confirm_delete.html', {'customer': customer})
 
-@csrf_exempt
 def inventory_api(request):
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Authentication required"}, status=401)
