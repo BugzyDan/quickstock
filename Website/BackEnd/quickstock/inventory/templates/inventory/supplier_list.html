@@ -120,7 +120,7 @@
                     <td data-label="Email / Phone">
                         <div class="supplier-contact-copy"><strong>{{ supplier.email|default:"No email" }}</strong><span>{{ supplier.phone|default:"No phone" }}</span></div>
                     </td>
-                    <td data-label="Orders"><span class="badge">{{ supplier.orders.count }} Order{{ supplier.orders.count|pluralize }}</span></td>
+                    <td data-label="Orders"><span class="badge">{{ supplier.order_count }} Order{{ supplier.order_count|pluralize }}</span></td>
                     <td data-label="Actions" class="action-cell">
                         <div class="supplier-action-group" aria-label="Actions for {{ supplier.name }}">
                             <a href="{% url 'supplier_ledger' supplier.id %}" class="supplier-action-link supplier-action-ledger">Ledger</a>

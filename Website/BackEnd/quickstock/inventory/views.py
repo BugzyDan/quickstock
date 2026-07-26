@@ -9568,7 +9568,7 @@ def supplier_list(request):
         "local": base_suppliers.filter(supplier_type=Supplier.TYPE_LOCAL).count(),
         "international": base_suppliers.filter(supplier_type=Supplier.TYPE_INTERNATIONAL).count(),
     }
-    suppliers = base_suppliers.prefetch_related("orders", "invoices")
+    suppliers = base_suppliers.annotate(order_count=Count("orders")).prefetch_related("invoices")
     query = request.GET.get("q", "").strip()
     type_filter = request.GET.get("type", "").strip().lower()
     if type_filter not in {Supplier.TYPE_LOCAL, Supplier.TYPE_INTERNATIONAL}:
@@ -9591,7 +9591,6 @@ def supplier_list(request):
     sort = request.GET.get("sort", "name")
     direction = request.GET.get("dir", "asc")
     if sort == "orders":
-        suppliers = suppliers.annotate(order_count=Count("orders"))
         sort_field = "order_count"
     else:
         sort_field = "name"

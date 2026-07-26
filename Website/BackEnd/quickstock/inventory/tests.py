@@ -5434,6 +5434,52 @@ class SupplierOriginMovementTests(TestCase):
         self.assertContains(international_page, "Global Components")
         self.assertNotContains(international_page, "Kingston Wholesale")
 
+    def test_supplier_directory_uses_paginated_annotated_order_counts(self):
+        owner = self._make_user("supplier-performance-owner")
+        location = Location.objects.create(owner=owner, name="Receiving Bay")
+        item = self._make_item(owner, name="Counted Item", sku="COUNTED")
+        suppliers = [
+            Supplier.objects.create(
+                owner=owner,
+                name=f"Supplier {index:02d}",
+                supplier_type=Supplier.TYPE_LOCAL,
+                country_code="JM",
+            )
+            for index in range(30)
+        ]
+        for _ in range(3):
+            PurchaseOrder.objects.create(
+                item=item,
+                supplier=suppliers[0],
+                location=location,
+                quantity_received=1,
+                unit_cost=Decimal("10.00"),
+            )
+        for _ in range(2):
+            PurchaseOrder.objects.create(
+                item=item,
+                supplier=suppliers[1],
+                location=location,
+                quantity_received=1,
+                unit_cost=Decimal("10.00"),
+            )
+
+        self.client.force_login(owner)
+        first_page = self.client.get(reverse("supplier_list"))
+        second_page = self.client.get(reverse("supplier_list"), {"page": 2})
+        sorted_page = self.client.get(reverse("supplier_list"), {"sort": "orders", "dir": "desc"})
+
+        self.assertEqual(first_page.status_code, 200)
+        self.assertEqual(second_page.status_code, 200)
+        self.assertEqual(sorted_page.status_code, 200)
+        self.assertEqual(len(first_page.context["suppliers"]), 25)
+        self.assertEqual(len(second_page.context["suppliers"]), 5)
+        self.assertEqual(first_page.context["page_obj"].paginator.count, 30)
+        sorted_suppliers = list(sorted_page.context["suppliers"])
+        self.assertEqual(sorted_suppliers[0].order_count, 3)
+        self.assertEqual(sorted_suppliers[1].order_count, 2)
+        self.assertContains(sorted_page, "3 Orders")
+
     def test_inventory_overview_separates_local_and_international_receipts(self):
         owner = self._make_user("receipt-origin-owner")
         location = Location.objects.create(owner=owner, name="Receiving Bay")
