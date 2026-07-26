@@ -2503,6 +2503,33 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertIn(owner_sale, sales)
         self.assertNotIn(other_sale, sales)
 
+    def test_sales_history_is_paginated_and_location_filtered(self):
+        owner = self._make_user("history-pagination-owner")
+        main = self._make_location(owner, "Main Branch")
+        warehouse = self._make_location(owner, "Warehouse")
+        for index in range(30):
+            Sale.objects.create(
+                owner=owner,
+                cashier=owner,
+                location=main if index < 26 else warehouse,
+                receipt_no=1000 + index,
+                total_price=Decimal("10.00"),
+            )
+
+        self.client.force_login(owner)
+        first_page = self.client.get(reverse("sales_history"))
+        second_page = self.client.get(reverse("sales_history"), {"page": 2})
+        filtered_page = self.client.get(reverse("sales_history"), {"location": warehouse.id})
+
+        self.assertEqual(first_page.status_code, 200)
+        self.assertEqual(second_page.status_code, 200)
+        self.assertEqual(filtered_page.status_code, 200)
+        self.assertEqual(len(first_page.context["sales"]), 25)
+        self.assertEqual(len(second_page.context["sales"]), 5)
+        self.assertEqual(first_page.context["page_obj"].paginator.count, 30)
+        self.assertEqual(filtered_page.context["page_obj"].paginator.count, 4)
+        self.assertTrue(all(sale.location_id == warehouse.id for sale in filtered_page.context["sales"]))
+
     def test_customer_directory_is_paginated(self):
         owner = self._make_user("customer-pagination-owner")
         Customer.objects.bulk_create(

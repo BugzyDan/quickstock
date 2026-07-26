@@ -1429,6 +1429,9 @@ class Sale(models.Model):
             models.Index(fields=["location"], name="sale_location_idx"),
             models.Index(fields=["owner"], name="sale_owner_idx"),
             models.Index(fields=["receipt_no"], name="sale_receipt_idx"),
+            models.Index(fields=["owner", "-timestamp"], name="sale_owner_ts_desc_idx"),
+            models.Index(fields=["owner", "location", "-timestamp"], name="sale_owner_loc_ts_idx"),
+            models.Index(fields=["owner", "receipt_no"], name="sale_owner_receipt_idx"),
             models.Index(fields=["shift", "tender"], name="sale_shift_tender_idx"),
             models.Index(fields=["receipt_status"], name="sale_receipt_status_idx"),
         ]
@@ -3654,6 +3657,7 @@ class StockRecord(models.Model):
         verbose_name_plural = "Stock Records"
         indexes = [
             models.Index(fields=["item", "location"], name="stock_item_loc_idx"),
+            models.Index(fields=["location", "quantity"], name="stock_loc_qty_idx"),
         ]
 
     def __str__(self):
