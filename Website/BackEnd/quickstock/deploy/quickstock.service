@@ -1,0 +1,24 @@
+[Unit]
+Description=QuickStock JA Django Gunicorn
+After=network.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/quickstock/current/Website/BackEnd/quickstock
+EnvironmentFile=/etc/quickstock/quickstock.env
+RuntimeDirectory=quickstock
+RuntimeDirectoryMode=0755
+ExecStart=/srv/quickstock/venv/bin/gunicorn quickstock.wsgi:application -c /srv/quickstock/current/Website/BackEnd/quickstock/deploy/gunicorn.conf.py
+Restart=always
+RestartSec=3
+KillSignal=SIGQUIT
+TimeoutStopSec=30
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

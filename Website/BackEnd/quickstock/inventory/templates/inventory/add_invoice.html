@@ -1,0 +1,116 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Entry | {{ supplier.name }}</title>
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{%static 'inventory/js/add_invoice.js'%}" defer></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-add-invoice page-supplier-list">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+
+    <a href="{% url 'global_search' %}"
+       class="nav-search-trigger"
+       title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<div class="container">
+    <div class="form-card">
+        <div class="add-invoice-header">
+            <div class="add-invoice-header-copy">
+                <h2 class="add-invoice-title">RECORD INVOICE</h2>
+                <p class="add-invoice-supplier-meta">Supplier: <strong>{{ supplier.name }}</strong></p>
+                <a href="{% url 'supplier_list' %}" class="add-invoice-back-link">← Back to Suppliers</a>
+            </div>
+            <span class="node-badge">LEDGER_V1</span>
+        </div>
+        
+        <form method="POST" action="{% url 'add_invoice' supplier.id %}">
+            {% csrf_token %}
+            
+            <div class="mobile-grid">
+                <div class="form-group">
+                    <label>Invoice Number</label>
+                    <input type="text" name="invoice_no" placeholder="INV-000" style="font-family: 'JetBrains Mono';">
+                </div>
+                <div class="form-group">
+                    <label>Target Node</label>
+                    <select name="location" required>
+                        {% for loc in locations %}
+                        <option value="{{ loc.id }}">{{ loc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="gct-box">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Gross Amount (JMD)</label>
+                    <input type="number" name="amount" id="id_amount" step="0.01" placeholder="0.00" required 
+                           style="font-size: 1.25rem; font-weight: 800; font-family: 'JetBrains Mono';">
+                    <div class="helper-text">Enter total (incl. 15% GCT).</div>
+                </div>
+                <div class="gct-preview">
+                    <div>GCT: <strong id="gct_val">$0.00</strong></div>
+                    <div>NET: <strong id="base_val">$0.00</strong></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Issue Date</label>
+                <input type="date" name="date_issued" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Payment Terms</label>
+                <select name="status">
+                    <option value="Pending">Pending (Account Payable)</option>
+                    <option value="Paid">Immediate (Paid)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-save" style="background: var(--primary-blue); color: #fff; border: 1px solid var(--primary-blue);">COMMIT TO LEDGER</button>
+            
+            <a href="{% url 'supplier_ledger' supplier.id %}" style="display: block; text-align: center; margin-top: 20px; font-size: 0.65rem; color: var(--soft-gray); text-decoration: none; font-weight: 800; letter-spacing: 1px;">← ABORT TRANSACTION</a>
+        </form>
+    </div>
+</div>
+
+<footer class="brand-footer">
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>
+</body>
+</html>

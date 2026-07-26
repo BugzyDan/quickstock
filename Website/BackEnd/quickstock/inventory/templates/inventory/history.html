@@ -1,0 +1,207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt History | Elite Terminal</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=receipt-history-mobile-1">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+<body class="page-history">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<div class="container">
+    <a href="{% url 'cash_register' %}" class="back-link">← Back to Terminal</a>
+
+    <div class="header">
+        <div>
+            <h1>📜 Receipt History</h1>
+            <p style="color: var(--text-muted); margin: 5px 0 0;">Transaction Management</p>
+        </div>
+        <div class="stats-badge">
+            Found: {{ page_obj.paginator.count }} Transactions
+        </div>
+    </div>
+    {% if request.user.is_superuser or request.user.profile.is_pro_active %}
+        {% url 'export_data' 'sales' as export_url %}
+        {% url 'sales_history' as clear_url %}
+        {% with q_encoded=q|urlencode start_encoded=start|urlencode end_encoded=end|urlencode location_encoded=location_filter|urlencode %}
+            {% include 'inventory/partials/export_clear_bar.html' with export_href=export_url|add:'?q='|add:q_encoded|add:'&start='|add:start_encoded|add:'&end='|add:end_encoded|add:'&location='|add:location_encoded|add:'&sort='|add:sort|add:'&dir='|add:dir clear_href=clear_url export_label='Export View' export_class='btn-view' clear_class='btn-view' export_style='padding: 8px 12px;' clear_style='padding: 8px 12px;' %}
+        {% endwith %}
+    {% endif %}
+
+    <div class="search-container">
+        <form method="GET" action="{% url 'sales_history' %}" class="search-form">
+            <div class="form-group" style="flex: 2;">
+                <label>Search</label>
+                <input type="text" name="q" class="search-input" placeholder="Receipt #, Sale ID, or Cashier..." value="{{ request.GET.q|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label>From Date & Time</label>
+                <input type="datetime-local" name="start" class="search-input" value="{{ request.GET.start|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label>To Date & Time</label>
+                <input type="datetime-local" name="end" class="search-input" value="{{ request.GET.end|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <select name="location" class="search-input">
+                    <option value="all" {% if location_filter == 'all' or not location_filter %}selected{% endif %}>All Locations</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc.id }}" {% if location_filter == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sort</label>
+                <select name="sort" class="search-input">
+                    <option value="timestamp" {% if sort == 'timestamp' %}selected{% endif %}>Date</option>
+                    <option value="receipt_no" {% if sort == 'receipt_no' %}selected{% endif %}>Receipt #</option>
+                    <option value="cashier" {% if sort == 'cashier' %}selected{% endif %}>Cashier</option>
+                    <option value="total" {% if sort == 'total' %}selected{% endif %}>Total</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Order</label>
+                <select name="dir" class="search-input">
+                    <option value="desc" {% if dir == 'desc' %}selected{% endif %}>Desc</option>
+                    <option value="asc" {% if dir == 'asc' %}selected{% endif %}>Asc</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Per Page</label>
+                <select name="page_size" class="search-input">
+                    <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                    <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-search">Filter</button>
+            
+            {% if request.GET.q or request.GET.start or request.GET.end or request.GET.sort or request.GET.dir or request.GET.page_size or request.GET.location %}
+                <a href="{% url 'sales_history' %}" class="btn-clear">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <a href="?sort=receipt_no&dir={% if sort == 'receipt_no' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="sort-link {% if sort == 'receipt_no' %}sort-active{% endif %}">
+                            Receipt #{% if sort == 'receipt_no' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?sort=timestamp&dir={% if sort == 'timestamp' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="sort-link {% if sort == 'timestamp' %}sort-active{% endif %}">
+                            Date & Time{% if sort == 'timestamp' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?sort=cashier&dir={% if sort == 'cashier' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="sort-link {% if sort == 'cashier' %}sort-active{% endif %}">
+                            Cashier{% if sort == 'cashier' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </a>
+                    </th>
+                    <th>Location</th>
+                    <th>
+                        <a href="?sort=total&dir={% if sort == 'total' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="sort-link {% if sort == 'total' %}sort-active{% endif %}">
+                            Total (JMD){% if sort == 'total' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </a>
+                    </th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td class="receipt-id">
+                        <span class="mobile-label">Receipt</span>
+                        #{{ sale.receipt_no|default:sale.id }}
+                    </td>
+                    <td>
+                        <span class="mobile-label">Date & Time</span>
+                        <div style="font-weight: 500;">{{ sale.timestamp|date:"M d, Y" }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ sale.timestamp|date:"h:i A" }}</div>
+                    </td>
+                    <td>
+                        <span class="mobile-label">Cashier</span>
+                        {{ sale.cashier.username|default:"Deleted User"|title }}
+                    </td>
+                    <td>
+                        <span class="mobile-label">Location</span>
+                        {{ sale.location.name|default:"—" }}
+                    </td>
+                    <td class="price">
+                        <span class="mobile-label">Total</span>
+                        ${{ sale.total_price|floatformat:2 }}
+                    </td>
+                    <td class="desktop-actions" style="text-align: right;">
+                        <a href="{% url 'view_receipt' sale.id %}" class="btn-view">Open Receipt</a>
+                    </td>
+                    <td class="mobile-actions">
+                        <a href="{% url 'view_receipt' sale.id %}" class="btn-view">Open Receipt</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                        No matching receipts found for the selected criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="pagination-row" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted);">
+        <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+        <div class="pagination-actions" style="display: flex; gap: 12px;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if dir %}&dir={{ dir }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn-view">← Prev</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if dir %}&dir={{ dir }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn-view">Next →</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

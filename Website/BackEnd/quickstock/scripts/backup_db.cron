@@ -1,0 +1,2 @@
+# Daily backup at 2:30 AM
+30 2 * * * /usr/bin/env bash -lc 'set -a && source /etc/quickstock/quickstock.env && set +a && /srv/quickstock/current/Website/BackEnd/quickstock/scripts/backup_db.sh' >> /var/log/quickstock_backup.log 2>&1

@@ -1,0 +1,6 @@
+{% if request.user.is_authenticated and request.user.profile.is_pro_active %}
+    <a href="{% url 'advanced_reports' %}"
+       class="{% if request.resolver_match.url_name == 'advanced_reports' %}active{% endif %}">
+        Advanced Analysis
+    </a>
+{% endif %}

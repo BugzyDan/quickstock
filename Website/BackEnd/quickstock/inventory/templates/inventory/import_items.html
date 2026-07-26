@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Items | QuickStock JA</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
+</head>
+
+<body class="page-imports">
+    <main style="max-width: 720px; margin: 40px auto; padding: 20px;">
+        <h2>Import Items (CSV)</h2>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">● {{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <p style="color:#64748b; font-size:0.95rem;">Upload a CSV with columns: <code>name</code>, <code>sku</code>, <code>price</code>, <code>quantity</code>, <code>cost_price</code>, <code>brand</code>, <code>category</code>. Max 2MB.</p>
+
+        <form method="POST" enctype="multipart/form-data" style="background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+            {% csrf_token %}
+            <div class="preference-group">
+                <label>CSV File</label>
+                <input type="file" name="csv_file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Upload & Import</button>
+        </form>
+
+        <section style="margin-top:24px;">
+            <h4>Sample CSV</h4>
+            <pre style="background:#0f172a; color:#e2e8f0; padding:14px; border-radius:10px; overflow:auto;">
+name,sku,price,quantity,cost_price,brand,category
+Blue T-Shirt,SKU-001,19.99,50,9.00,Acme Apparel,Tops
+Red Hoodie,SKU-002,39.99,20,18.00,Acme Apparel,Outerwear
+            </pre>
+        </section>
+    </main>
+    
+</body>
+</html>

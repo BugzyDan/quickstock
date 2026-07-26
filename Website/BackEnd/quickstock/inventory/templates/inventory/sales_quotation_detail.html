@@ -1,0 +1,190 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ quotation.quote_no|default:"Quotation" }} | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260721-document-actions-2">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-quotation-detail page-supplier-list">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="sales-page-main sales-document-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="qs-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="sales-page-head ops-hero ops-hero-sales sales-document-hero">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Quotation record</p>
+            <h1 class="sales-page-title">{{ quotation.quote_no|default:"Quotation" }}</h1>
+            <p class="sales-page-subtitle">
+                {% if quotation.customer %}{{ quotation.customer.name }}{% else %}Walk-in / Unassigned{% endif %}
+                • Created {{ quotation.created_at|date:"M d, Y H:i" }}
+            </p>
+            <div class="ops-chip-row"><span class="ops-chip">{{ quotation.get_status_display }}</span>{% if quotation.valid_until %}<span class="ops-chip">Valid to {{ quotation.valid_until|date:"M d, Y" }}</span>{% endif %}</div>
+        </div>
+        <div class="ops-actions sales-document-actions">
+            <a href="{% url 'sales_quotation_list' %}" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Back to Quotations</a>
+            {% if quotation.status == 'converted' and quotation.converted_invoice %}
+                <a href="{% url 'sales_invoice_detail' quotation.converted_invoice.id %}" class="qs-btn qs-btn-primary">Back To Invoice</a>
+            {% elif quotation.status == 'draft' %}
+                <a href="#quotation-conversion" class="qs-btn qs-btn-primary">Convert Options</a>
+            {% endif %}
+            {% if can_email_sales_document and quotation.status != 'cancelled' %}
+                <a href="#sales-document-email" class="qs-btn qs-btn-secondary sales-document-email-action" aria-controls="sales-document-email">Email Quotation</a>
+            {% endif %}
+            <a href="#print-quotation" class="qs-btn qs-btn-secondary sales-document-visible-action" data-loading-ignore onclick="window.print(); return false;" style="background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; border-color:#ffffff !important;">Print Quotation</a>
+        </div>
+    </section>
+
+    <div class="sales-detail-grid-premium">
+        <!-- Structural Items Ledger Line Card -->
+        <section class="sales-card-premium">
+            <div class="sales-table-wrap">
+                <table class="sales-table-premium">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Item Description</th>
+                            <th style="width: 15%;">SKU</th>
+                            <th style="width: 12%;">Qty</th>
+                            <th style="width: 15%;">Unit Price</th>
+                            <th style="width: 18%; text-align: right;">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for line in quote_items %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ line.item_name|default:line.item.name }}</td>
+                            <td><code style="font-family: inherit; font-size: 0.85rem; color: var(--qs-text-muted);">{{ line.item.sku|default:"NO-SKU" }}</code></td>
+                            <td>{{ line.quantity }}</td>
+                            <td>${{ line.unit_price|floatformat:2 }}</td>
+                            <td style="font-weight: 700; text-align: right; color: var(--qs-text-main);">${{ line.line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:32px; color:var(--qs-text-muted); font-weight:500;">No line items recorded on this quotation record.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Document Metrics Side Panel -->
+        <aside class="sales-card-premium">
+            <div class="summary-row-premium">
+                <span>Status</span>
+                <span class="qs-chip status-{{ quotation.status }}">{{ quotation.get_status_display }}</span>
+            </div>
+            <div class="summary-row-premium"><span>Quotation #</span><strong>{{ quotation.quote_no }}</strong></div>
+            <div class="summary-row-premium"><span>Valid Until</span><strong>{{ quotation.valid_until|date:"M d, Y"|default:"--" }}</strong></div>
+            <div class="summary-row-premium"><span>Subtotal</span><strong>${{ quotation.subtotal|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Discount</span><strong>${{ discount_amount|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Tax Setting</span><span style="font-weight:600; font-size:0.85rem; color:var(--qs-text-muted);">{% if tax_mode == 'none' %}Removed{% elif tax_mode == 'custom' %}Custom {{ tax_rate_percent|floatformat:2 }}%{% else %}Default {{ tax_rate_percent|floatformat:2 }}%{% endif %}</span></div>
+            <div class="summary-row-premium"><span>Tax Amount</span><strong>${{ quotation.tax_amount|floatformat:2 }}</strong></div>
+            {% if quotation.customer %}
+            <div class="summary-row-premium"><span>Customer Credit</span><strong>${{ quotation.customer.credit_balance|floatformat:2 }}</strong></div>
+            {% endif %}
+            <div class="summary-row-premium"><span>Total</span><strong style="color: var(--qs-primary);">${{ quotation.total_amount|floatformat:2 }}</strong></div>
+
+            {% if can_email_sales_document and quotation.status != 'cancelled' %}
+            <section id="sales-document-email" class="sales-document-email-panel" aria-labelledby="quotation-email-title">
+                <div class="sales-document-email-head">
+                    <div>
+                        <span class="sales-document-email-eyebrow">Customer delivery</span>
+                        <h2 id="quotation-email-title">Email Quotation</h2>
+                    </div>
+                    <span class="sales-document-email-badge" aria-label="A PDF copy of this quotation will be included">PDF included</span>
+                </div>
+                <p class="sales-document-email-copy">Review the recipient before sending quotation <strong>{{ quotation.quote_no|default:quotation.id }}</strong>.</p>
+                <form method="post" action="{% url 'sales_quotation_email' quotation.id %}" class="sales-document-email-form">
+                    {% csrf_token %}
+                    <label for="quotation-recipient-email">Recipient email</label>
+                    <input id="quotation-recipient-email" name="recipient_email" type="email" inputmode="email" autocomplete="email" value="{{ quotation.customer.email|default:'' }}" placeholder="customer@example.com" aria-describedby="quotation-recipient-email-help" required{% if email_panel_open %} autofocus{% endif %}>
+                    <p id="quotation-recipient-email-help" class="sales-document-email-help">
+                        {% if quotation.customer.email %}
+                            Edits affect only this delivery; the saved customer email will not be changed.
+                        {% else %}
+                            No saved customer email exists. Enter an address for this delivery only; the customer profile will not be changed.
+                        {% endif %}
+                    </p>
+                    <button type="submit" class="qs-btn qs-btn-primary sales-document-email-submit">Send Quotation</button>
+                </form>
+            </section>
+            {% endif %}
+
+            {% if notes_display %}
+            <div style="margin-top:16px; padding:14px; border:1px solid #e2e8f0; background: #f8fafc; border-radius:10px; font-size:0.85rem; color:var(--qs-text-muted); line-height:1.4;">
+                <strong style="display:block; color:var(--qs-text-main); margin-bottom:6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Terms & Custom Notes</strong>
+                {{ notes_display }}
+            </div>
+            {% endif %}
+
+            <!-- Dynamic Workflow Operations Engine -->
+            {% if quotation.status == 'draft' %}
+            <div id="quotation-conversion" class="conversion-engine-container">
+                <form method="post" action="{% url 'sales_quotation_convert_to_invoice' quotation.id %}">
+                    {% csrf_token %}
+                    <label>Invoice Location</label>
+                    <select name="location_id" required>
+                        {% for loc in locations %}
+                            <option value="{{ loc.id }}">{{ loc.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label style="margin-top:12px;">Next Payment Method</label>
+                    <select name="payment_method">
+                        {% for value, label in payment_methods %}
+                            <option value="{{ value }}" {% if value == 'cash' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button type="submit" class="qs-btn qs-btn-slate" style="width:100%;">Convert To Invoice</button>
+                        <button type="submit" class="qs-btn qs-btn-emerald" name="next_step" value="pay" style="width:100%;">Convert & Proceed To Payment</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</main>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>

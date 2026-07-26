@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoice.invoice_no }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+
+<body class="page-invoice-detail">
+    <div class="receipt-card">
+        <div class="header">
+            <h2 style="margin:0;">Invoice Details</h2>
+            {% if profile.receipt_logo_url %}
+                <img src="{{ profile.receipt_logo_url }}" alt="{{ profile.receipt_brand_name|default:'Brand Logo' }}" style="max-height:60px; margin-top:10px;">
+            {% endif %}
+            <p style="color: #0061ff; font-weight: 800;">{{ profile.receipt_brand_name|default:invoice.supplier.name }}</p>
+            {% if profile.receipt_address %}
+                <p style="color:#747d8c; margin:4px 0;">{{ profile.receipt_address }}</p>
+            {% endif %}
+            {% if profile.receipt_contact_phone or profile.receipt_contact_email %}
+                <p style="color:#747d8c; margin:0;">
+                    {% if profile.receipt_contact_phone %}{{ profile.receipt_contact_phone }}{% endif %}
+                    {% if profile.receipt_contact_phone and profile.receipt_contact_email %} · {% endif %}
+                    {% if profile.receipt_contact_email %}{{ profile.receipt_contact_email }}{% endif %}
+                </p>
+            {% endif %}
+        </div>
+        
+        <div class="row">
+            <span class="label">Invoice Number</span>
+            <span class="val">#{{ invoice.invoice_no }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Amount</span>
+            <span class="val">${{ invoice.amount|floatformat:2 }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Date Issued</span>
+            <span class="val">{{ invoice.date_issued|date:"F d, Y" }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Status</span>
+            <span class="val">
+                <span class="badge {% if invoice.status == 'Paid' %}paid{% else %}pending{% endif %}">
+                    {{ invoice.status|upper }}
+                </span>
+            </span>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 30px 0;">
+        <a href="{% url 'supplier_ledger' invoice.supplier.id %}" style="color: #747d8c; text-decoration: none; font-size: 0.8rem; font-weight: 600;">← Back to Ledger</a>
+        <button onclick="window.print()" style="float:right; cursor:pointer;">Print Invoice</button>
+    </div>
+</body>
+
+</html>

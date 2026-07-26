@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Transfer | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/inventory.js' %}" defer></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}" class="page-transfer-stock">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+
+    <a href="{% url 'global_search' %}" class="nav-search-right" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="transfer-shell">
+    <section class="transfer-hero">
+        <div class="transfer-hero-copy">
+            <p class="transfer-kicker">Inventory routing</p>
+            <h1>Move Stock With Control</h1>
+            <p class="transfer-subtitle">Select the exact item, validate source balances, and push stock across locations without losing visibility into what stays behind.</p>
+        </div>
+        <div class="transfer-hero-metrics">
+            <article class="transfer-metric-card">
+                <span class="transfer-metric-label">Operator</span>
+                <strong class="transfer-metric-value">{{ request.user.username|upper }}</strong>
+                <span class="transfer-metric-note">Authenticated transfer desk</span>
+            </article>
+            <article class="transfer-metric-card">
+                <span class="transfer-metric-label">Locations</span>
+                <strong class="transfer-metric-value">{{ locations|length }}</strong>
+                <span class="transfer-metric-note">Available destinations</span>
+            </article>
+            <article class="transfer-metric-card">
+                <span class="transfer-metric-label">Items</span>
+                <strong class="transfer-metric-value">{{ items|length }}</strong>
+                <span class="transfer-metric-note">Ready to relocate</span>
+            </article>
+        </div>
+    </section>
+
+    <div class="transfer-workbench">
+        <aside class="transfer-insight-panel">
+            <div class="transfer-insight-head">
+                <span class="transfer-panel-eyebrow">Source intelligence</span>
+                <h2>Location balances</h2>
+                <p>Pick an item to inspect how much stock currently sits at each location before you commit a move.</p>
+            </div>
+
+            <div class="preview-box transfer-stock-board">
+                <div class="transfer-board-head">
+                    <span class="label-caps">Available by location</span>
+                    <span id="selected-item-badge" class="transfer-selected-item">Awaiting selection</span>
+                </div>
+                <div id="stock-list" class="transfer-stock-list">
+                    <p class="transfer-empty-copy">Select a product to view location balances.</p>
+                </div>
+            </div>
+
+            <div class="transfer-ops-grid">
+                <div class="transfer-ops-card">
+                    <span class="label-caps">System status</span>
+                    <strong>Live</strong>
+                    <small>Stock values update from the active register environment.</small>
+                </div>
+                <div class="transfer-ops-card">
+                    <span class="label-caps">Transfer rules</span>
+                    <strong>Validated</strong>
+                    <small>Source and destination must differ and quantity must remain in range.</small>
+                </div>
+            </div>
+        </aside>
+
+        <section class="transfer-form-card">
+            {% if messages %}
+                <div class="transfer-message-stack">
+                    {% for message in messages %}
+                        <div class="transfer-message {% if message.tags == 'error' %}is-error{% else %}is-success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if transfer_confirmation %}
+                <div class="transfer-complete-card" role="status" aria-live="polite">
+                    <div class="transfer-complete-icon" aria-hidden="true">✓</div>
+                    <div class="transfer-complete-copy">
+                        <span class="label-caps">Transfer Completed</span>
+                        <h2>{{ transfer_confirmation.quantity }} units transferred</h2>
+                        <p>{{ transfer_confirmation.item_name }} moved from {{ transfer_confirmation.from_location }} to {{ transfer_confirmation.to_location }}.</p>
+                        <div class="transfer-complete-meta">
+                            <span>Reference <strong>{{ transfer_confirmation.reference }}</strong></span>
+                            <span>{{ transfer_confirmation.from_location }} now <strong>{{ transfer_confirmation.source_balance }}</strong></span>
+                            <span>{{ transfer_confirmation.to_location }} now <strong>{{ transfer_confirmation.destination_balance }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="transfer-form-head">
+                <h2>Create transfer order</h2>
+                <p>Search inventory, confirm the source branch, then route the quantity to the receiving destination.</p>
+            </div>
+
+            <form method="POST" class="transfer-form-grid">
+                {% csrf_token %}
+
+                <div class="transfer-field transfer-field-full">
+                    <label class="label-caps" for="item-search">Search inventory item</label>
+                    <div class="transfer-search-shell">
+                        <input
+                            type="search"
+                            id="item-search"
+                            class="transfer-item-search"
+                            placeholder="Search item, SKU, or brand..."
+                            autocomplete="off"
+                            aria-autocomplete="list"
+                            aria-controls="transfer-search-results"
+                            aria-expanded="false"
+                        >
+                        <div id="transfer-search-results" class="transfer-search-results" role="listbox" aria-label="Matching inventory items"></div>
+                    </div>
+                </div>
+
+                <div class="transfer-field transfer-field-full">
+                    <label class="label-caps" for="item-select">Target inventory item</label>
+                    <select name="item_id" id="item-select" required>
+                        <option value="" disabled selected>Select SKU or Item...</option>
+                        {% for item in items %}
+                            <option value="{{ item.id }}" data-search="{{ item.name }} {{ item.sku }} {{ item.brand }}">
+                                {{ item.name }}{% if item.sku %} · {{ item.sku }}{% endif %}{% if item.brand %} ({{ item.brand }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="transfer-field">
+                    <label class="label-caps" for="from-location">From location</label>
+                    <select name="from_location" id="from-location" required>
+                        <option value="">Select item first...</option>
+                    </select>
+                </div>
+
+                <div class="transfer-field">
+                    <label class="label-caps" for="to-location">To location</label>
+                    <select name="to_location" id="to-location" required>
+                        <option value="" disabled selected>Select destination...</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc.id }}">{{ loc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="location-error" class="error-msg">Source and destination cannot be the same.</div>
+
+                <div class="transfer-field transfer-field-full">
+                    <label class="label-caps" for="qty-input">Transfer quantity</label>
+                    <input type="number"
+                           name="quantity"
+                           id="qty-input"
+                           min="1"
+                           placeholder="0"
+                           required
+                           class="transfer-qty-input">
+                </div>
+
+                <div id="qty-error" class="error-msg">The transfer quantity exceeds the available source stock.</div>
+
+                <div class="transfer-live-preview" aria-live="polite">
+                    <div class="transfer-live-head">
+                        <span class="label-caps">Live transfer preview</span>
+                        <strong id="transfer-live-title">Select an item to preview movement</strong>
+                    </div>
+                    <div class="transfer-live-routes">
+                        <div class="transfer-route-card">
+                            <span class="label-caps">Source balance</span>
+                            <strong id="transfer-source-route">Awaiting source</strong>
+                            <p id="transfer-source-flow">0 → 0</p>
+                        </div>
+                        <div class="transfer-route-card">
+                            <span class="label-caps">Destination balance</span>
+                            <strong id="transfer-destination-route">Awaiting destination</strong>
+                            <p id="transfer-destination-flow">0 → 0</p>
+                        </div>
+                    </div>
+                    <p id="transfer-live-note" class="transfer-live-note">Choose source, destination, and quantity to confirm the move before posting.</p>
+                </div>
+
+                <div class="transfer-snapshot">
+                    <div class="transfer-snapshot-card">
+                        <span class="label-caps">Chosen source</span>
+                        <strong id="transfer-source-preview">Awaiting source</strong>
+                    </div>
+                    <div class="transfer-snapshot-card">
+                        <span class="label-caps">Chosen destination</span>
+                        <strong id="transfer-destination-preview">Awaiting destination</strong>
+                    </div>
+                    <div class="transfer-snapshot-card">
+                        <span class="label-caps">Requested move</span>
+                        <strong id="transfer-qty-preview">0 units</strong>
+                    </div>
+                </div>
+
+                <div class="transfer-actions">
+                    <button type="submit" id="submit-btn" class="btn-execute">Execute Transfer</button>
+                    <a href="{% url 'inventory' %}" class="btn-abort">Back to Inventory</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+{{ stock_json|json_script:"quickstockTransferStockData" }}
+<script src="{% static 'inventory/js/transfer_stock.js' %}" defer></script>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>

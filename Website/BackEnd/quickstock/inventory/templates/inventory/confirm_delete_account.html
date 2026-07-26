@@ -1,0 +1,10 @@
+<!-- confirm_delete_account.html -->
+{% load static %}
+<h2>Confirm Account Deletion</h2>
+<p>This action cannot be undone. Are you sure?</p>
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit" class="btn-primary" style="background-color:#e84118;">Yes, Delete My Account</button>
+    <a href="{% url 'settings' %}" class="btn-primary">Cancel</a>
+</form>
+<script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>

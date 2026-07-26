@@ -1,0 +1,132 @@
+    {% load static %}
+    <!DOCTYPE html>
+    <html lang="en">
+        
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>About | {{ app_name|default:"QuickStock JA" }}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=about-dashboard-desktop-brand-20260721">
+
+
+    <script src="{% static 'inventory/js/about.js' %}" defer></script>
+    </head>
+
+    <body class="page-about">
+      
+        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+        <nav id="main-nav" aria-label="About page navigation" aria-hidden="true">
+            <a href="{% url 'support' %}">Support Center</a>
+        </nav>
+        <div class="about-container">
+            <div class="hero-banner">
+                <span class="version-tag">{{ app_build_label|default:"STABLE_BUILD" }} {{ app_version|default:"V2.6.0" }}</span>
+                <h1>The {{ app_region|default:"Caribbean" }} Digital Backbone</h1>
+                <p>{{ app_tagline|default:"High-integrity inventory management engineered for the region's retail and distribution networks." }}</p>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="content-grid" style="align-items: center;">
+                <div class="glass-card">
+                    <h3>👋 Welcome Back</h3>
+                    <p>
+                        {% if display_name %}{{ display_name }}{% else %}Team Member{% endif %}
+                        {% if plan_label %}<br><strong>Plan:</strong> {{ plan_label }}{% endif %}
+                        {% if plan_status %}<br><strong>Status:</strong> {{ plan_status }}{% endif %}
+                    </p>
+                    {% if default_location %}
+                    <p><strong>Default Location:</strong> {{ default_location.name }}</p>
+                    {% endif %}
+                    <p><strong>Tax Engine:</strong> {{ tax_label|default:"Tax" }} {{ tax_rate_percent|default:0 }}%</p>
+                </div>
+                <div class="glass-card">
+                    <h3>📊 Your Workspace</h3>
+                    {% if stats %}
+                    <p><strong>Items:</strong> {{ stats.item_count|default:0 }}</p>
+                    <p><strong>Units:</strong> {{ stats.total_units|default:0 }}</p>
+                    <p><strong>Categories:</strong> {{ stats.category_count|default:0 }}</p>
+                    <p><strong>Brands:</strong> {{ stats.brand_count|default:0 }}</p>
+                    <p><strong>Locations:</strong> {{ stats.location_count|default:0 }}</p>
+                    <p><strong>Inventory Value:</strong> {{ stats.inventory_value|floatformat:2 }}</p>
+                    <p><strong>Retail Value:</strong> {{ stats.retail_value|floatformat:2 }}</p>
+                    {% else %}
+                    <p>Inventory metrics will appear here once your catalog is loaded.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="content-grid">
+                <div class="glass-card">
+                    <h3>🛡️ Our Mission</h3>
+                    <p>To simplify inventory management for small and growing businesses by providing affordable, intuitive, and reliable software that increases visibility, reduces losses, and improves profitability</p>
+                </div>
+                <div class="glass-card">
+                    <h3>📈 Our Vision</h3>
+                    <p>To digitize and modernize small businesses in developing economies by delivering accessible tools that bridge the gap between informal operations and scalable, data-driven enterprises.</p>
+                </div>
+            </div>
+
+            <div class="content-grid" style="margin-top: 24px;">
+                <div class="glass-card" style="grid-column: span 2;">
+                    <h3>🚀 High-Impact Product Roadmap</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.88rem;">Key active and upcoming capabilities moving onto the QuickStock platform:</p>
+                    <ul style="padding-left: 20px; line-height: 1.6; font-weight: 500; font-size: 0.92rem; list-style-type: disc;">
+                        <li>Grace periods & reminders (pre-expiry email/SMS, 7-day buffer)</li>
+                        <li>Invoice/receipt branding (logo/contact on PDF/email)</li>
+                        <li>Role-based access per location (cashier vs manager)</li>
+                        <li>Audit exports (CSV/JSON payments & logs)</li>
+                        <li>2FA + login alerts (TOTP/email + new device notice)</li>
+                        <li>Data import wizard (items & customers)</li>
+                        <li>Usage analytics (low stock, top sellers, daily revenue)</li>
+                        <li>Support hook (prefilled logs/environment)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-grid" style="align-items: center;">
+                <div>
+                    <h2 style="font-weight: 900; font-size: 2rem; letter-spacing: -1px;">Operational Integrity</h2>
+                    <p>QuickStock JA is more than inventory software—it's a complete business operations platform designed to give you confidence in every transaction, every movement, and every decision. From inventory and sales to cash management and reporting, QuickStock helps businesses operate with accuracy, accountability, and real-time visibility. </p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 10px;">✅ <strong> Inventory Intelligence:</strong> Track stock movement, purchases, sales, and transfers with complete accuracy.</li>
+                        <li style="margin-bottom: 10px;">✅ <strong>Business Operations:</strong> Streamline your daily workflows with intuitive tools and automated processes.</li>
+                        <li style="margin-bottom: 10px;">✅ <strong>Built for Growth:</strong> Whether you're operating a single location or expanding to multiple branches, QuickStock scales with your business while keeping your data secure, synchronized, and under control.</li>
+                    </ul>
+                </div>
+                
+                <div class="specs-box">
+                    <h4>Business Capabilities</h4>
+                    <div class="spec-line"><span>Inventory Control</span> <strong>Real-Time Stock Tracking</strong></div>
+                    <div class="spec-line"><span>Point of Sale</span> <strong>Fast & Secure Sales</strong></div>
+                    <div class="spec-line"><span>Cash Management</span> <strong>Daily Reconciliation</strong></div>
+                    <div class="spec-line"><span>Business Reports</span> <strong>Real-Time Analytics</strong></div>
+                    <div class="spec-line"><span>Multi-Location</span> <strong>Branch Ready</strong></div>
+                    <div class="spec-line"><span>Data Security</span> <strong>Encrypted & Backed Up</strong></div>
+                </div>
+            </div>
+
+            <div class="architect-section">
+                <div class="architect-img">👨🏾‍💻</div>
+                <div class="architect-info">
+                    <span class="role-title">{{ contact_role|default:"Lead Systems Architect" }}</span>
+                    <h2>{{ contact_name|default:"QuickStock JA Team" }}</h2>
+                    <p style="color: #636e72;">
+                        Specializing in full-stack development and scalable database systems, we build the digital infrastructure that helps Jamaican businesses grow from single-location operations into efficient, multi-branch enterprises.
+
+                    </p>
+                    
+                    <div class="contact-pill">
+                        <strong>Contact Info:</strong><br>
+                        {% if contact_email %}Email: {{ contact_email }}<br>{% endif %}
+                        {% if contact_phone %}TEL: {{ contact_phone }}{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align: center; padding: 40px; color: #b2bec3; font-family: 'JetBrains Mono'; font-size: 0.7rem;">
+            &copy; {{ current_year|default:2026 }} {{ app_name|default:"QuickStock JA" }}. All rights reserved.</footer>
+    </body>
+    </html>

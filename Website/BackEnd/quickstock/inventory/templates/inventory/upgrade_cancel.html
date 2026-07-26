@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>QuickStock JA | Upgrade canceled</title>
+
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+
+</head>
+
+<body class="page-upgrade">
+
+    <div class="cancel-wrap">
+        <div class="cancel-title">Payment canceled</div>
+        <p class="cancel-text">No charges were made. You can try upgrading again whenever you’re ready.</p>
+        <a href="{% url 'index' %}#pricing" class="btn">Back to Pricing</a>
+    </div>
+
+</body>
+
+</html>

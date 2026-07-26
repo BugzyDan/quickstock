@@ -1,0 +1,197 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Create Quotation | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-sales-actions-1">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <script src="{% static 'inventory/js/sales_quotation_form.js' %}" defer></script>
+    
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-quotation-create page-supplier-list">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="sales-page-main sales-document-main" data-tax-rate="{{ default_tax_rate_percent|default:15 }}">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="qs-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="sales-page-head ops-hero ops-hero-sales sales-document-hero">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Quotation studio</p>
+            <h1 class="sales-page-title">New Sales Quotation</h1>
+            <p class="sales-page-subtitle">Build a clear customer offer from live inventory, pricing and fulfillment context.</p>
+            <div class="ops-chip-row" aria-label="Quotation workflow"><span class="ops-chip">Inventory linked</span><span class="ops-chip">Tax ready</span><span class="ops-chip">Invoice convertible</span></div>
+        </div>
+        <div class="ops-actions sales-document-actions">
+            <a href="{% url 'sales_quotation_list' %}" class="qs-btn qs-btn-slate">Back to Quotations</a>
+            <a href="{% url 'sales_invoice_create' %}?source=scratch" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Create Invoice Instead</a>
+        </div>
+    </section>
+
+    <form method="post" class="sales-card-premium">
+        {% csrf_token %}
+
+        <!-- Configuration Metadata Segment -->
+        <div class="sales-detail-grid-premium">
+            <div class="sales-summary-box-premium">
+                <div class="settings-form-group-premium">
+                    <label>Customer</label>
+                    <select name="customer_id">
+                        <option value="">Walk-in / Unassigned</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }}{% if customer.phone %} ({{ customer.phone }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="settings-form-group-premium">
+                    <label>Valid Until</label>
+                    <input type="date" name="valid_until">
+                </div>
+                
+                <div class="settings-form-group-premium">
+                    <label>Tax Engine</label>
+                    <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:12px;">
+                        <select name="tax_mode" id="quoteTaxMode">
+                            <option value="default">Default Tax</option>
+                            <option value="none">Remove Tax</option>
+                            <option value="custom">Custom Tax %</option>
+                        </select>
+                        <input type="number" name="tax_rate_percent" id="quoteTaxRateInput" min="0" step="0.01" value="{{ default_tax_rate_percent|default:15 }}">
+                    </div>
+                </div>
+                
+                <div class="settings-form-group-premium">
+                    <label>Discount Structure</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:12px;">
+                        <select name="discount_type" id="quoteDiscountType">
+                            <option value="flat">Flat Amount ($)</option>
+                            <option value="percent">Percent (%)</option>
+                        </select>
+                        <input type="number" name="discount_value" id="quoteDiscountValue" min="0" step="0.01" value="0.00">
+                    </div>
+                </div>
+                
+                <div class="settings-form-group-premium" style="margin-bottom: 0;">
+                    <label>Terms & Conditions / Notes</label>
+                    <textarea name="notes" rows="3" placeholder="Optional: payment terms, delivery timelines, special conditions..."></textarea>
+                </div>
+            </div>
+
+            <!-- Ledger Breakdown Pane -->
+            <div class="sales-summary-box-premium totals-pane">
+                <div style="width: 100%;">
+                    <div class="summary-row-premium"><span>Subtotal</span><strong id="quoteSubtotal">$0.00</strong></div>
+                    <div class="summary-row-premium"><span>Discount Breakdown</span><strong id="quoteDiscount">$0.00</strong></div>
+                    <div class="summary-row-premium"><span id="quoteTaxLabel">Tax ({{ default_tax_rate_percent|default:15 }}%)</span><strong id="quoteTax">$0.00</strong></div>
+                    <div class="summary-row-premium"><span>Grand Total</span><strong id="quoteTotal" style="color: var(--qs-primary);">$0.00</strong></div>
+                </div>
+                <p style="margin: 20px 0 0 0; font-size: 0.76rem; color: var(--qs-text-muted); line-height: 1.4; font-weight: 500;">
+                    * Discounts are calculated and applied globally prior to taxation calculations. Tax rates apply specifically to eligible taxable structural line items.
+                </p>
+            </div>
+        </div>
+
+        <!-- Line Item Workspace Segment -->
+        <div class="quote-line-editor-premium">
+            <h3 class="table-editor-title">Quotation Line Editor</h3>
+            <div class="sales-table-wrap">
+                <table class="sales-table-premium">
+                    <thead>
+                        <tr>
+                            <th style="width: 44%;">Inventory Item</th>
+                            <th style="width: 14%; text-align: center;">In Stock</th>
+                            <th style="width: 14%; text-align: center;">Qty</th>
+                            <th style="width: 16%;">Unit Price</th>
+                            <th style="width: 12%; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quoteLineBody">
+                        <!-- Dynamic Rows Injected via JavaScript Form Engine -->
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" class="quote-line-add-premium" id="addQuoteLine">+ Add Line Item</button>
+        </div>
+
+        <!-- Lower Strategy Actions -->
+        <div class="sales-form-actions">
+            <a href="{% url 'sales_quotation_list' %}" class="qs-btn qs-btn-secondary">Cancel</a>
+            <button type="submit" class="qs-btn qs-btn-primary" style="background-color: var(--qs-primary, #2563eb); color: #ffffff; border-color: var(--qs-primary, #2563eb);">Save Quotation</button>
+        </div>
+    </form>
+
+    <!-- Standard Client Component Template Hook -->
+    <template id="quoteLineRowTemplate">
+        <tr class="quote-line-row">
+            <td>
+                <select name="item_id[]" class="quote-line-item" required>
+                    <option value="">Select item from stock...</option>
+                    {% for item in items %}
+                        <option
+                            value="{{ item.id }}"
+                            data-price="{{ item.price }}"
+                            data-stock="{{ item.quantity }}"
+                            data-taxable="{% if item.is_taxable %}1{% else %}0{% endif %}"
+                        >
+                            {{ item.name }} ({{ item.sku|default:"NO-SKU" }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="text" class="quote-line-stock" value="0" style="text-align: center;" readonly>
+            </td>
+            <td>
+                <input type="number" name="quantity[]" class="quote-line-qty" min="1" step="1" value="1" style="text-align: center;" required>
+            </td>
+            <td>
+                <input type="number" name="unit_price[]" class="quote-line-price" min="0.01" step="0.01" value="0.00" required>
+            </td>
+            <td style="text-align: right;">
+                <button type="button" class="quote-line-remove-premium quote-line-remove">Remove</button>
+            </td>
+        </tr>
+    </template>
+</main>
+
+<footer style="position: static; width: 100%; margin-top: auto;">
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,447 @@
+    {% load static %}
+    <!DOCTYPE html>
+    <html lang="en"
+          data-theme="{{ request.user.profile.theme|default:'system' }}"
+          {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+          {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>QuickStock JA | System Configuration</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+        <script src="{% static 'inventory/js/settings.js' %}" defer></script>
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+
+
+    </head>
+
+    <body class="page-settings">
+
+        <header>
+            <div class="header-title"><a
+                href="{% url 'index' %}">QUICKSTOCK // SYSTEM</a></div>
+            <div style="font-size: 0.75rem; font-weight: 600; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; margin-top: 0;">V 2.1.0</div>
+        </header>
+
+        <main>
+            <section class="settings-card">
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li class="{{ message.tags }}">● {{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <h2>Account Management</h2>
+                <div class="info-row"><strong>Username</strong> {{ request.user.username }}</div>
+                <div class="info-row"><strong>Email</strong> {{ request.user.email|default:"Not Provided" }}</div>
+
+                <a href="{% url 'change_password' %}?from=settings" class="btn btn-secondary" style="display: block; width: 100%;">Update Security Credentials</a>
+
+                <hr>
+
+                <h3>Operational Preferences</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="preference-group">
+                        <label>System Theme</label>
+                        <select name="theme">
+                            <option value="system" {% if profile.theme == 'system' %}selected{% endif %}>Follow OS Default</option>
+                            <option value="light" {% if profile.theme == 'light' %}selected{% endif %}>Light Mode</option>
+                            <option value="dark" {% if profile.theme == 'dark' %}selected{% endif %}>Terminal (Dark)</option>
+                        </select>
+                    </div>
+
+                    <div class="preference-group">
+                        <label>POS Terminal Config</label>
+                        <input type="text" name="pos" value="{{ profile.pos_config }}" placeholder="e.g. 80mm-thermal, high-contrast">
+                    </div>
+
+                    <div class="preference-group">
+                        <label>Receipt/Invoice Brand Name</label>
+                        <input type="text" name="brand_name" value="{{ brand_defaults.name }}" placeholder="e.g. John's Shop (leave blank to clear)">
+                    </div>
+                    <div class="preference-group">
+                        <label>Brand Logo URL</label>
+                        <input type="url" name="brand_logo_url" value="{{ brand_defaults.logo }}" placeholder="https://.../logo.png">
+                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Leave blank to clear the URL.</small>
+                    </div>
+                    <div class="preference-group">
+                        <label>Upload Logo (PNG/JPG, max 1MB)</label>
+                        <input type="file" name="brand_logo_file" accept="image/png,image/jpeg,image/jpg">
+                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Uploading a file will replace the URL.</small>
+                    </div>
+                    <div class="preference-group">
+                        <label>Receipt Contact Email</label>
+                        <input type="email" name="brand_email" value="{{ brand_defaults.email }}" placeholder="contact@yourshop.com">
+                    </div>
+                    <div class="preference-group">
+                        <label>Receipt Contact Phone</label>
+                        <input type="text" name="brand_phone" value="{{ brand_defaults.phone }}" placeholder="+1 876-000-0000">
+                    </div>
+                
+                    <div class="preference-group">
+                        <label>My Access Level</label>
+                        {% if is_admin %}
+                            <select name="role">
+                                <option value="admin" {% if profile.role == 'admin' %}selected{% endif %}>System Administrator</option>
+                                <option value="cashier" {% if profile.role == 'cashier' %}selected{% endif %}>Cashier</option>
+                                <option value="manager" {% if profile.role == 'manager' %}selected{% endif %}>Manager</option>
+                            </select>
+                        {% else %}
+                            <input type="text" value="{{ profile.get_role_display }}" class="readonly-input" readonly>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="background: var(--accent-blue); color: #fff; border: 1px solid var(--accent-blue);">Synchronize Preferences</button>
+                </form>
+
+                {% if is_admin %}
+                <hr>
+                <h3>Team Management</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Manage staff access, roles, and branch assignments for this workspace.
+                </p>
+
+                {% if staff_management_enabled %}
+                <form method="POST" action="{% url 'manage_staff' %}" class="staff-create-form" style="background: #f8fafc; padding: 25px; border-radius: 18px; border: 1px solid var(--border-color);">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create">
+                    <div class="staff-create-grid">
+                        <div class="preference-group" style="margin-bottom: 0;">
+                            <label>Username</label>
+                            <input type="text" name="username" placeholder="e.g. Janice_R" required>
+                        </div>
+                        <div class="preference-group" style="margin-bottom: 0.">
+                            <label>Email</label>
+                            <input type="email" name="email" placeholder="staff@company.com" required>
+                        </div>
+                        <div class="preference-group" style="margin-bottom: 0;">
+                            <label>Initial Role</label>
+                            <select name="role">
+                                <option value="cashier">Cashier</option>
+                                <option value="manager">Manager</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 15px; background: white; border: 1px solid #cbd5e0;">+ Add New Staff Member</button>
+                </form>
+
+                {% if all_staff %}
+                <div style="overflow-x: auto; margin-top: 25px;">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th>Access Role</th>
+                                <th>Assigned Branch</th>
+                                <th>Daily Summary Edit</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for staff_profile in all_staff %}
+                            <tr>
+                                <td style="font-weight: 600;">{{ staff_profile.user.username }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'manage_staff' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_role">
+                                        <input type="hidden" name="user_id" value="{{ staff_profile.user.id }}">
+                                        
+                                        <select name="new_role" onchange="this.form.submit()" class="role-badge-select">
+                                            <option value="cashier" {% if staff_profile.role == 'cashier' %}selected{% endif %}>Cashier</option>
+                                            <option value="manager" {% if staff_profile.role == 'manager' %}selected{% endif %}>Manager</option>
+                                            <option value="admin" {% if staff_profile.role == 'admin' %}selected{% endif %}>Admin</option>
+                                        </select>
+                                    </form>
+                                </td>
+
+
+
+                                <td>
+                                    <form method="POST" action="{% url 'manage_staff' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_location">
+                                        <input type="hidden" name="user_id" value="{{ staff_profile.user.id }}">
+                                        <select name="new_location" onchange="this.form.submit()" class="form-select form-select-sm">
+                                            <option value="" {% if not staff_profile.default_location %}selected{% endif %}>No location assigned</option>
+                                            {% for loc in all_locations %}
+                                                <option value="{{ loc.id }}" {% if staff_profile.default_location.id == loc.id %}selected{% endif %}>
+                                                    {{ loc.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>
+                                    {% if staff_profile.role == 'manager' or staff_profile.role == 'cashier' %}
+                                    <form method="POST" action="{% url 'manage_staff' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_daily_summary_access">
+                                        <input type="hidden" name="user_id" value="{{ staff_profile.user.id }}">
+                                        <label style="display:inline-flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:800; color:#475569;">
+                                            <input type="checkbox" name="can_edit_daily_summary" value="1" onchange="this.form.submit()" {% if staff_profile.can_edit_daily_summary %}checked{% endif %}>
+                                            Can use
+                                        </label>
+                                    </form>
+                                    {% else %}
+                                        <span style="color: var(--text-muted); font-size: 0.8rem;">Included by role</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <form method="POST" action="{% url 'manage_staff' %}" onsubmit="return confirm('Revoke access for {{ staff_profile.user.username }}?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="user_id" value="{{ staff_profile.user.id }}">
+                                        <button type="submit" style="background: none; border: none; color: var(--danger-red); font-size: 0.75rem; font-weight: 800; cursor: pointer; text-transform: uppercase; padding: 5px;">
+                                            Revoke
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+
+
+
+                        
+                    </table>
+                </div>
+
+
+<!-- LIVE REGISTER CONTROL & LOGISTICS -->
+<div class="settings-card" style="margin-top: 25px; padding: 25px; border: 1px solid var(--border-color);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 1rem;">Live Register Control</h3>
+        {% if active_shifts or unassigned_staff or assigned_idle_staff %}
+            <span style="background: {% if active_shifts and not unassigned_staff %}var(--success-green){% else %}#f59e0b{% endif %}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">
+                {{ live_register_attention_count }} ACTIVE
+            </span>
+        {% endif %}
+    </div>
+
+    {% if active_shifts or unassigned_staff or assigned_idle_staff %}
+        <div style="overflow-x: auto;">
+            <table class="staff-table">
+                <thead>
+                    <tr style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <th>Staff Member</th>
+                        <th>Branch</th>
+                        <th>Clock In</th>
+                        <th style="text-align: left; padding-left: 4px;">Clock Out</th>
+                        <th>Live Sales (JMD)</th>
+                        <th style="text-align: right;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift in active_shifts %}
+                    <tr style="{% if shift.is_closed %}opacity: 0.7; background: rgba(241, 245, 249, 0.5);{% endif %}">
+                        <td style="font-weight: 600;">
+                            <span style="display: inline-flex; align-items: center; gap: 8px;">
+                                <div style="width: 24px; height: 24px; background: {% if shift.is_closed %}#64748b{% else %}var(--bg-dark){% endif %}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-family: var(--mono-font);">
+                                    {{ shift.cashier.username|slice:":1"|upper }}
+                                </div>
+                                {{ shift.cashier.username }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.85rem;">{{ shift.location.name }}</td>
+                        
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">
+                            {{ shift.start_time|time:"g:i A" }}
+                        </td>
+
+                        <td style="font-size: 0.85rem; text-align: left; padding-left: 4px; font-weight: {% if shift.is_closed %}700{% else %}400{% endif %}; color: {% if shift.is_closed %}var(--text-main){% else %}var(--text-muted){% endif %};">
+                            {% if shift.end_time %}
+                                {{ shift.end_time|time:"g:i A" }}
+                            {% elif shift.is_closed %}
+                                Closed
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+
+                        <td style="font-family: var(--mono-font); font-weight: 700; color: {% if shift.is_closed %}#64748b{% else %}var(--success-green){% endif %};">
+                            ${{ shift.total_sales }}
+                        </td>
+
+                        <td style="text-align: right;">
+                            {% if shift.is_closed %}
+                                <span style="font-size: 0.65rem; font-weight: 800; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Finished</span>
+                            {% else %}
+                                <span style="font-size: 0.65rem; font-weight: 800; color: var(--success-green); border: 1px solid var(--success-green); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Active</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for staff in unassigned_staff %}
+                    <tr style="background: rgba(245, 158, 11, 0.08);">
+                        <td style="font-weight: 600;">
+                            <span style="display: inline-flex; align-items: center; gap: 8px;">
+                                <div style="width: 24px; height: 24px; background: #92400e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-family: var(--mono-font);">
+                                    {{ staff.user.username|slice:":1"|upper }}
+                                </div>
+                                {{ staff.user.username }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.85rem; color: #b45309; font-weight: 700;">Unassigned</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">Awaiting admin assignment</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem; text-align: left; padding-left: 4px;">--</td>
+                        <td style="font-family: var(--mono-font); font-weight: 700; color: var(--text-muted);">$0.00</td>
+                        <td style="text-align: right;">
+                            <span style="font-size: 0.65rem; font-weight: 800; color: #b45309; border: 1px solid #f59e0b; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Unassigned</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for staff in assigned_idle_staff %}
+                    <tr style="background: rgba(59, 130, 246, 0.06);">
+                        <td style="font-weight: 600;">
+                            <span style="display: inline-flex; align-items: center; gap: 8px;">
+                                <div style="width: 24px; height: 24px; background: #1d4ed8; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-family: var(--mono-font);">
+                                    {{ staff.user.username|slice:":1"|upper }}
+                                </div>
+                                {{ staff.user.username }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.85rem;">{{ staff.default_location.name }}</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">Awaiting shift open</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem; text-align: left; padding-left: 4px;">--</td>
+                        <td style="font-family: var(--mono-font); font-weight: 700; color: var(--text-muted);">$0.00</td>
+                        <td style="text-align: right;">
+                            <span style="font-size: 0.65rem; font-weight: 800; color: #1d4ed8; border: 1px solid #93c5fd; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Assigned</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- SYSTEM CLEAR PLACEHOLDER -->
+        <div style="text-align: center; padding: 45px 0;">
+            <div style="font-size: 2.2rem; margin-bottom: 12px; filter: grayscale(1);">🛡️</div>
+            <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">System Clear</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">All registers are currently closed and balanced.</div>
+        </div>
+    {% endif %}
+</div>
+                {% else %}
+                    <div style="text-align: center; color: var(--text-muted); padding: 16px 0;">No additional staff registered.</div>
+                {% endif %}
+                {% else %}
+                <div style="background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                    Staff management is a PRO feature. Upgrade to unlock multi-user access.
+                </div>
+                {% endif %}
+
+                <hr>
+                <h3>System Integrity & Logistics</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Set country and tax settings to ensure accurate GCT/VAT calculations.
+                </p>
+
+                <form method="POST" style="background: #f8fafc; padding: 25px; border-radius: 18px; border: 1px solid var(--border-color); margin-bottom: 25px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_tax_rate_single">
+                    <div style="font-weight: 800; font-size: 0.8rem; color: #1e293b; margin-bottom: 12px;">Tax Configuration</div>
+                    <div class="tax-grid">
+                        <div class="preference-group">
+                            <label>Country</label>
+                            <select name="tax_rate_country" id="tax-country" required>
+                                <option value="JM">Jamaica</option>
+                                <option value="TT">Trinidad &amp; Tobago</option>
+                                <option value="BB">Barbados</option>
+                                <option value="GY">Guyana</option>
+                                <option value="LC">Saint Lucia</option>
+                                <option value="INT">International</option>
+                            </select>
+                        </div>
+                        <div class="preference-group">
+                            <label>Tax Rate (%)</label>
+                            <input type="number" name="tax_rate_value" id="tax-rate-input" min="0" max="100" step="0.01" placeholder="e.g. 15.00" required>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                        Country applies to all locations in this workspace.
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                        Current: JM {{ tax_rate_percent_by_country.JM|floatformat:2 }}% · TT {{ tax_rate_percent_by_country.TT|floatformat:2 }}% · BB {{ tax_rate_percent_by_country.BB|floatformat:2 }}% · GY {{ tax_rate_percent_by_country.GY|floatformat:2 }}% · LC {{ tax_rate_percent_by_country.LC|floatformat:2 }}% · INT {{ tax_rate_percent_by_country.INT|floatformat:2 }}%
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 10px; background: white; border: 1px solid #cbd5e0; width: 100%;">Apply Country &amp; Tax</button>
+                </form>
+
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 18px; border: 1px solid #dcfce7; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.85rem; color: #166534; display: flex; align-items: center; gap: 8px;">
+                            <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+                            PROFILE LOCK: ENFORCED
+                        </div>
+                        <div style="font-size: 0.75rem; color: #15803d; margin-top: 4px;">Staff are strictly locked to their assigned branches for all transactions.</div>
+                    </div>
+                </div>
+
+                <form method="POST" class="system-logistics-form" style="background: #f8fafc; padding: 25px; border-radius: 18px; border: 1px solid var(--border-color); margin-bottom: 25px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_system_logistics">
+                    <div class="system-logistics-grid">
+                        <div class="preference-group">
+                            <label>Audit Retention (Days)</label>
+                            <input type="number" name="audit_retention_days" min="1" value="{{ audit_retention_days }}" required>
+                        </div>
+                        
+                        <div class="preference-group">
+                            <label>Primary Funding Branch</label>
+                            <select name="funding_branch">
+                                {% for loc in all_locations %}
+                                    {% if loc.name != "Unassigned" %}
+                                        <option value="{{ loc.id }}" {% if loc.is_primary %}selected{% endif %}>{{ loc.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 10px; background: white; border: 1px solid #cbd5e0; width: 100%;">Synchronize System Logistics</button>
+                </form>
+
+                <div style="border: 1px solid #fee2e2; border-radius: 18px; padding: 20px; background: #fffafb;">
+                    <label style="display: block; font-weight: 800; font-size: 0.7rem; color: #b91c1c; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Data Purge Operations</label>
+                    <form method="POST" action="{% url 'clear_all_logs' %}" onsubmit="return confirm('PERMANENT: Delete ALL audit logs?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary" style="background: #fff; border: 1px solid #fecaca; color: var(--danger-red); width: 100%; font-size: 0.8rem;">
+                            Purge All Audit Logs
+                        </button>
+                    </form>
+                </div>
+                {% endif %} <hr>
+                <h3 style="color: var(--danger-red);">Zone of No Return</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Terminating your account permanently purges all inventory and sales history from our servers.</p>
+                <form method="POST" action="{% url 'delete_account' %}" onsubmit="return confirm('CRITICAL: This action is permanent and will destroy all business logs. Proceed?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Terminate Enterprise Access</button>
+                </form>
+
+                <div class="settings-nav">
+                    <span class="settings-nav-links">
+                        <a href="{% url 'dashboard' %}">Dashboard</a>
+                        <span class="sep">•</span>
+                        <a href="{% url 'profile' %}">User Profile</a>
+                        {% if is_admin %}
+                            <span class="sep">•</span>
+                            <a href="{% url 'audit_logs' %}?from=settings">Audit Logs</a>
+                        {% endif %}
+                    </span>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+        </footer>
+
+        
+<script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Add Customer</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-add-customer">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="ops-shell customer-create-shell">
+    <section class="ops-hero customer-create-hero">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Relationship management</p>
+            <h2>New Customer Profile</h2>
+            <p>Build a clean account record from the start so sales, quotations, and follow-up notes stay tied to the right customer.</p>
+            <div class="ops-chip-row">
+                <span class="ops-chip">Ledger ready</span>
+                <span class="ops-chip">Invoice ready</span>
+                <span class="ops-chip">Follow-up friendly</span>
+            </div>
+        </div>
+        <div class="customer-create-hero-side">
+            <div class="customer-create-hero-stat">
+                <span class="customer-create-hero-label">Customer setup</span>
+                <strong>One clean record</strong>
+                <small>Name, contact info, addresses, and account notes stay ready for quotations, invoices, and branch teams.</small>
+            </div>
+            <div class="ops-actions">
+                <a href="{% url 'customer_list' %}" class="customer-create-back-link">Back to Directory</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="customer-create-layout">
+        <div class="customer-create-panel">
+            <div class="customer-create-panel-head">
+                <div>
+                    <p class="customer-create-section-kicker">Account setup</p>
+                    <h2>Customer details</h2>
+                </div>
+                <p class="customer-create-subtitle">Fill in the essentials below to add a client to your ledger and make them available everywhere the sales flow needs them.</p>
+            </div>
+            
+            <form method="post" class="customer-create-form">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% if field.help_text %}
+                        <p class="customer-create-field-hint">{{ field.help_text }}</p>
+                    {% endif %}
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="customer-create-field-error">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="customer-create-actions">
+                    <button type="submit" class="customer-create-submit">
+                        Save Customer
+                    </button>
+                    <a href="{% url 'customer_list' %}" class="customer-create-cancel">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <aside class="customer-create-side">
+            <section class="customer-create-side-card">
+                <p class="customer-create-section-kicker">Why this matters</p>
+                <h3>Keep sales records clean from day one</h3>
+                <p>Once this profile is saved, the customer becomes available for quotations, invoices, account notes, and future branch follow-up.</p>
+            </section>
+
+            <section class="customer-create-side-card customer-create-side-card-soft">
+                <p class="customer-create-section-kicker">Recommended</p>
+                <ul class="customer-create-checklist">
+                    <li>Use a full customer name so the account is easy to search later.</li>
+                    <li>Add the best email or phone contact for invoice and quotation follow-up.</li>
+                    <li>Record physical and business addresses when delivery or billing needs them.</li>
+                    <li>Use notes for delivery details, billing instructions, or follow-up context.</li>
+                </ul>
+            </section>
+
+            <section class="customer-create-side-card customer-create-side-card-dark">
+                <p class="customer-create-section-kicker">After save</p>
+                <h3>Next best steps</h3>
+                <p>Open the profile to review account activity, add dated notes, and keep the customer ready for the next transaction.</p>
+            </section>
+        </aside>
+    </section>
+</main>
+
+<footer>
+    <p>&copy; 2026 QuickStock JA. Customer records are encrypted and private.</p>
+</footer>
+
+</body>
+</html>

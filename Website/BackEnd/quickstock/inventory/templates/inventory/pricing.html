@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - QuickStock JA</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+
+<body class="page-pricing">
+    <header class="pricing-header">
+        <a href="{% url 'index' %}" class="pricing-brand" aria-label="QuickStock JA Home">
+            <img src="{% static 'images/QuickStock_Logo.jpg' %}" alt="QuickStock JA Logo" class="pricing-logo">
+            <span class="logo-wordmark">
+                <span class="logo-quick">Quick</span><span class="logo-stock">Stock</span><span class="logo-ja">JA</span>
+            </span>
+        </a>
+        <div class="pricing-header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="btn-edit">DASHBOARD</a>
+            {% else %}
+                <a href="{% url 'about' %}" class="btn-edit">ABOUT</a>
+                <a href="{% url 'login' %}" class="btn-edit">LOGIN</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="pricing-container">
+        <h1>Simple, Affordable Pricing</h1>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h4>Starter</h4>
+                <p class="pricing-plan-note">14-day free trial</p>
+                <div class="price">$0<span>/14 days</span></div>
+                <ul>
+                    <li>Basic Inventory Tracking</li>
+                    <li>Manual Sales Recording</li>
+                    <li>Single User Access</li>
+                    <li class="excluded">Unlimited Items & SKU Tracking</li>
+                    <li class="excluded">Advanced Inventory Analytics</li>
+                    <li class="excluded">Full CSV/Excel Data Exports</li>
+                    <li class="excluded">Staff Role Management</li>
+                    <li class="excluded">WiPay Payment Integration</li>
+                    <li class="excluded">Multi-Location Support</li>
+                    <li class="excluded">Automated GCT Reporting</li>
+                    <li class="excluded">Low-Stock Email Alerts</li>
+                </ul>
+                {% if request.user.is_authenticated and profile %}
+                    {% if profile.is_trial_active %}
+                        <a href="{% url 'upgrade' %}" class="btn-upgrade btn-starter">Trial Active</a>
+                    {% elif profile.is_pro_active %}
+                        <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter">Current Plan</a>
+                    {% else %}
+                        <a href="{% url 'upgrade' %}" class="btn-upgrade btn-starter">Trial Ended</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'signup' %}" class="btn-upgrade btn-starter">Start Free Trial</a>
+                {% endif %}
+            </div>
+
+            <div class="pricing-card pro">
+                <div class="pro-badge">Best Value</div>
+                <h4>Professional</h4>
+                <p class="pricing-plan-note">For growing retail shops</p>
+                <div class="price">$190<span>/yr</span></div>
+                <ul>
+                    <li>Everything in Starter</li>
+                    <li><strong>Advanced Inventory Analytics</strong></li>
+                    <li><strong>Unlimited Items & SKU Tracking</strong></li>
+                    <li>Full CSV/Excel Data Exports</li>
+                    <li>Staff Role Management</li>
+                    <li>WiPay Payment Integration</li>
+                    <li>Multi-Location Support</li>
+                </ul>
+                <p class="pricing-offline-note">Includes Free Windows offline Version download.</p>
+                {% if request.user.is_authenticated %}
+                    {% if profile and profile.is_pro_active %}
+                        <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="btn-upgrade is-current-plan">Current Plan</a>
+                    {% elif profile and profile.is_trial_active %}
+                        <a href="{% url 'upgrade' %}?plan=pro" class="btn-upgrade">Upgrade to Pro</a>
+                    {% else %}
+                        <a href="{% url 'upgrade' %}?plan=pro" class="btn-upgrade">Get Pro</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'signup' %}" class="btn-upgrade">Get Pro</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

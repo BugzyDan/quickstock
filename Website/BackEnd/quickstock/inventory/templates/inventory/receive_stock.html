@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Intake | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <script src="{% static 'inventory/js/receive_stock.js' %}" defer></script>
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-receive-stock page-inventory">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-right" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="receive-workbench-shell">
+    <section class="receive-hero-banner">
+        <div class="receive-hero-copy">
+            <p class="receive-hero-kicker">Inbound inventory</p>
+            <h1>Receive Stock With Confidence</h1>
+            <p>Scan the item, confirm the destination node, and track the batch value before new stock lands in your active inventory.</p>
+        </div>
+        <div class="receive-hero-pills">
+            <span class="receive-hero-pill">Barcode-first intake</span>
+            <span class="receive-hero-pill">Live batch value</span>
+            <span class="receive-hero-pill">Location-aware receiving</span>
+        </div>
+    </section>
+
+    {% if receive_confirmation %}
+        <section class="receive-complete-card" role="status" aria-live="polite">
+            <div class="receive-complete-icon" aria-hidden="true">OK</div>
+            <div class="receive-complete-copy">
+                <span class="label-caps">Receiving complete</span>
+                <h2>{{ receive_confirmation.quantity }} unit{{ receive_confirmation.quantity|pluralize }} added to {{ receive_confirmation.item_name }}</h2>
+                <p>Inventory is now updated at {{ receive_confirmation.location_name }}.</p>
+            </div>
+            <dl class="receive-complete-stats">
+                <div>
+                    <dt>Current stock</dt>
+                    <dd>{{ receive_confirmation.current_stock }}</dd>
+                </div>
+                <div>
+                    <dt>Batch value</dt>
+                    <dd>${{ receive_confirmation.batch_value }}</dd>
+                </div>
+                <div>
+                    <dt>Location</dt>
+                    <dd>{{ receive_confirmation.location_name }}</dd>
+                </div>
+            </dl>
+        </section>
+    {% endif %}
+
+    <div class="receive-workbench-grid">
+        <aside class="receive-insight-rail">
+            <div class="receive-rail-section">
+                <span class="receive-rail-eyebrow">Inbound logic</span>
+                <h3>Batch summary</h3>
+            </div>
+
+            <div class="receive-meta-box receive-batch-box">
+                <span class="receive-meta-label">Estimated batch value</span>
+                <div class="receive-meta-val" id="batch_total">$0.00</div>
+            </div>
+
+            <div class="receive-meta-grid">
+                <div class="receive-meta-box">
+                    <span class="receive-meta-label">Operator</span>
+                    <div class="receive-meta-mini">{{ request.user.username|upper }}</div>
+                </div>
+                <div class="receive-meta-box">
+                    <span class="receive-meta-label">Items ready</span>
+                    <div class="receive-meta-mini">{{ items|length }} SKUs</div>
+                </div>
+            </div>
+
+            <div class="receive-preview-box">
+                <span class="preview-label">Selected item</span>
+                <div class="preview-val" id="receive_live_item">Awaiting scan</div>
+            </div>
+
+            <section class="receive-item-found-panel is-awaiting" id="receive_item_found_panel" aria-live="polite">
+                <div class="receive-item-found-head">
+                    <span class="receive-item-found-status" id="receive_item_found_status">Awaiting scan</span>
+                    <strong id="receive_item_found_title">Scan or select an item</strong>
+                </div>
+                <p id="receive_item_found_name">Use the barcode field or item dropdown to confirm the SKU before posting stock.</p>
+                <dl class="receive-item-found-facts">
+                    <div>
+                        <dt>Current stock</dt>
+                        <dd id="receive_item_current_stock">--</dd>
+                    </div>
+                    <div>
+                        <dt>Last purchase cost</dt>
+                        <dd id="receive_item_last_cost">$0.00</dd>
+                    </div>
+                    <div>
+                        <dt>Average purchase cost</dt>
+                        <dd id="receive_item_average_cost">$0.00</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <div class="receive-preview-box">
+                <span class="preview-label">BARCODE</span>
+                <div class="preview-val receive-preview-code" id="receive_live_code">--</div>
+            </div>
+
+            <div class="receive-preview-box">
+                <span class="preview-label">Receiving location</span>
+                <div class="preview-val" id="receive_live_location">{{ locations.0.name|default:"SELECT_NODE" }}</div>
+            </div>
+
+            <div class="receive-preview-box">
+                <span class="preview-label">Quantity x cost</span>
+                <div class="preview-val" id="receive_live_math">0 x 0.00</div>
+            </div>
+
+            <div class="receive-ops-stack">
+                <div class="receive-ops-card">
+                    <span class="label-caps">Workflow</span>
+                    <strong>Stock intake</strong>
+                    <small>Use the scanner field first for the fastest receiving flow on the floor.</small>
+                </div>
+                <div class="receive-ops-card">
+                    <span class="label-caps">Checklist</span>
+                    <strong>Item, location, quantity</strong>
+                    <small>Confirm these before posting so the receiving batch lands in the right place.</small>
+                </div>
+            </div>
+        </aside>
+
+        <section class="receive-form-surface">
+            <div class="receive-form-head">
+                <h2>Create intake batch</h2>
+                <p>Scan or search the item, choose supplier and location, then confirm quantity and unit cost for this receiving event.</p>
+                {% if messages %}
+                    <div class="receive-messages" role="status">
+                        {% for message in messages %}
+                            <p class="{{ message.tags }}">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="POST" class="receive-form-layout">
+                {% csrf_token %}
+
+                <section class="receive-form-section">
+                    <div class="receive-section-head">
+                        <span class="label-caps">Scan</span>
+                        <h3>Item identification</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field full">
+                            <label>Barcode Scanner Input</label>
+                            <input type="text"
+                                   id="stock-barcode-input"
+                                   placeholder="Scan barcode or type SKU then press Enter"
+                                   autocomplete="off">
+                        </div>
+
+                        <div class="field full">
+                            <label>Target Inventory Item</label>
+                            <select name="item" id="receive-item-select" required>
+                                <option value="" disabled selected>Scan or select item...</option>
+                                {% for i in items %}
+                                    <option value="{{ i.id }}"
+                                            data-barcode="{{ i.barcode|default:'' }}"
+                                            data-sku="{{ i.sku|default:'' }}"
+                                            data-name="{{ i.name|escape }}"
+                                            data-price="{{ i.price|default:0 }}"
+                                            data-current-stock="{{ i.receive_current_stock|default:0 }}"
+                                            data-last-cost="{{ i.receive_last_purchase_cost|floatformat:2 }}"
+                                            data-average-cost="{{ i.receive_average_purchase_cost|floatformat:2 }}">
+                                        {{ i.name }} ({{ i.sku }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="receive-form-section">
+                    <div class="receive-section-head">
+                        <span class="label-caps">Routing</span>
+                        <h3>Sourcing and destination</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Sourcing / Supplier</label>
+                            <select name="supplier" required>
+                                <option value="" disabled selected>Select Supplier</option>
+                                {% for s in suppliers %}
+                                    <option value="{{ s.id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                    </div>
+
+                        <div class="field">
+                            <label>Receiving Location</label>
+                            <select name="location" id="receive-location-select" required>
+                                {% for loc in locations %}
+                                    <option value="{{ loc.id }}">{{ loc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="receive-form-section">
+                    <div class="receive-section-head">
+                        <span class="label-caps">Commercials</span>
+                        <h3>Quantity and costing</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Quantity Received</label>
+                            <input type="number" name="quantity" id="receive-qty-input" min="1" placeholder="0" required>
+                        </div>
+
+                        <div class="field">
+                            <label>Unit Cost</label>
+                            <input type="number" name="unit_cost" id="receive-cost-input" step="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="receive-actions">
+                    <button type="submit" class="btn-confirm">Receive Stock</button>
+                    <a href="{% url 'inventory' %}" class="btn-abort receive-abort-link">Back to Inventory</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt #{{ receipt_number }}</title>
+</head>
+<body style="margin:0; padding:24px; background:#f8fafc; font-family:Inter, Arial, sans-serif; color:#0f172a;">
+    <div style="max-width:720px; margin:0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; overflow:hidden;">
+        <div style="padding:24px 28px; background:linear-gradient(135deg, #2563eb, #0891b2); color:#ffffff;">
+            <p style="margin:0 0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">QuickStock JA Receipt</p>
+            <h1 style="margin:0; font-size:28px;">Receipt #{{ receipt_number }}</h1>
+            <p style="margin:10px 0 0; opacity:0.88;">Issued {{ sale_date|date:"M d, Y h:i A" }}</p>
+        </div>
+        <div style="padding:28px;">
+            <p style="margin-top:0;">Hello,</p>
+            <p>Your receipt from {{ brand_name }} is attached as a PDF and summarized below.</p>
+
+            <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:10px 0; border-bottom:1px solid #e2e8f0;">Description</th>
+                        <th style="text-align:right; padding:10px 0; border-bottom:1px solid #e2e8f0;">Qty</th>
+                        <th style="text-align:right; padding:10px 0; border-bottom:1px solid #e2e8f0;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in receipt_items %}
+                    <tr>
+                        <td style="padding:12px 0; border-bottom:1px solid #f1f5f9;">
+                            <strong>{{ item.item_name }}</strong><br>
+                            <span style="color:#64748b; font-size:13px;">{{ item.line_meta }}</span>
+                        </td>
+                        <td style="padding:12px 0; text-align:right; border-bottom:1px solid #f1f5f9;">{{ item.quantity }}</td>
+                        <td style="padding:12px 0; text-align:right; border-bottom:1px solid #f1f5f9;">{{ item.line_total_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table style="width:100%; max-width:320px; margin-left:auto; border-collapse:collapse;">
+                <tr><td style="padding:6px 0; color:#64748b;">Subtotal</td><td style="padding:6px 0; text-align:right;">{{ subtotal_display }}</td></tr>
+                <tr><td style="padding:6px 0; color:#64748b;">{{ tax_label }}</td><td style="padding:6px 0; text-align:right;">{{ tax_amount_display }}</td></tr>
+                <tr><td style="padding:6px 0; color:#64748b;">Discount</td><td style="padding:6px 0; text-align:right;">-{{ discount_display }}</td></tr>
+                <tr><td style="padding:10px 0; font-weight:700; border-top:1px solid #cbd5e1;">Total</td><td style="padding:10px 0; text-align:right; font-weight:700; border-top:1px solid #cbd5e1;">{{ grand_total_display }}</td></tr>
+            </table>
+
+            {% if sale.notes %}
+            <div style="margin-top:24px; padding:16px; background:#f8fafc; border-radius:12px;">
+                <strong style="display:block; margin-bottom:8px;">Notes</strong>
+                <div style="color:#475569;">{{ sale.notes|linebreaksbr }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

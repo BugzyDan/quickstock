@@ -1,0 +1,245 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Command Center</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+
+
+
+    <script id="quickstockDashboardConfig" type="application/json">
+        {"themePref": "{{ request.user.profile.theme|default:'system'|escapejs }}", "inventoryPercent": {{ inventory_percent|default:0 }}}
+    </script>
+    <script src="{% static 'inventory/js/page_config.js' %}" defer></script>
+
+
+
+    <script 
+        src="{% static 'inventory/js/dashboard.js' %}" defer>
+    </script>
+
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-dashboard">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="ops-shell ops-shell-wide">
+    <section class="ops-hero ops-hero-dashboard">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Command center</p>
+            <h2>Performance Hub</h2>
+            <p>Review live revenue, stock integrity, and operational signals across your business for <strong>Fiscal Year 2026</strong>.</p>
+            <div class="ops-chip-row">
+                <span class="ops-chip">Revenue monitor</span>
+                <span class="ops-chip">Stock health</span>
+                <span class="ops-chip">Operator activity</span>
+            </div>
+        </div>
+
+        <form method="get" class="ops-toolbar ops-toolbar-compact dashboard-branch-toolbar" id="dashboardLocationForm">
+            <label for="dashboardLocationSelect">Branch</label>
+            <select name="location" id="dashboardLocationSelect" class="dashboard-branch-select" data-autosubmit="true">
+                <option value="all" {% if current_location_id == "all" %}selected{% endif %}>Global (All Locations)</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if current_location_id == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-apply dashboard-sync-btn">Sync</button>
+        </form>
+    </section>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-label">Gross Revenue (JMD)</span>
+            <div class="kpi-value">${{ total_sales|floatformat:2|default:"0.00" }}</div>
+            <div class="dashboard-kpi-meta">
+                <span class="badge badge-success">Live from Terminal</span>
+                <span class="dashboard-kpi-subtle">Yesterday: ${{ yesterday_revenue|floatformat:2|default:"0.00" }}</span>
+            </div>
+            <div class="dashboard-revenue-context dashboard-revenue-{{ revenue_change_status|default:'flat' }}">
+                <span>{{ revenue_change_label|default:"No prior-day context" }}</span>
+                <span>Today: ${{ today_revenue|floatformat:2|default:"0.00" }}</span>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Stock Integrity</span>
+            <div class="kpi-value dashboard-stock-value {% if low_stock_count > 0 %}is-warning{% else %}is-healthy{% endif %}">
+                {{ low_stock_count|default:"0" }}
+            </div>
+            <div class="dashboard-kpi-action-row">
+                <span class="dashboard-kpi-subtle">Reorder Warnings</span>
+                {% if low_stock_count > 0 %}
+                    <span class="badge badge-danger-soft">Urgent</span>
+                {% else %}
+                    <span class="badge badge-success">Optimal</span>
+                {% endif %}
+            </div>
+            {% if low_stock_count > 0 %}
+                <a href="{{ low_stock_action_url }}" class="dashboard-card-action">Review Items</a>
+            {% else %}
+                <p class="dashboard-card-note">All tracked items are above the reorder threshold.</p>
+            {% endif %}
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Storage Utilization</span>
+            <div class="kpi-value">{{ inventory_percent|default:"0" }}%</div>
+            <div class="progress-box">
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {{ inventory_percent|default:"0" }}%;"></div>
+                </div>
+                <div class="dashboard-capacity-row">
+                    <span class="dashboard-capacity-count">{{ total_inventory_display|default:total_inventory }} / {{ inventory_capacity_display|default:inventory_capacity }} Units</span>
+                    <span class="dashboard-capacity-status {% if inventory_percent >= 100 %}capacity-reached{% endif %}">{{ inventory_capacity_status|default:"No capacity data" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-grid dashboard-secondary-grid">
+        <div class="kpi-card">
+            <span class="kpi-label">Daily Revenue (last 7 days)</span>
+            <div class="dashboard-card-note">Trend snapshot</div>
+            <div class="mini-scroll">
+                <table class="mini-table">
+                    <tbody>
+                    {% for row in daily_revenue %}
+                        <tr>
+                            <td>{{ row.day|date:"M d" }}</td>
+                            <td class="dashboard-table-number">${{ row.total|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="dashboard-empty-row">No sales in period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="kpi-card dashboard-contained-card">
+            <div class="dashboard-card-heading-row">
+                <span class="dashboard-count-pill">
+                    {{ top_sellers|length|default:0 }}
+                </span>
+                <span class="kpi-label dashboard-inline-label">Top Sellers (30d)</span>
+            </div>
+            <div class="dashboard-card-note">By units sold</div>
+            <div class="mini-scroll">
+                <table class="mini-table">
+                    <tbody>
+                    {% for s in top_sellers %}
+                        <tr>
+                            <td>{{ s.item__name }}</td>
+                            <td class="dashboard-table-number">{{ s.total_qty }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="dashboard-empty-row">No sales yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Low Stock (≤ {{ low_stock_threshold }})</span>
+            <div class="dashboard-card-note">Reorder candidates</div>
+            <div class="mini-scroll">
+                <table class="mini-table">
+                    <tbody>
+                    {% for it in low_stock_items %}
+                        <tr>
+                            <td>{{ it.name|default:it.item.name }}</td>
+                            <td class="dashboard-table-number">{{ it.quantity }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="dashboard-empty-row">All items healthy.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if profile and profile.role == 'admin' %}
+    <section class="kpi-card ops-surface-card dashboard-activity-card">
+        <div class="dashboard-activity-head">
+            <div>
+                <span class="kpi-label">Live Activity Feed</span>
+                <p>Recent audit events across your workspace.</p>
+            </div>
+            <a href="{% url 'audit_logs' %}?from=dashboard" class="btn btn-outline dashboard-registry-link">View Event Registry</a>
+        </div>
+        <div class="dashboard-activity-feed">
+            {% for log in recent_logs %}
+                <article class="dashboard-activity-item severity-{{ log.severity|default:'info' }}">
+                    <div class="dashboard-activity-main">
+                        <span class="dashboard-activity-action">{{ log.get_action_display|default:log.action }}</span>
+                        <p>{{ log.message }}</p>
+                        <span class="dashboard-activity-user">{{ log.user.get_full_name|default:log.user.username|default:"System" }}</span>
+                    </div>
+                    <div class="dashboard-activity-meta">
+                        <span class="dashboard-severity-pill">{{ log.get_severity_display|default:log.severity|default:"Info" }}</span>
+                        {% if log.status %}
+                            <span class="dashboard-status-pill">{{ log.status }}</span>
+                        {% endif %}
+                        <time datetime="{{ log.created_at|date:'c' }}">{{ log.created_at|timesince }} ago</time>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="dashboard-activity-empty">
+                    <strong>No recent events</strong>
+                    <span>Audit activity will appear here as staff work through sales, stock, and settings changes.</span>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</main>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+        
+    </div>
+    
+</footer>
+
+
+
+</body>
+</html>

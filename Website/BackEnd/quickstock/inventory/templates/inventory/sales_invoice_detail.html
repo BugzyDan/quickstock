@@ -1,0 +1,336 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260721-document-actions-2">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+</head>
+
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-invoice-detail page-supplier-list">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-right" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="sales-page-main sales-document-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="qs-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="sales-page-head ops-hero ops-hero-sales sales-document-hero">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Invoice record</p>
+            <h1 class="sales-page-title">{{ invoice.invoice_no|default:"Invoice" }}</h1>
+            <p class="sales-page-subtitle">
+                {% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in / Unassigned{% endif %}
+                • Issued {{ invoice.issued_at|date:"M d, Y H:i" }}
+            </p>
+            <div class="ops-chip-row"><span class="ops-chip">{{ invoice.get_status_display }}</span><span class="ops-chip">Balance ${{ balance_due|floatformat:2 }}</span></div>
+        </div>
+        <div class="ops-actions sales-document-actions">
+            <a href="{% url 'sales_invoice_list' %}" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Back</a>
+            {% if invoice.quotation_id %}
+                <a href="{% url 'sales_quotation_detail' invoice.quotation_id %}" class="qs-btn qs-btn-slate">View Quote</a>
+            {% endif %}
+            {% if can_email_sales_document and invoice.status != 'void' %}
+                <a href="#sales-document-email" class="qs-btn qs-btn-secondary sales-document-email-action" aria-controls="sales-document-email">Email Invoice</a>
+            {% endif %}
+            
+            {% if invoice.status != 'void' and payments_enabled and can_manage_invoice_at_location %}
+                <a href="{% url 'sales_invoice_payment' invoice.id %}" class="qs-btn qs-btn-primary sales-payment-action-primary">
+                    {% if invoice.status == 'paid' %}Review Payments{% else %}Open Payment Screen{% endif %}
+                </a>
+            {% elif invoice.status == 'issued' and can_manage_invoice_at_location %}
+                <a href="{% url 'sales_invoice_payment' invoice.id %}" class="qs-btn qs-btn-primary sales-payment-action-settle">
+                    Payment Page
+                </a>
+            {% endif %}
+            <button type="button" class="qs-btn qs-btn-secondary sales-document-visible-action sales-document-white-action" data-loading-ignore onclick="window.print()">
+                Print
+            </button>
+            {% if can_issue_credit_notes and invoice.status != 'void' %}
+                <a href="#credit-note-panel" class="qs-btn qs-btn-secondary sales-document-visible-action sales-document-white-action" data-loading-ignore>Create Credit Note</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="sales-detail-grid-premium">
+        <!-- Core Invoice Line Items Card -->
+        <section class="sales-card-premium">
+            <div class="sales-table-wrap">
+                <table class="sales-table-premium">
+                    <thead>
+                        <tr>
+                            <th class="sales-col-item">Item Description</th>
+                            <th class="sales-col-sku">SKU</th>
+                            <th class="sales-col-qty">Qty</th>
+                            <th class="sales-col-unit">Unit Price</th>
+                            <th class="sales-col-total">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for line in invoice_items %}
+                        <tr>
+                            <td class="sales-line-name">{{ line.item_name|default:line.item.name }}</td>
+                            <td><code class="sales-line-sku">{{ line.item.sku|default:"NO-SKU" }}</code></td>
+                            <td>{{ line.quantity }}</td>
+                            <td>${{ line.unit_price|floatformat:2 }}</td>
+                            <td class="sales-line-total">${{ line.line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="sales-empty-line-items">No line items recorded on this invoice ledger record.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Metrics Breakdowns and Accounting Ledger Details Side Rail -->
+        <aside class="sales-card-premium">
+            <div class="summary-row-premium">
+                <span>Status</span>
+                <span class="qs-chip status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+            </div>
+            <div class="summary-row-premium">
+                <span>Pickup status</span>
+                <strong class="sales-pickup-status sales-pickup-status-{{ invoice.collection_status }}">{{ invoice.get_collection_status_display }}</strong>
+            </div>
+            <div class="summary-row-premium"><span>Invoice #</span><strong>{{ invoice.invoice_no }}</strong></div>
+            <div class="summary-row-premium"><span>Linked Quotation</span><strong>{{ invoice.quotation.quote_no|default:"--" }}</strong></div>
+            <div class="summary-row-premium"><span>Location</span><strong>{{ invoice.location.name|default:"--" }}</strong></div>
+            <div class="summary-row-premium"><span>Subtotal</span><strong>${{ invoice.subtotal|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Discount Amount</span><strong>${{ discount_amount|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Tax Setting</span><span class="sales-muted-summary-value">{% if tax_mode == 'none' %}Removed{% elif tax_mode == 'custom' %}Custom {{ tax_rate_percent|floatformat:2 }}%{% else %}Default {{ tax_rate_percent|floatformat:2 }}%{% endif %}</span></div>
+            <div class="summary-row-premium"><span>Tax Amount</span><strong>${{ invoice.tax_amount|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Original Total</span><strong>${{ invoice.total_amount|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Credit Notes Issued</span><strong class="{% if credit_note_total > 0 %}sales-value-danger{% else %}sales-muted-summary-value{% endif %}">${{ credit_note_total|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Net Invoice Total</span><strong class="sales-value-primary">${{ effective_total_amount|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Paid Total</span><strong class="sales-value-success">${{ paid_total|floatformat:2 }}</strong></div>
+            <div class="summary-row-premium"><span>Balance Due</span><strong class="sales-value-balance {% if balance_due > 0 %}is-due{% else %}is-clear{% endif %}">${{ balance_due|floatformat:2 }}</strong></div>
+            {% if invoice.customer %}
+            <div class="summary-row-premium"><span>Customer Credit</span><strong>${{ customer_credit_balance|floatformat:2 }}</strong></div>
+            {% if customer_credit_balance > 0 and balance_due > 0 %}
+            <div class="summary-row-premium"><span>Balance After Customer Credit</span><strong class="sales-value-balance {% if balance_after_customer_credit > 0 %}is-due{% else %}sales-value-success{% endif %}">${{ balance_after_customer_credit|floatformat:2 }}</strong></div>
+            {% endif %}
+            {% endif %}
+            {% if overpayment_amount > 0 %}
+            <div class="summary-row-premium"><span>Overpayment Logged</span><strong class="sales-value-primary">${{ overpayment_amount|floatformat:2 }}</strong></div>
+            {% endif %}
+
+            {% if can_email_sales_document and invoice.status != 'void' %}
+            <section id="sales-document-email" class="sales-document-email-panel" aria-labelledby="invoice-email-title">
+                <div class="sales-document-email-head">
+                    <div>
+                        <span class="sales-document-email-eyebrow">Customer delivery</span>
+                        <h2 id="invoice-email-title">Email Invoice</h2>
+                    </div>
+                    <span class="sales-document-email-badge" aria-label="A PDF copy of this invoice will be included">PDF included</span>
+                </div>
+                <p class="sales-document-email-copy">Review the recipient before sending invoice <strong>{{ invoice.invoice_no|default:invoice.id }}</strong>.</p>
+                <form method="post" action="{% url 'sales_invoice_email' invoice.id %}" class="sales-document-email-form">
+                    {% csrf_token %}
+                    <label for="invoice-recipient-email">Recipient email</label>
+                    <input id="invoice-recipient-email" name="recipient_email" type="email" inputmode="email" autocomplete="email" value="{{ invoice.customer.email|default:'' }}" placeholder="customer@example.com" aria-describedby="invoice-recipient-email-help" required{% if email_panel_open %} autofocus{% endif %}>
+                    <p id="invoice-recipient-email-help" class="sales-document-email-help">
+                        {% if invoice.customer.email %}
+                            Edits affect only this delivery; the saved customer email will not be changed.
+                        {% else %}
+                            No saved customer email exists. Enter an address for this delivery only; the customer profile will not be changed.
+                        {% endif %}
+                    </p>
+                    <button type="submit" class="qs-btn qs-btn-primary sales-document-email-submit">Send Invoice</button>
+                </form>
+            </section>
+            {% endif %}
+
+            <!-- Contextual Operational Action Alerts -->
+            {% if invoice.status == 'issued' %}
+            <div class="sales-context-alert">
+                {% if payments_enabled %}
+                    This invoice still has money due. Use <strong>Open Payment Screen</strong> to record collections and keep the balance current.
+                {% else %}
+                    This invoice is still open. Payment records are not enabled in this environment yet, so settle it with the fallback mark-paid flow.
+                {% endif %}
+            </div>
+            {% elif invoice.status == 'paid' %}
+                {% if invoice.collection_status == 'awaiting_collection' %}
+                <section class="sales-pickup-alert sales-pickup-alert-held" aria-labelledby="held-items-title">
+                    <strong id="held-items-title" class="sales-pickup-alert-title">Paid — held for customer pickup</strong>
+                    <p>This invoice is fully settled, but the goods remain in store until the customer collects them.</p>
+                    {% if can_manage_invoice_at_location %}
+                    <form method="post" action="{% url 'sales_invoice_mark_collected' invoice.id %}" class="sales-pickup-release-form">
+                        {% csrf_token %}
+                        <button type="submit" class="qs-btn qs-btn-primary">Mark Items Picked Up</button>
+                    </form>
+                    {% else %}
+                    <p class="sales-pickup-location-note">Switch to {{ invoice.location.name|default:"the invoice location" }} to record this pickup.</p>
+                    {% endif %}
+                </section>
+                {% elif invoice.collection_status == 'collected_immediately' %}
+                <div class="sales-pickup-alert sales-pickup-alert-complete" role="status">
+                    <strong class="sales-pickup-alert-title">Paid and collected</strong>
+                    <p>The customer picked up these items when the invoice was settled.</p>
+                </div>
+                {% elif invoice.collection_status == 'collected_after_hold' %}
+                <div class="sales-pickup-alert sales-pickup-alert-complete" role="status">
+                    <strong class="sales-pickup-alert-title">Picked up after hold</strong>
+                    <p>The paid items were stored for the customer and have now been collected.</p>
+                </div>
+                {% elif invoice.collection_status == 'untracked' %}
+                <div class="sales-pickup-alert sales-pickup-alert-neutral">
+                    <strong class="sales-pickup-alert-title">Legacy pickup record</strong>
+                    <p>This invoice is fully settled, but its pickup outcome was not recorded.</p>
+                    {% if can_manage_invoice_at_location %}
+                    <form method="post" action="{% url 'sales_invoice_classify_collection' invoice.id %}" class="sales-pickup-classify-form">
+                        {% csrf_token %}
+                        <label for="legacyPickupStatus">Record the known outcome</label>
+                        <div>
+                            <select id="legacyPickupStatus" name="collection_status" required>
+                                <option value="">Choose pickup outcome</option>
+                                <option value="awaiting_collection">Still remaining in store</option>
+                                <option value="collected_immediately">Collected at sale or payment</option>
+                                <option value="collected_after_hold">Picked up after being held</option>
+                            </select>
+                            <button type="submit" class="qs-btn qs-btn-secondary">Save Outcome</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="sales-pickup-alert sales-pickup-alert-neutral">
+                    <strong class="sales-pickup-alert-title">Pickup outcome needed</strong>
+                    <p>Payment is complete, but the physical pickup result still needs to be recorded.</p>
+                    {% if can_manage_invoice_at_location %}
+                    <form method="post" action="{% url 'sales_invoice_classify_collection' invoice.id %}" class="sales-pickup-classify-form">
+                        {% csrf_token %}
+                        <label for="pendingPickupStatus">Record the pickup outcome</label>
+                        <div>
+                            <select id="pendingPickupStatus" name="collection_status" required>
+                                <option value="">Choose pickup outcome</option>
+                                <option value="awaiting_collection">Still remaining in store</option>
+                                <option value="collected_immediately">Collected at sale or payment</option>
+                                <option value="collected_after_hold">Picked up after being held</option>
+                            </select>
+                            <button type="submit" class="qs-btn qs-btn-secondary">Save Outcome</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Nested History Sub-Logs Container -->
+            {% if payments %}
+            <div class="sales-payment-history-panel">
+                <strong class="sales-payment-history-title">Payment History</strong>
+                <div class="sales-payment-history-list">
+                    {% for payment in payments %}
+                    <div class="sales-payment-history-row">
+                        <div>
+                            <strong class="sales-payment-history-amount">${{ payment.amount|floatformat:2 }}</strong>
+                            <span class="sales-payment-history-method">{{ payment.get_payment_method_display }}{% if payment.reversal %} · Reversed{% endif %}{% if payment.reference %} • <small class="sales-payment-reference">Ref: {{ payment.reference }}</small>{% endif %}</span>
+                            {% if payment.reversal %}
+                            <small class="sales-payment-reversal-note">{{ payment.reversal.reason }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="sales-payment-history-meta">
+                            <div class="sales-payment-history-date">{{ payment.payment_date|date:"M d, Y H:i" }}</div>
+                            <div>Recorded by: {% if payment.received_by %}{{ payment.received_by.username }}{% elif payment.received_by_username %}{{ payment.received_by_username }}{% else %}System{% endif %}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if can_issue_credit_notes and invoice.status != 'void' %}
+            <div id="credit-note-panel" class="sales-credit-note-panel">
+                <strong class="sales-credit-note-title">Issue Credit Note</strong>
+                <p class="sales-credit-note-copy">Managers and admins can reduce the invoice balance here. If the invoice becomes overpaid, the excess is stored on the customer's account credit.</p>
+                <form method="post" action="{% url 'sales_invoice_create_credit_note' invoice.id %}" class="sales-credit-note-form">
+                    {% csrf_token %}
+                    <label>
+                        <span>Amount</span>
+                        <input type="number" name="amount" step="0.01" min="0.01" max="{{ effective_total_amount|floatformat:2 }}" placeholder="0.00" required>
+                    </label>
+                    <label>
+                        <span>Reason</span>
+                        <select name="reason">
+                            {% for value, label in credit_note_reason_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Internal Notes</span>
+                        <textarea name="notes" rows="3" placeholder="Reason for this credit note, returned items, or customer adjustment details."></textarea>
+                    </label>
+                    <button type="submit" class="qs-btn qs-btn-primary sales-credit-note-submit">Save Credit Note</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if credit_notes %}
+            <div class="sales-credit-history">
+                <strong class="sales-credit-note-title">Credit Note History</strong>
+                <div class="sales-credit-history-list">
+                    {% for credit_note in credit_notes %}
+                    <div class="sales-credit-history-item">
+                        <div>
+                            <strong>${{ credit_note.amount|floatformat:2 }}</strong>
+                            <span>{{ credit_note.get_reason_display }}</span>
+                            {% if credit_note.notes %}
+                                <p>{{ credit_note.notes }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="sales-credit-history-meta">
+                            <div>{{ credit_note.created_at|date:"M d, Y H:i" }}</div>
+                            <div>{% if credit_note.created_by %}{{ credit_note.created_by.username }}{% elif credit_note.created_by_username %}{{ credit_note.created_by_username }}{% else %}System{% endif %}</div>
+                            {% if credit_note.credited_customer_amount > 0 %}
+                                <div>Acct credit: ${{ credit_note.credited_customer_amount|floatformat:2 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if notes_display %}
+            <div class="sales-terms-panel">
+                <strong class="sales-terms-title">Terms & Notes</strong>
+                {{ notes_display }}
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-meta sales-document-footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

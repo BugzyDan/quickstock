@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Error Detected</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+<body class="page-server-error" style="margin:0; min-height:100vh; background:#0f172a;">
+    <div class="qs-error-overlay">
+        <div class="qs-error-overlay__backdrop"></div>
+        <div class="qs-error-overlay__dialog" role="alertdialog" aria-modal="true" aria-labelledby="qsServerErrorTitle">
+            <p class="qs-error-overlay__eyebrow">QuickStock detected a problem</p>
+            <h1 id="qsServerErrorTitle" class="qs-error-overlay__title">The website hit a server error</h1>
+            <p class="qs-error-overlay__message">
+                QuickStock could not finish this request right now. Reload the page to try again, or return to the dashboard after a moment.
+            </p>
+            <div class="qs-error-overlay__actions">
+                <button type="button" class="qs-error-overlay__button qs-error-overlay__button--primary" onclick="window.location.reload()">Reload page</button>
+                <a href="/" class="qs-error-overlay__button" style="text-decoration:none; display:inline-flex; align-items:center;">Go home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

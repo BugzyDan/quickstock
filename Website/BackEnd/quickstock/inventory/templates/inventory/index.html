@@ -1,0 +1,419 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" {% if request.user.is_authenticated %}data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="QuickStock JA - Professional Inventory & POS Solutions">
+
+    {% if request.user.is_authenticated %}
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    {% endif %}
+
+    <script src="{% static 'inventory/js/script.js' %}?v=home-mobile-nav-5" defer></script>
+    <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
+
+    <title>QuickStock JA | Inventory Simplified</title>
+    
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=index-page-css-cleanup-1">
+
+    
+</head>
+
+<body {% if request.user.is_authenticated %}data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %} class="page-index page-index{% if not request.user.is_authenticated %} signed-out{% endif %}">
+<div class="page-wrapper">
+    
+<header>
+    <a href="{% url 'index' %}" class="logo-link">
+    <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo" alt="QuickStock JA Logo">
+    
+    <div class="logo-text-group">
+        <span class="logo-wordmark">
+            <span class="logo-quick">Quick</span> <span class="logo-stock">Stock</span> <span class="logo-ja">JA</span>
+        </span>
+        <p class="slogan">Inventory Simplified</p>
+    </div>
+
+
+    </a>
+    <div class="header-actions">
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="user-info{% if request.user.is_authenticated %} index-signed-in-actions{% endif %}">
+            {% if request.user.is_authenticated %}
+                <div class="index-desktop-operator">
+                    <span class="index-desktop-operator-badge">Operator: <strong class="index-operator-name">{{ request.user.username }}</strong></span>
+                    <a href="{% url 'settings' %}" class="index-header-utility-link">Settings</a>
+                    <form action="{% url 'logout' %}" method="post" class="index-logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="index-header-utility-link index-header-utility-link-danger index-logout-button">Logout</button>
+                    </form>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="index-login-link">Login</a>
+                <a href="{% url 'signup' %}" class="btn-add index-start-link">Get Started</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<nav id="main-nav">
+    <ul>
+        {% if request.user.is_authenticated %}
+            <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            {% if request.user.profile.role == 'manager' or request.user.profile.role == 'admin' %}
+                <li><a href="{% url 'inventory' %}">Inventory Control</a></li>
+            {% endif %}
+            <li><a href="{% url 'support' %}">Help & Support</a></li>
+            <li class="index-mobile-nav-only"><a href="{% url 'profile' %}">Profile</a></li>
+        {% else %}
+            <li><a href="{% url 'about' %}">About Us</a></li>
+            <li class="index-mobile-nav-only"><a href="{% url 'login' %}">Login</a></li>
+            <li class="index-mobile-nav-only"><a href="{% url 'signup' %}" class="btn-add">Get Started</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+<main class="main-text">
+    <section class="hero-section">
+        <div class="index-hero-grid">
+            <div class="index-hero-copy">
+                <div class="index-hero-kicker">Retail Control Center</div>
+                <h2>Scale Your Business. <br><span>Protect Your Margins.</span></h2>
+                <p class="index-hero-lead">
+                    The digital backbone for Caribbean retail. Professional tools for tracking, GCT reporting, inventory automation, and cleaner branch-level decision making.
+                </p>
+                <div class="index-proof-strip">
+                    <span>Built for Jamaica and the wider Caribbean</span>
+                    <span>Offline-ready Windows companion</span>
+                    <span>Role-based access with audit trails</span>
+                </div>
+            </div>
+
+            <aside class="index-hero-panel">
+                {% if request.user.is_authenticated and profile %}
+                    <div class="index-status-card">
+                        <div class="index-status-head">
+                            <span class="index-status-label">Active Workspace</span>
+                            <span class="index-status-role">{{ profile.get_role_display|default:profile.role|upper }}</span>
+                        </div>
+                        <h3>{{ request.user.username }}</h3>
+                        <p>
+                            {% if profile.default_location %}
+                                Default branch: <strong>{{ profile.default_location.name }}</strong>
+                            {% else %}
+                                Default branch not assigned yet. Update your profile to lock in your daily workspace.
+                            {% endif %}
+                        </p>
+
+                        <div class="index-status-metrics">
+                            <div class="index-status-metric">
+                                <span>Plan</span>
+                                <strong>{{ profile.plan_badge_label }}</strong>
+                            </div>
+                            <div class="index-status-metric index-status-metric-status">
+                                <span>Status</span>
+                                <strong class="index-status-value-status">
+                                    {% if profile.is_pro_active %}Ready for Pro workflows{% elif profile.is_trial_active %}Trial active{% else %}Upgrade recommended{% endif %}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="index-panel-actions">
+                            <a href="{% url 'cash_register' %}" class="index-panel-btn">Offline Mode</a>
+                            <a href="{% url 'profile' %}" class="index-panel-btn">Profile</a>
+                            {% if profile.is_pro_active %}
+                                <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="index-panel-btn">Desktop App</a>
+                            {% else %}
+                                <a href="{% url 'upgrade' %}" class="index-panel-btn">Upgrade Options</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="index-status-card index-status-card-guest">
+                        <div class="index-status-head">
+                            <span class="index-status-label">What You Get</span>
+                            <span class="index-status-role">14-Day Trial</span>
+                        </div>
+                        <h3>Launch faster with less spreadsheet chaos.</h3>
+                        <p>Track stock, log sales, manage branches, and keep cleaner tax-ready records from day one.</p>
+                        <div class="index-status-metrics">
+                            <div>
+                                <span>Setup</span>
+                                <strong>Minutes, not days</strong>
+                            </div>
+                            <div>
+                                <span>Visibility</span>
+                                <strong>Inventory, margins, movement</strong>
+                            </div>
+                        </div>
+
+                        <div class="index-panel-actions">
+                            <a href="#pricing" class="index-panel-btn">Compare Plans</a>
+                            <a href="{% url 'about' %}" class="index-panel-btn">Product Tour</a>
+                            <a href="{% url 'signup' %}" class="index-panel-btn">Start Trial</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </aside>
+
+        </div>
+    </section>
+
+    <section class="index-pricing-intro">
+        <div>
+            <h3 id="pricing">Simple, Affordable Pricing</h3>
+            <p>Choose the lane that matches your current stage, then upgrade when you want deeper analytics, exports, and branch controls.</p>
+        </div>
+    </section>
+
+    <div class="pricing-grid">
+    <div class="pricing-card">
+        {% if profile.is_trial_active and profile.plan == "TRIAL" %}
+            <div class="pro-badge is-current-plan">Current Plan</div>
+        {% endif %}
+        <h4>Starter</h4>
+        <p class="index-plan-caption">14-day free trial</p>
+        <div class="price">$0<span>/14 days</span></div>
+        <ul>
+            <li>Basic Inventory Tracking</li>
+            <li>Manual Sales Recording</li>
+            <li>Single User Access</li>
+            <li class="excluded">Unlimited Items & SKU Tracking</li>
+            <li class="excluded">Advanced Inventory Analytics</li>
+            <li class="excluded">Full CSV/Excel Data Exports</li>
+            <li class="excluded">Staff Role Management</li>
+            <li class="excluded">WiPay Payment Integration</li>
+            <li class="excluded">Multi-Location Support</li>
+            <li class="excluded">Automated GCT Reporting</li>
+            <li class="excluded">Low-Stock Email Alerts</li>
+        </ul>
+        {% if request.user.is_authenticated and profile %}
+            {% if profile.is_trial_active %}
+                <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter index-muted-cta">Current Plan (Trial)</a>
+            {% elif profile.is_pro_active %}
+                <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter">Starter Features Included</a>
+            {% else %}
+                <a href="{% url 'upgrade' %}" class="btn-upgrade btn-starter">Trial Ended</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'signup' %}" class="btn-upgrade btn-starter">Start Free Trial</a>
+        {% endif %}
+    </div>
+
+    <div class="pricing-card pro">
+        <div class="pro-badge">Best Value</div>
+        <h4>Professional</h4>
+        <p class="index-plan-caption">For growing retail shops</p>
+        <div class="price">$19<span>/mo</span></div>
+        <p class="index-plan-billing-note">
+            or $190<span class="index-price-period"> / year</span>
+        </p>
+        <ul>
+            <li>Everything in Starter</li>
+            <li><strong>Advanced Inventory Analytics</strong></li>
+            <li><strong>Unlimited Items & SKU Tracking</strong></li>
+            <li>Full CSV/Excel Data Exports</li>
+            <li>Staff Role Management</li>
+            <li>WiPay Payment Integration</li>
+            <li>Multi-Location Support</li>
+        </ul>
+        <p class="index-plan-footnote">
+            Includes Free Windows offline Version download.
+        </p>
+        {% if request.user.is_authenticated %}
+            {% if profile.is_pro_active %}
+                <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="btn-upgrade is-current-plan">Current Plan (Pro)</a>
+            {% else %}
+                <a href="{% url 'upgrade' %}?plan=pro&billing=monthly" class="btn-upgrade">Upgrade to Pro</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'signup' %}" class="btn-upgrade">Get Pro</a>
+        {% endif %}
+    </div>
+</div>
+
+    {% if request.user.is_authenticated %}
+        <div class="current-plan-box">
+            {% if profile.is_pro_active %}
+                <span>✔ <strong>Pro Member</strong> — Renewal: {{ profile.pro_expires|date:"M d, Y" }}</span>
+            {% elif profile.is_trial_active %}
+                <span>⏳ <strong>Current Plan: Starter (Trial)</strong> — Ends: {{ profile.plan_end|date:"M d, Y" }}</span>
+            {% else %}
+                <span>⚠ <strong>Trial Ended</strong> — <a href="{% url 'upgrade' %}" class="index-upgrade-alert-link">Upgrade for GCT Tools →</a></span>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <section class="section">
+        <div class="pill">Built for Growth</div>
+        <h3 class="section-title">Multi-Location Ready</h3>
+        <p class="section-subtitle">Manage multiple stores with centralized inventory, shared analytics, and role-based access for each branch.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Branch-Level Controls</h4>
+                <p class="muted">Assign managers per location and control pricing, stock moves, and permissions.</p>
+            </div>
+            <div class="card">
+                <h4>Unified Reporting</h4>
+                <p class="muted">Track performance by store, product category, and time period in one dashboard.</p>
+            </div>
+            <div class="card">
+                <h4>Inter-Store Transfers</h4>
+                <p class="muted">Move stock between locations with audit trails and accurate COGS.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h3 class="section-title">Product Demo</h3>
+        <p class="section-subtitle">A quick walkthrough of inventory, POS checkout, and GCT reporting.</p>
+        <div class="demo-wrap">
+            <a href="{% url 'about' %}" class="demo-frame demo-frame-link" aria-label="Watch the QuickStock demo">
+                <div class="demo-screen">
+                    <div class="play-btn" aria-hidden="true"></div>
+                </div>
+            </a>
+            <div class="card">
+                <h4>What you will see</h4>
+                <p class="muted">Barcode scanning, auto-reorder alerts, live margin tracking, and WiPay checkout.</p>
+                <a href="{% url 'about' %}" class="btn-upgrade index-inline-demo-link">Watch the Demo</a>
+            </div>
+        </div>
+    </section>
+<section class="section">
+    <h3 class="section-title">Starter vs Professional</h3>
+    <p class="section-subtitle">Quick scan comparison to choose the right plan.</p>
+
+    <!-- Responsive wrapper -->
+    <div class="table-wrapper">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Starter</th>
+                    <th>Professional</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Inventory Tracking</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Manual Sales Recording</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Unlimited Items & SKU</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Advanced Analytics</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>CSV/Excel Export</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Staff Role Management</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>WiPay Integration</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Multi-Location Support</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+
+    <section class="section">
+        <h3 class="section-title">Trusted by Local Retailers</h3>
+        <p class="section-subtitle">Real wins from shops like yours.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Harbor Mart</h4>
+                <p class="muted">“Shrinkage dropped by <strong>22%</strong> in 60 days.”</p>
+                <p class="muted">Kingston, JM</p>
+            </div>
+            <div class="card">
+                <h4>Bay Street Pharmacy</h4>
+                <p class="muted">“Weekly stock counts cut from 6 hours to <strong>90 minutes</strong>.”</p>
+                <p class="muted">Montego Bay, JM</p>
+            </div>
+            <div class="card">
+                <h4>FreshLine Grocers</h4>
+                <p class="muted">“Recovered <strong>$480k JMD</strong> in missed margins.”</p>
+                <p class="muted">Ocho Rios, JM</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h3 class="section-title">Case Study</h3>
+        <p class="section-subtitle">A snapshot of measurable impact.</p>
+        <div class="card">
+            <h4>Island Value Supermarket</h4>
+            <p class="muted">After implementing QuickStock JA Pro across three locations, the team reduced stockouts by <strong>31%</strong> and improved gross margin by <strong>4.6 points</strong> within one quarter.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h3 class="section-title">Security & Compliance</h3>
+        <p class="section-subtitle">Built to protect your data and support audit needs.</p>
+        <div class="grid-2">
+            <div class="card">
+                <ul class="security-list">
+                    <li>Daily encrypted backups with recovery testing</li>
+                    <li>Role-based access controls and operator logs</li>
+                    <li>Audit trails for inventory adjustments</li>
+                    <li>Secure payment handoff with WiPay</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Compliance Highlights</h4>
+                <p class="muted">Automatic GCT-ready reports, exportable datasets, and monthly archives for easy audits.</p>
+                <a href="{% url 'about' %}" class="btn-upgrade index-inline-demo-link">View Security Details</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h3 class="section-title">Integrations</h3>
+        <p class="section-subtitle">Connect with the tools you already use.</p>
+        <div class="logo-row">
+            <div class="logo-pill">WiPay</div>
+            <div class="logo-pill">CSV / Excel</div>
+            <div class="logo-pill">Barcode Scanners</div>
+            <div class="logo-pill">POS Hardware</div>
+            <div class="logo-pill">Receipt Printers</div>
+        </div>
+    </section>
+
+    <section class="section faq">
+        <h3 class="section-title">FAQ</h3>
+        <p class="section-subtitle">Clear answers before you commit.</p>
+        <details>
+            <summary>What is included in the 14-day trial?</summary>
+            <p>The trial includes core inventory tracking, basic sales logging, and a limited user seat to evaluate fit.</p>
+        </details>
+        <details>
+            <summary>Does Pro include WiPay checkout?</summary>
+            <p>Yes. Pro includes WiPay payment integration for secure online checkout flows.</p>
+        </details>
+        <details>
+            <summary>How does GCT reporting work?</summary>
+            <p>QuickStock JA generates GCT-ready reports with export options to help with monthly filings.</p>
+        </details>
+        <details>
+            <summary>Can I cancel or downgrade?</summary>
+            <p>You can downgrade at renewal. We keep your data accessible and exportable.</p>
+        </details>
+        <details>
+            <summary>Can I export my data?</summary>
+            <p>Yes. Pro includes CSV/Excel exports across inventory, sales, and audit logs.</p>
+        </details>
+    </section>
+
+    <section class="section">
+        <div class="cta">
+            <div>
+                <h3>Need multi-location onboarding?</h3>
+                <p>Get tailored setup, data migration, and staff training for larger operations.</p>
+            </div>
+            <a href="{% url 'about' %}" class="btn">Talk to Sales</a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>
+</div>
+</body>
+</html>

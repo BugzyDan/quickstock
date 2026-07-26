@@ -1,0 +1,240 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Payment | {{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-pickup-lifecycle-1">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <script id="salesInvoicePaymentConfig" type="application/json">
+        {
+            "balanceDue": "{{ balance_due|floatformat:2 }}",
+            "availableCustomerCredit": "{{ available_customer_credit|floatformat:2 }}"
+        }
+    </script>
+    <script src="{% static 'inventory/js/sales_invoice_payment.js' %}" defer></script>
+    
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-invoice-payment page-supplier-list">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="sales-page-main sales-document-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="qs-alert qs-alert-info">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="sales-page-head ops-hero ops-hero-sales sales-document-hero sales-payment-hero">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Collection desk</p>
+            <h1 class="sales-page-title">Invoice Payment</h1>
+            <p class="sales-page-subtitle">
+                {{ invoice.invoice_no }}
+                • {% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in / Unassigned{% endif %}
+                • Issued {{ invoice.issued_at|date:"M d, Y H:i" }}
+            </p>
+            <div class="ops-chip-row"><span class="ops-chip">Balance ${{ balance_due|floatformat:2 }}</span><span class="ops-chip">{{ invoice.get_status_display }}</span></div>
+        </div>
+        <div class="ops-actions sales-document-actions">
+            <a href="{% url 'sales_invoice_detail' invoice.id %}" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Back To Invoice</a>
+            <button type="button" class="qs-btn qs-btn-secondary" onclick="window.print()">Print Receipt</button>
+        </div>
+    </section>
+
+    <!-- Balanced Financial Dashboard Container Split Layout -->
+    <div class="sales-detail-grid">
+        <section class="sales-card">
+            <div class="sales-payment-stack">
+                
+                <!-- Borderless Grid Ledger Elements -->
+                <div class="sales-summary-container">
+                    <div class="sales-summary-block"><span>Status</span><span class="sales-chip status-{{ invoice.status }}">{{ invoice.get_status_display }}</span></div>
+                    <div class="sales-summary-block"><span>Location</span><strong>{{ invoice.location.name|default:"--" }}</strong></div>
+                    <div class="sales-summary-block"><span>Subtotal</span><strong>${{ invoice.subtotal|floatformat:2 }}</strong></div>
+                    <div class="sales-summary-block"><span>Tax</span><strong>${{ invoice.tax_amount|floatformat:2 }}</strong></div>
+                    <div class="sales-summary-block"><span>Total Invoice</span><strong>${{ invoice.total_amount|floatformat:2 }}</strong></div>
+                    <div class="sales-summary-block"><span>Total Paid</span><strong>${{ paid_total|floatformat:2 }}</strong></div>
+                    <div class="sales-summary-block highlight-balance"><span>Balance Due</span><strong>${{ balance_due|floatformat:2 }}</strong></div>
+                    {% if invoice.customer %}
+                    <div class="sales-summary-block"><span>Account Credit</span><strong>${{ customer_credit_balance|floatformat:2 }}</strong></div>
+                    {% endif %}
+                    {% if overpayment_amount > 0 %}
+                    <div class="sales-summary-block"><span>Overpayment</span><strong>${{ overpayment_amount|floatformat:2 }}</strong></div>
+                    {% endif %}
+                </div>
+
+                {% if invoice.status == 'void' %}
+                <div class="qs-alert qs-alert-danger">
+                    This invoice has been voided, so no more payments can be recorded.
+                </div>
+                {% elif balance_due <= 0 %}
+                <div class="qs-alert qs-alert-success">
+                    This invoice is fully settled. You can still review the payment history.
+                </div>
+                {% else %}
+                <form method="post" class="sales-payment-form">
+                    {% csrf_token %}
+                    <div class="qs-alert qs-alert-info">
+                        {% if invoice.customer %}
+                            Any payment above the balance due will be stored on {{ invoice.customer.name }}'s account as credit.
+                        {% else %}
+                            Assign a customer to this invoice before recording any overpayment, otherwise the extra amount cannot be stored as account credit.
+                        {% endif %}
+                    </div>
+                    <div class="sales-summary-container sales-payment-credit-summary">
+                        {% if invoice.customer %}
+                        <div class="sales-summary-block"><span>Credit Available Now</span><strong id="available-credit-display">${{ available_customer_credit|floatformat:2 }}</strong></div>
+                        <div class="sales-summary-block"><span>Credit Applied</span><strong id="credit-applied-display">$0.00</strong></div>
+                        {% endif %}
+                        <div class="sales-summary-block"><span>Remaining After Credit</span><strong id="remaining-after-credit-display">${{ balance_due|floatformat:2 }}</strong></div>
+                        <div class="sales-summary-block"><span>Amount Over</span><strong id="amount-over-display">$0.00</strong></div>
+                    </div>
+                    <div id="overage-highlight-panel" class="qs-alert qs-alert-info sales-overage-panel" hidden>
+                        <strong class="sales-overage-title">Customer Overpayment Detected</strong>
+                        <span id="overage-highlight-copy">This payment is over the remaining invoice balance.</span>
+                    </div>
+                    <div class="sales-payment-grid">
+                        <label class="sales-payment-field">
+                            <span>Amount To Record ($)</span>
+                            <input type="number" id="payment-amount-input" name="amount" min="0" step="0.01" value="{{ default_payment_amount|floatformat:2 }}" required>
+                        </label>
+                        {% if invoice.customer %}
+                        <label class="sales-payment-field">
+                            <span>Apply Account Credit ($)</span>
+                            <input type="number" id="credit-to-apply-input" name="credit_to_apply" min="0" max="{{ available_customer_credit|floatformat:2 }}" step="0.01" value="0.00">
+                            <small class="sales-payment-help">Use up to ${{ available_customer_credit|floatformat:2 }} from {{ invoice.customer.name }}'s credit balance.</small>
+                        </label>
+                        {% endif %}
+                        <label class="sales-payment-field">
+                            <span>Payment Method</span>
+                            <select name="payment_method" required>
+                                {% for value, label in payment_methods %}
+                                    <option value="{{ value }}" {% if value == default_payment_method %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="sales-payment-field">
+                            <span>Reference / Transaction ID</span>
+                            <input type="text" name="reference" maxlength="80" placeholder="Cheque #, auth code, wire ID">
+                        </label>
+                        <label class="sales-payment-field">
+                            <span>Payment Date & Time</span>
+                            <input type="datetime-local" name="payment_date" value="{{ default_payment_datetime }}">
+                        </label>
+                    </div>
+
+                    <fieldset class="sales-pickup-fieldset">
+                        <legend>Item pickup</legend>
+                        <p class="sales-pickup-guidance">
+                            This choice is used only if this payment fully settles the invoice.
+                        </p>
+                        <div class="sales-pickup-options">
+                            <label class="sales-pickup-option">
+                                <input type="radio" name="pickup_status" value="collected_now" checked>
+                                <span class="sales-pickup-option-copy">
+                                    <strong>Customer collected items now</strong>
+                                    <small>Record the goods as picked up immediately with this final payment.</small>
+                                </span>
+                            </label>
+                            <label class="sales-pickup-option">
+                                <input type="radio" name="pickup_status" value="leave_in_store">
+                                <span class="sales-pickup-option-copy">
+                                    <strong>Keep paid items in store</strong>
+                                    <small>Hold the goods for a later customer pickup and show them under Remaining In Store.</small>
+                                </span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <label class="sales-payment-field">
+                        <span>Notes / Internal Memo</span>
+                        <textarea name="notes" rows="3" placeholder="Optional notes regarding collection status or customer memo"></textarea>
+                    </label>
+
+                    <div class="sales-payment-actions-row">
+                        <a href="{% url 'sales_invoice_detail' invoice.id %}" class="qs-btn qs-btn-secondary">Cancel</a>
+                        <button type="submit" class="qs-btn qs-btn-primary sales-record-payment-button">Record Payment</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Sidebar Activity Tracking Feed -->
+        <aside class="sales-card">
+            <h3 class="history-title">Payment & Collection History</h3>
+            {% if payments %}
+                <div class="sales-payment-history-list">
+                    {% for payment in payments %}
+                    <div class="sales-payment-history-item">
+                        <div class="sales-payment-history-head">
+                            <div>
+                                <div class="sales-payment-history-amount">${{ payment.amount|floatformat:2 }}</div>
+                                <div class="sales-payment-history-method">
+                                    {{ payment.get_payment_method_display }}
+                                    {% if payment.reversal %} · Reversed{% endif %}
+                                </div>
+                            </div>
+                            <div class="sales-payment-history-meta">
+                                <div class="sales-payment-history-date">{{ payment.payment_date|date:"M d, Y H:i" }}</div>
+                                <div class="sales-payment-history-byline">By: {% if payment.received_by %}{{ payment.received_by.get_full_name|default:payment.received_by.username }}{% elif payment.received_by_username %}{{ payment.received_by_username }}{% else %}System{% endif %}</div>
+                            </div>
+                        </div>
+                        {% if payment.reference %}
+                        <div class="sales-payment-detail-line has-divider">
+                            <strong class="sales-payment-detail-label">Reference:</strong> {{ payment.reference }}
+                        </div>
+                        {% endif %}
+                        {% if payment.notes %}
+                        <div class="sales-payment-detail-line">
+                            <strong class="sales-payment-detail-label">Notes:</strong> {{ payment.notes }}
+                        </div>
+                        {% endif %}
+                        {% if payment.reversal %}
+                        <div class="sales-reversal-panel">
+                            <strong>Reversal:</strong> {{ payment.reversal.reason }}
+                            <div class="sales-reversal-meta">
+                                {{ payment.reversal.created_at|date:"M d, Y H:i" }} by {{ payment.reversal.reversed_by_username|default:"System" }}
+                            </div>
+                        </div>
+                        {% elif can_revert_payments %}
+                        <form method="post" action="{% url 'sales_invoice_payment_revert' invoice.id payment.id %}" class="sales-reversal-form">
+                            {% csrf_token %}
+                            <label class="sales-reversal-label">
+                                Reversal reason
+                                <input type="text" name="reversal_reason" maxlength="500" required class="sales-reversal-input" placeholder="Reason for correcting this payment">
+                            </label>
+                            <button type="submit" class="qs-btn qs-btn-secondary sales-reversal-button" onclick="return confirm('Revert this payment and restore its invoice balance effects?');">
+                                Revert Payment
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="sales-payment-empty">
+                    No payments have been recorded for this invoice yet.
+                </div>
+            {% endif %}
+        </aside>
+    </div>
+</main>
+
+</body>
+</html>

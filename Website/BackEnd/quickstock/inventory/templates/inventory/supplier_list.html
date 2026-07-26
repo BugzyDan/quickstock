@@ -1,0 +1,159 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Supplier Directory | QuickStock JA </title>
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260721-supplier-actions">
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-supplier-list">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search" aria-label="Search the business">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </a>
+</nav>
+
+<main class="ops-shell supplier-directory-shell">
+    {% if messages %}
+        <div class="supplier-form-messages" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>
+    {% endif %}
+
+    <section class="ops-hero ops-hero-suppliers supplier-directory-hero" aria-labelledby="supplier-directory-title">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Supply network</p>
+            <h1 id="supplier-directory-title" class="supplier-directory-title">Supplier Directory</h1>
+            <p>Manage every purchasing partner in one place while origin badges keep local receipts and imports immediately distinguishable.</p>
+            <div class="ops-chip-row">
+                <span class="ops-chip">Origin routing</span>
+                <span class="ops-chip">Ledger access</span>
+                <span class="ops-chip">Location context</span>
+            </div>
+        </div>
+        <div class="ops-actions">
+            <a href="{% url 'supplier_add' %}" class="btn-add-supplier header-btn ops-primary-link">+ Register New Supplier</a>
+        </div>
+    </section>
+
+    <nav class="supplier-origin-tabs" aria-label="Filter suppliers by origin">
+        <a href="?q={{ q|urlencode }}&sort={{ sort }}&dir={{ dir }}&page_size={{ page_size }}" class="supplier-origin-tab{% if not type_filter %} is-active{% endif %}"{% if not type_filter %} aria-current="page"{% endif %}>
+            <span>All suppliers</span><strong>{{ supplier_counts.all }}</strong>
+        </a>
+        <a href="?type=local&q={{ q|urlencode }}&sort={{ sort }}&dir={{ dir }}&page_size={{ page_size }}" class="supplier-origin-tab supplier-origin-tab-local{% if type_filter == 'local' %} is-active{% endif %}"{% if type_filter == 'local' %} aria-current="page"{% endif %}>
+            <span>Local</span><strong>{{ supplier_counts.local }}</strong>
+        </a>
+        <a href="?type=international&q={{ q|urlencode }}&sort={{ sort }}&dir={{ dir }}&page_size={{ page_size }}" class="supplier-origin-tab supplier-origin-tab-international{% if type_filter == 'international' %} is-active{% endif %}"{% if type_filter == 'international' %} aria-current="page"{% endif %}>
+            <span>International</span><strong>{{ supplier_counts.international }}</strong>
+        </a>
+    </nav>
+
+    <div class="supplier-filters ops-toolbar ops-toolbar-inline">
+        <form method="get" class="supplier-filter-form">
+            {% if type_filter %}<input type="hidden" name="type" value="{{ type_filter }}">{% endif %}
+            <label class="supplier-filter-search">
+                <span class="supplier-sr-only">Search suppliers</span>
+                <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Search company, contact, address...">
+            </label>
+            <select name="sort" aria-label="Sort suppliers">
+                <option value="name" {% if sort == 'name' %}selected{% endif %}>Sort: Name</option>
+                <option value="orders" {% if sort == 'orders' %}selected{% endif %}>Sort: Orders</option>
+            </select>
+            <select name="dir" aria-label="Sort direction">
+                <option value="asc" {% if dir == 'asc' %}selected{% endif %}>Ascending</option>
+                <option value="desc" {% if dir == 'desc' %}selected{% endif %}>Descending</option>
+            </select>
+            <select name="page_size" aria-label="Rows per page">
+                <option value="10" {% if page_size == 10 %}selected{% endif %}>10 rows</option>
+                <option value="25" {% if page_size == 25 %}selected{% endif %}>25 rows</option>
+                <option value="50" {% if page_size == 50 %}selected{% endif %}>50 rows</option>
+                <option value="100" {% if page_size == 100 %}selected{% endif %}>100 rows</option>
+            </select>
+            <button type="submit" class="btn-add-supplier supplier-apply-filter">Apply</button>
+        </form>
+        <div class="supplier-result-count">Showing <strong>{{ page_obj.paginator.count }}</strong> matching supplier{{ page_obj.paginator.count|pluralize }}</div>
+    </div>
+
+    {% if request.user.is_superuser or request.user.profile.is_pro_active %}
+        {% url 'export_suppliers_csv' as export_url %}
+        <div class="supplier-export-bar">
+            <span>Directory tools</span>
+            <div>
+                <a href="{{ export_url }}?q={{ q|urlencode }}&sort={{ sort }}&dir={{ dir }}&type={{ type_filter }}" class="btn-add-supplier">Export View</a>
+                <a href="{% url 'supplier_list' %}" class="btn-add-supplier supplier-clear-link">Clear Filters</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="table-container ops-surface-card supplier-directory-table-wrap">
+        <table class="supplier-table">
+            <thead>
+                <tr>
+                    <th><a href="?sort=name&dir={% if sort == 'name' and dir == 'asc' %}desc{% else %}asc{% endif %}&page_size={{ page_size }}&q={{ q|urlencode }}&type={{ type_filter }}" class="sort-link {% if sort == 'name' %}sort-active{% endif %}">Company Name{% if sort == 'name' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Primary Contact</th>
+                    <th>Email / Phone</th>
+                    <th><a href="?sort=orders&dir={% if sort == 'orders' and dir == 'asc' %}desc{% else %}asc{% endif %}&page_size={{ page_size }}&q={{ q|urlencode }}&type={{ type_filter }}" class="sort-link {% if sort == 'orders' %}sort-active{% endif %}">Orders{% if sort == 'orders' %} {% if dir == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+                    <th class="supplier-actions-heading">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td data-label="Company Name"><strong class="supplier-company-name">{{ supplier.name }}</strong></td>
+                    <td data-label="Type"><span class="supplier-type-badge supplier-type-badge-{{ supplier.supplier_type }}">{{ supplier.get_supplier_type_display }}</span></td>
+                    <td data-label="Location">
+                        <div class="supplier-location-copy">
+                            <span>{{ supplier.address|default:"Address not recorded" }}</span>
+                            <strong>{{ supplier.get_country_code_display }}</strong>
+                        </div>
+                    </td>
+                    <td data-label="Primary Contact">{{ supplier.contact_name|default:"Not assigned" }}</td>
+                    <td data-label="Email / Phone">
+                        <div class="supplier-contact-copy"><strong>{{ supplier.email|default:"No email" }}</strong><span>{{ supplier.phone|default:"No phone" }}</span></div>
+                    </td>
+                    <td data-label="Orders"><span class="badge">{{ supplier.orders.count }} Order{{ supplier.orders.count|pluralize }}</span></td>
+                    <td data-label="Actions" class="action-cell">
+                        <div class="supplier-action-group" aria-label="Actions for {{ supplier.name }}">
+                            <a href="{% url 'supplier_ledger' supplier.id %}" class="supplier-action-link supplier-action-ledger">Ledger</a>
+                            <a href="{% url 'supplier_edit' supplier.id %}" class="supplier-action-link supplier-action-edit">Edit</a>
+                            {% if request.user.profile.role == 'admin' or request.user.is_superuser %}
+                            <form class="supplier-delete-form" action="{% url 'supplier_delete' supplier.id %}" method="post" onsubmit="return confirm('Remove this supplier and its related records?');">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn supplier-action-delete" title="Delete Supplier" aria-label="Delete {{ supplier.name }}">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="supplier-directory-empty"><strong>No matching suppliers</strong><span>Register a purchasing partner or change the current search and origin filter.</span></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="ops-pagination supplier-pagination" aria-label="Supplier directory pages">
+        <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+        <div>
+            {% if page_obj.has_previous %}<a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+            {% if page_obj.has_next %}<a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+        </div>
+    </nav>
+    {% endif %}
+</main>
+
+<footer><div class="footer-meta"><p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p></div></footer>
+</body>
+</html>

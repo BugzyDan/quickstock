@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA Pro | Elevate Your Business</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=upgrade-palette-1">
+    <script src="{% static 'inventory/js/upgrade.js' %}" defer></script>
+</head>
+<body class="page-upgrade">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<main class="upgrade-shell">
+    <section class="upgrade-hero">
+        <div class="upgrade-hero-copy">
+            <span class="upgrade-kicker">Growth Plan</span>
+            <h1>Upgrade with clarity, not clutter.</h1>
+            <p class="subtitle">Choose the billing pace that fits your store and unlock deeper analytics, cleaner exports, and stronger team controls.</p>
+            <div class="upgrade-proof-strip">
+                <span>Inventory analytics</span>
+                <span>Staff permissions</span>
+                <span>Export-ready records</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="upgrade-card">
+        {% if profile.parent_admin or profile.is_pro_active %}
+            <div class="upgrade-state-band">
+                <div class="pro-active-box">
+                    {% if profile.parent_admin %}
+                        Organization License Active (Linked to {{ profile.parent_admin.user.username }})
+                    {% else %}
+                        Pro Active until {{ profile.pro_expires|default:"Forever" }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="upgrade-success-layout">
+                <div class="upgrade-success-copy">
+                    <span class="upgrade-kicker">Pro Access Ready</span>
+                    <h2>Everything is already unlocked.</h2>
+                    <p class="subtitle">Your account has access to QuickStock JA Pro features, including advanced reporting, stronger inventory controls, and full business exports.</p>
+                    <div class="upgrade-proof-strip upgrade-proof-strip-compact">
+                        <span>Reports enabled</span>
+                        <span>Multi-user tools</span>
+                        <span>Desktop access</span>
+                    </div>
+                </div>
+                <div class="upgrade-side-card">
+                    <h3>Next best action</h3>
+                    <p>Open the desktop app for a faster full-screen workflow, or head back to your dashboard to keep working.</p>
+                    <div class="upgrade-actions">
+                        <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="btn btn-primary">
+                            Download Windows App
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="upgrade-grid">
+                <div class="upgrade-plan-panel">
+                    {% if not wipay_ready %}
+                        <div class="alert-box">
+                            WiPay is not configured for {{ wipay_env }}. Add credentials to enable checkout.
+                        </div>
+                    {% endif %}
+
+                    <div id="wipay-feedback" class="alert-box is-hidden" role="alert" aria-live="polite"></div>
+
+                    <div class="upgrade-plan-head">
+                        <div>
+                            <span class="upgrade-kicker">QuickStock Pro</span>
+                            <h2>Go Pro.</h2>
+                            <p class="subtitle">Precision tools for the serious entrepreneur.</p>
+                        </div>
+                        <span class="upgrade-badge">Best for growing teams</span>
+                    </div>
+
+                    <div class="billing-switch" aria-label="Select billing cycle">
+                        <button type="button" class="billing-option active" data-cycle="yearly">Yearly</button>
+                        <button type="button" class="billing-option" data-cycle="monthly">Monthly</button>
+                    </div>
+
+                    <div class="price-block">
+                        <div class="price-tag" id="upgrade-price-value">${{ pro_price_yearly|floatformat:2 }}<span class="price-currency"> JMD</span></div>
+                        <span class="price-period" id="upgrade-price-period">Per Year</span>
+                        <p class="price-note">No plan confusion. Switch billing anytime the next time you renew.</p>
+                    </div>
+
+                    <ul class="pro-features">
+                        <li>Advanced inventory analytics</li>
+                        <li>Unlimited items and SKU tracking</li>
+                        <li>Full CSV and Excel data exports</li>
+                        <li>Staff role management</li>
+                        <li>WiPay payment integration</li>
+                    </ul>
+
+                    <div class="upgrade-actions">
+                        <form id="checkout-form" method="POST" action="{% url 'create_wipay_checkout_session' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="billing_cycle" id="billing_cycle" value="yearly">
+                            <button type="submit" class="btn btn-primary" {% if not wipay_ready %}disabled{% endif %}>
+                                Upgrade Now
+                            </button>
+                        </form>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Maybe Later</a>
+                    </div>
+                </div>
+
+                <aside class="upgrade-side-card">
+                    <h3>Your current access</h3>
+
+                    {% if profile.is_trial_active %}
+                        <div class="pro-active-box trial-box">
+                            Trial active until {{ profile.plan_end|date:"M d, Y" }}
+                        </div>
+                    {% else %}
+                        <div class="pro-active-box neutral-box">
+                            Starter access is active. Upgrade when you are ready for advanced controls.
+                        </div>
+                    {% endif %}
+
+                    <div class="upgrade-side-metrics">
+                        <div>
+                            <span>Status</span>
+                            <strong>{% if profile.is_trial_active %}Trial Running{% else %}Starter Plan{% endif %}</strong>
+                        </div>
+                        <div>
+                            <span>Checkout</span>
+                            <strong>{% if wipay_ready %}Ready{% else %}Pending Setup{% endif %}</strong>
+                        </div>
+                    </div>
+
+                    <div class="upgrade-side-copy">
+                        <p>Pro is a strong fit if you need cleaner reporting, deeper visibility across products, and tighter control over what staff can access.</p>
+                    </div>
+
+                    <div class="upgrade-side-list">
+                        <span>Faster month-end reporting</span>
+                        <span>Better operational visibility</span>
+                        <span>Stronger controls as your team grows</span>
+                    </div>
+                </aside>
+            </div>
+
+            <div id="billing-prices"
+                 data-yearly="{{ pro_price_yearly|floatformat:2 }}"
+                 data-monthly="{{ pro_price_monthly|floatformat:2 }}"
+                 hidden></div>
+        {% endif %}
+    </section>
+</main>
+<footer>
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>   
+</body>
+</html>

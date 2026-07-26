@@ -1,0 +1,372 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Super Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-dashboard page-super-admin-dashboard">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    
+
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+
+    
+</nav>
+
+
+<main class="super-admin-shell">
+    <section class="super-admin-hero">
+        <div class="super-admin-hero-main">
+            <div class="super-admin-hero-copy">
+                <span class="admin-badge">Platform Super Admin</span>
+                <p class="super-admin-kicker">Mission control for every subscribed workspace</p>
+                <h2 class="super-admin-title" style="color: white;">Platform Control Center</h2>
+                <p>One command surface for tenant health, subscription state, and the business footprint moving across QuickStock.</p>
+            </div>
+            <div class="super-admin-hero-highlights" aria-label="Platform snapshot">
+                <div class="hero-highlight-card">
+                    <span class="hero-highlight-label">Tenant Health</span>
+                    <strong>{{ active_companies }} active</strong>
+                    <span class="hero-highlight-note">{{ suspended_companies }} suspended and {{ attention_count }} flagged for follow-up</span>
+                </div>
+                <div class="hero-highlight-card">
+                    <span class="hero-highlight-label">Subscription Mix</span>
+                    <strong>{{ pro_companies }} paid</strong>
+                    <span class="hero-highlight-note">{{ trial_companies }} in trial and {{ expiring_soon_companies }} renewing soon</span>
+                </div>
+            </div>
+        </div>
+        <div class="super-admin-session panel-card">
+            <span class="super-admin-session-label">Signed in as</span>
+            <strong>{{ request.user.username }}</strong>
+            <p>Use this surface to review tenant risk, audit signals, and platform-wide business coverage before opening deeper admin tools.</p>
+            <a href="/admin/" class="super-admin-action super-admin-action-primary">Open Django Admin</a>
+        </div>
+    </section>
+
+    <section class="super-admin-command-strip" aria-label="Super admin commands">
+        <a href="/admin/auth/user/" class="command-card">
+            <span class="command-label">Users</span>
+            <strong>Manage accounts</strong>
+            <span class="command-note">Open global authentication and staff records</span>
+        </a>
+        <a href="/admin/inventory/userprofile/" class="command-card">
+            <span class="command-label">Tenants</span>
+            <strong>Profiles and plans</strong>
+            <span class="command-note">Review subscription details and company profiles</span>
+        </a>
+        <a href="/admin/inventory/auditlog/" class="command-card">
+            <span class="command-label">Audit</span>
+            <strong>Review activity</strong>
+            <span class="command-note">Inspect recent events and account-level changes</span>
+        </a>
+        <a href="{% url 'dashboard' %}" class="command-card">
+            <span class="command-label">Workspace</span>
+            <strong>Open app dashboard</strong>
+            <span class="command-note">Jump back into the main QuickStock experience</span>
+        </a>
+    </section>
+
+    <section class="super-admin-section">
+        <div class="section-heading">
+            <div>
+                <span class="section-eyebrow">Platform State</span>
+                <h3>Subscription and tenant health</h3>
+            </div>
+            <p>Scannable indicators for the companies that can operate, those approaching renewal, and any accounts that need intervention.</p>
+        </div>
+        <div class="summary-grid">
+        <div class="summary-card summary-card-priority">
+            <span class="summary-label">Companies</span>
+            <div class="summary-value">{{ total_companies }}</div>
+            <div class="summary-note">All top-level subscribed tenants</div>
+        </div>
+        <div class="summary-card summary-card-success">
+            <span class="summary-label">Active</span>
+            <div class="summary-value">{{ active_companies }}</div>
+            <div class="summary-note">Currently allowed to operate</div>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Trial</span>
+            <div class="summary-value">{{ trial_companies }}</div>
+            <div class="summary-note">Companies in trial mode</div>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">PRO</span>
+            <div class="summary-value">{{ pro_companies }}</div>
+            <div class="summary-note">Paid subscriptions</div>
+        </div>
+        <div class="summary-card summary-card-priority">
+            <span class="summary-label">Expiring Soon</span>
+            <div class="summary-value">{{ expiring_soon_companies }}</div>
+            <div class="summary-note">Renewal within 7 days</div>
+        </div>
+        <div class="summary-card summary-card-attention">
+            <span class="summary-label">Needs Attention</span>
+            <div class="summary-value">{{ attention_count }}</div>
+            <div class="summary-note">Pending, suspended, or renewal risk</div>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Suspended</span>
+            <div class="summary-value">{{ suspended_companies }}</div>
+            <div class="summary-note">Temporarily blocked tenants</div>
+        </div>
+        </div>
+    </section>
+
+    <section class="super-admin-insight-grid">
+        <article class="panel-card insight-card">
+            <div class="panel-header">
+                <div>
+                    <h3>Attention Queue</h3>
+                    <p>Tenants that need a platform owner check before support tickets pile up.</p>
+                </div>
+                <span class="admin-badge admin-badge-warn">{{ attention_count }} flagged</span>
+            </div>
+            <div class="tenant-list">
+                {% for company in attention_companies %}
+                    <div class="tenant-list-row">
+                        <div>
+                            <strong>{{ company.user.username }}</strong>
+                            <span>{{ company.user.email|default:"No email set" }}</span>
+                        </div>
+                        <div class="tenant-list-meta">
+                            <span class="status-pill status-{{ company.status|lower }}">{{ company.get_status_display }}</span>
+                            <span class="plan-pill">{{ company.get_plan_display }}</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">No tenants need immediate attention.</div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel-card insight-card">
+            <div class="panel-header">
+                <div>
+                    <h3>Recent Tenant Activity</h3>
+                    <p>Latest accounts by audit activity across the platform.</p>
+                </div>
+            </div>
+            <div class="tenant-list">
+                {% for company in recent_company_rows %}
+                    <div class="tenant-list-row">
+                        <div>
+                            <strong>{{ company.user.username }}</strong>
+                            <span>{{ company.item_count }} items · {{ company.sale_count }} sales</span>
+                        </div>
+                        <div class="tenant-list-date">
+                            {% if company.last_activity %}
+                                {{ company.last_activity|date:"M d, H:i" }}
+                            {% else %}
+                                No activity
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">No tenant activity yet.</div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="super-admin-section super-admin-section-ops">
+        <div class="section-heading">
+            <div>
+                <span class="section-eyebrow">Business Footprint</span>
+                <h3>Operational volume across the platform</h3>
+            </div>
+            <p>Totals grouped by operational domain showing the system workload and tenant network activity.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 15px;">
+            <!-- Domain 1: Network & Access -->
+            <div class="panel-card" style="padding: 20px; border: 1px solid var(--border-color); background: var(--surface);">
+                <h4 style="margin: 0 0 15px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Network & Access</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="summary-card" style="padding: 10px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Staff</span>
+                        <div class="summary-value" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ total_staff }}</div>
+                    </div>
+                    <div class="summary-card" style="padding: 10px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Locations</span>
+                        <div class="summary-value" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ total_locations }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domain 2: Catalog & Entities -->
+            <div class="panel-card" style="padding: 20px; border: 1px solid var(--border-color); background: var(--surface);">
+                <h4 style="margin: 0 0 15px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Catalog & Entities</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Items</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_items }}</div>
+                    </div>
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Customers</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_customers }}</div>
+                    </div>
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Suppliers</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_suppliers }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domain 3: Sales & Documents -->
+            <div class="panel-card" style="padding: 20px; border: 1px solid var(--border-color); background: var(--surface);">
+                <h4 style="margin: 0 0 15px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Sales & Documents</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Sales</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_sales }}</div>
+                    </div>
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Invoices</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_invoices }}</div>
+                    </div>
+                    <div class="summary-card" style="padding: 8px 4px; text-align: center; background: var(--surface-muted);">
+                        <span class="summary-label" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Quotes</span>
+                        <div class="summary-value" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ total_quotations }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel-card">
+        <div class="panel-header">
+            <div>
+                <span class="section-eyebrow">Registry</span>
+                <h3>Company Registry</h3>
+                <p>Each row is a company root account. Staff, locations, inventory, and sales remain within that tenant boundary.</p>
+            </div>
+            <div class="registry-header-meta">
+                <span class="admin-badge admin-badge-success">
+                    Page {{ company_page.number }} of {{ company_page.paginator.num_pages }}
+                </span>
+                <span class="admin-badge admin-badge-muted">
+                    {{ total_companies }} companies tracked
+                </span>
+            </div>
+        </div>
+
+        <div class="registry-ops-bar" aria-label="Registry monitoring cues">
+            <div class="registry-ops-copy">
+                <strong>Tenant monitor</strong>
+                <span>Rows with amber or red treatment surface renewal risk, pending access, and suspended accounts first.</span>
+            </div>
+            <div class="registry-legend">
+                <span class="registry-legend-pill registry-legend-pill-risk">Needs follow-up</span>
+                <span class="registry-legend-pill registry-legend-pill-healthy">Healthy</span>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="company-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Plan</th>
+                        <th>Renewal</th>
+                        <th>Staff</th>
+                        <th>Locations</th>
+                        <th>Items</th>
+                        <th>Customers</th>
+                        <th>Sales</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in company_page.object_list|slice:":5" %}
+                        <tr class="registry-row {% if company.status == 'suspended' %}registry-row-critical{% elif company.status == 'pending' %}registry-row-risk{% elif company.pro_expires or company.plan_end %}registry-row-watch{% endif %}">
+                            <td>
+                                <div class="registry-company-cell">
+                                    <div class="tenant-name">{{ company.user.username }}</div>
+                                    <div class="tenant-email">{{ company.user.email|default:"No email set" }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-pill status-{{ company.status|lower }}">{{ company.get_status_display }}</span>
+                            </td>
+                            <td><span class="plan-pill">{{ company.get_plan_display }}</span></td>
+                            <td>
+                                {% if company.pro_expires %}
+                                    {{ company.pro_expires|date:"M d, Y" }}
+                                {% elif company.plan_end %}
+                                    {{ company.plan_end|date:"M d, Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ company.staff_count }}</td>
+                            <td>{{ company.location_count }}</td>
+                            <td>{{ company.item_count }}</td>
+                            <td>{{ company.customer_count }}</td>
+                            <td>{{ company.sale_count }}</td>
+                            <td>
+                                {% if company.last_activity %}
+                                    <span class="registry-activity">{{ company.last_activity|date:"M d, Y H:i" }}</span>
+                                {% else %}
+                                    <span class="registry-activity registry-activity-muted">No activity</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="/admin/auth/user/{{ company.user_id }}/change/">User</a>
+                                    <a href="/admin/inventory/userprofile/{{ company.id }}/change/">Profile</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="11" class="table-empty">No subscribed companies found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-row" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0 10px; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Showing a preview of up to 5 companies out of {{ total_companies }} tracked
+            </div>
+            <div>
+                <a href="/admin/inventory/userprofile/" class="btn btn-outline" style="font-weight: 700; text-decoration: none; padding: 8px 16px; display: inline-block;">View Full Company Registry in Platform Admin →</a>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

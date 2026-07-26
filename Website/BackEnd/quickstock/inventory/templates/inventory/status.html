@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Status | QuickStock JA</title>
+  <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+
+<body class="page-status">
+  <div class="page-wrapper">
+
+    <header>
+      <a href="{% url 'index' %}" class="logo-link">
+        <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo" alt="QuickStock JA Logo">
+        QuickStock JA
+      </a>
+    </header>
+
+    <main class="main-text" style="max-width: 900px; text-align: left;">
+      <h2>System Status</h2>
+      <p>{{ status_label }}.</p>
+      <ul>
+        <li>Website: {% if status == "ok" %}OK{% else %}Degraded{% endif %}</li>
+        <li>API: <a href="{% url 'api_health' %}">Health Check</a></li>
+        {% for name, result in checks.items %}
+          <li>
+            {{ name|capfirst }}:
+            {% if result.ok %}OK{% else %}Issue{% endif %}
+            {% if result.detail %} - {{ result.detail }}{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+    
+  </div>
+</body>
+</html>

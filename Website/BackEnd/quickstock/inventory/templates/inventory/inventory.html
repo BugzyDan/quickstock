@@ -1,0 +1,248 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Control | QuickStock JA POS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/inventory.js' %}" defer></script>
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-inventory">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<div class="main-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="inventory-flash-message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="inventory-card">
+        <section class="inventory-hero">
+            <div class="inventory-hero-copy">
+                <p class="inventory-kicker">Stock command center</p>
+                <h2>Inventory Items</h2>
+                <p class="inventory-subtitle">Live updates from the HQ terminal with quick visibility into stock health, SKU lookup, item actions, and per-location stock control.</p>
+            </div>
+            <div class="inventory-hero-metrics">
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Active Items</span>
+                    <strong class="inventory-metric-value">{{ page_obj.paginator.count }}</strong>
+                    <span class="inventory-metric-note">SKU records in your catalogue</span>
+                </article>
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Low Stock</span>
+                    <strong class="inventory-metric-value" id="inventory-low-stock-count">0</strong>
+                    <span class="inventory-metric-note">Items needing attention</span>
+                </article>
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Depleted</span>
+                    <strong class="inventory-metric-value" id="inventory-depleted-count">0</strong>
+                    <span class="inventory-metric-note">Items currently unavailable</span>
+                </article>
+            </div>
+        </section>
+
+        <div class="inventory-toolbar">
+            <div class="inventory-toolbar-copy">
+                <div class="inventory-toolbar-heading">
+                    <h3>Inventory table</h3>
+                    <p>Scan quantities, open per-location breakdowns, and jump straight into stock updates.</p>
+                </div>
+                <div class="inventory-toolbar-chips">
+                    <a href="{% url 'inventory_overview' %}" class="inventory-chip">Open Inventory Overview</a>
+                    <span class="inventory-chip">Sort: {{ sort|default:"name"|title }}</span>
+                    <span class="inventory-chip">Direction: {{ dir|default:"asc"|upper }}</span>
+                    {% if q %}
+                        <span class="inventory-chip inventory-chip-search">Search: "{{ q }}"</span>
+                    {% else %}
+                        <span class="inventory-chip inventory-chip-muted">Showing all items</span>
+                    {% endif %}
+                </div>
+                <div class="breakdown-master">
+                    <button type="button" id="expand-all">Expand All</button>
+                    <button type="button" id="collapse-all">Collapse All</button>
+                </div>
+            </div>
+
+            <form method="get" class="filters">
+                <label class="inventory-field inventory-field-search">
+                    <span>Search</span>
+                    <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search SKU or Name...">
+                </label>
+                <label class="inventory-field">
+                    <span>Sort by</span>
+                    <select name="sort">
+                        <option value="name" {% if sort == 'name' %}selected{% endif %}>Sort: Name</option>
+                        <option value="quantity" {% if sort == 'quantity' %}selected{% endif %}>Sort: Stock</option>
+                        <option value="price" {% if sort == 'price' %}selected{% endif %}>Sort: Price</option>
+                        <option value="category" {% if sort == 'category' %}selected{% endif %}>Sort: Category</option>
+                    </select>
+                </label>
+                <label class="inventory-field">
+                    <span>Direction</span>
+                    <select name="dir">
+                        <option value="asc" {% if dir == 'asc' %}selected{% endif %}>Asc</option>
+                        <option value="desc" {% if dir == 'desc' %}selected{% endif %}>Desc</option>
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary inventory-filter-submit">Apply Filters</button>
+            </form>
+        </div>
+
+        <div class="inventory-table-wrap">
+            <table id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Unique SKU</th>
+                        <th>Product & Brand</th>
+                        <th class="inventory-col-qty">Qty</th>
+                        <th>Health</th>
+                        <th>Price (JMD)</th>
+                        <th class="inventory-col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="inventory-row">
+                        <td data-label="Category" class="inventory-category-cell">{{ item.category.name|upper }}</td>
+                        <td data-label="SKU"><span class="sku-tag">{{ item.sku|default:"PENDING" }}</span></td>
+                        <td data-label="Product">
+                            <div class="inventory-product-name">{{ item.name }}</div>
+                            <div class="inventory-product-brand">{{ item.brand.name }}</div>
+                        </td>
+                        <td data-label="Qty"
+                            class="inventory-qty-cell"
+                            data-quantity="{{ item.quantity }}">
+                            <span class="inventory-qty-value">{{ item.quantity }}</span>
+                            <div class="inventory-breakdown-trigger">
+                                <button type="button"
+                                        class="breakdown-toggle"
+                                        data-target="breakdown-{{ item.id }}"
+                                        aria-expanded="false">
+                                    Breakdown
+                                </button>
+                            </div>
+
+                            <div class="stock-breakdown" id="breakdown-{{ item.id }}" style="display: none;">
+                                <strong>Total</strong>
+                                <ul>
+                                    {% if item.location_totals %}
+                                        {% for location_name, qty in item.location_totals.items %}
+                                            <li><span>{{ location_name }}</span><strong>{{ qty }}</strong></li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li><span>No locations assigned</span><strong>0</strong></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </td>
+                        <td data-label="Health">
+                            {% if item.quantity > 10 %}<span class="badge in-stock">Stable</span>
+                            {% elif item.quantity > 0 %}<span class="badge low-stock">Low Stock</span>
+                            {% else %}<span class="badge out-of-stock">Depleted</span>{% endif %}
+                        </td>
+                        <td data-label="Price" class="price-tag">${{ item.price|floatformat:2 }}</td>
+                        <td data-label="Actions" class="actions-cell">
+                            <div class="inventory-actions-group">
+                                <a href="{% url 'inventory_update' item.id %}" class="action-btn-modify">
+                                    Modify
+                                </a>
+
+                                <form method="POST" action="{% url 'inventory_delete' item.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="action-btn-delete"
+                                            onclick="return confirm('Archive SKU #{{ item.sku }}?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="inventory-empty-state">No records found matching your search.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="action-footer">
+            <div class="inventory-footer-meta">
+                <span class="inventory-footer-label">Active SKUs</span>
+                <strong>{{ page_obj.paginator.count }}</strong>
+            </div>
+            <div class="inventory-footer-actions">
+                {% if not is_pro_user and starter_items_remaining <= 0 %}
+                    <a href="{% url 'upgrade' %}" class="btn btn-outline inventory-footer-action inventory-footer-action-secondary inventory-footer-new-item is-disabled" style="pointer-events: none; opacity: 0.5;">+ New Item</a>
+                {% else %}
+                    <a href="{% url 'inventory_add' %}" class="btn btn-outline inventory-footer-action inventory-footer-action-secondary inventory-footer-new-item">+ New Item</a>
+                {% endif %}
+
+                <a href="{% url 'transfer_stock' %}" class="btn btn-outline inventory-footer-action inventory-footer-action-secondary inventory-transfer-btn">
+                    Transfer Stock
+                </a>
+
+                <a href="{% url 'receive_stock' %}" class="btn btn-primary inventory-footer-action inventory-footer-action-primary inventory-receive-stock-btn">Receive Stock</a>
+            </div>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="inventory-pagination">
+            <div class="inventory-pagination-meta">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+            <div class="inventory-pagination-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&dir={{ dir }}&q={{ q|urlencode }}">← Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&dir={{ dir }}&q={{ q|urlencode }}">Next →</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+
+</html>

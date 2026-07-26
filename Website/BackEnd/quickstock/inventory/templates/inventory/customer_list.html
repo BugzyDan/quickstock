@@ -1,0 +1,144 @@
+    {% load static theme_tags %}
+    <!DOCTYPE html>
+    <html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>QuickStock JA | Customer Directory</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+
+          <script 
+        src="{% static 'inventory/js/customer_list.js' %}" defer>
+    </script>
+    </head>
+
+    <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-customer-list">
+
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+  <nav id="main-nav">
+
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}"
+       class="nav-search-trigger"
+       title="Search">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+
+    </a>
+
+</nav>
+
+    <main class="ops-shell">
+        <section class="ops-hero ops-hero-customers">
+            <div class="ops-hero-copy">
+                <p class="ops-kicker">Relationship management</p>
+                <h2>Customer Directory</h2>
+                <p>Track clients, search account history faster, and keep every contact ready for quotations, invoices, and follow-up.</p>
+                <div class="ops-chip-row">
+                    <span class="ops-chip">Client search</span>
+                    <span class="ops-chip">Contact history</span>
+                    <span class="ops-chip">Invoice ready</span>
+                </div>
+            </div>
+            <div class="ops-actions">
+                <a href="{% url 'add_customer' %}" class="btn-apply ops-primary-link">+ Add Client</a>
+            </div>
+        </section>
+
+        <form method="get" class="search-area ops-toolbar ops-toolbar-inline">
+            <input type="text" name="q" value="{{ query|default:'' }}" class="search-input" placeholder="Search by name, email, phone, or address...">
+            <button type="submit" class="customer-directory-filter-btn">Filter</button>
+            {% if query %}
+                <a href="{% url 'customer_list' %}" class="ops-clear-link">Clear</a>
+            {% endif %}
+        </form>
+
+        <div class="customer-table-container ops-surface-card">
+            <div style="overflow-x: auto;">
+                <table class="customer-table">
+                    <thead>
+                        <tr>
+                            <th>Client / Joined</th>
+                            <th>Contact Info</th>
+                            <th>Address / Notes</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                
+                                <div class="client-info">
+                                    <a href="{% url 'customer_detail' customer.id %}" class="name customer-directory-name">{{ customer.name }}</a>
+                                    <span class="date">{{ customer.created_at|date:"M d, Y" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="contact-pill">📞 {{ customer.phone|default:"N/A" }}</div>
+                                <div style="font-size: 0.75rem; color: var(--primary-blue); margin-top: 4px;">✉️ {{ customer.email|default:"No email" }}</div>
+                            </td>
+                            <td>
+                                {% if customer.physical_address or customer.business_address %}
+                                <div class="notes-preview" title="{{ customer.physical_address|default:customer.business_address }}">
+                                    {{ customer.physical_address|default:customer.business_address }}
+                                </div>
+                                {% endif %}
+                                <div class="notes-preview" title="{{ customer.notes }}">
+                                    {{ customer.notes|default:"No notes added." }}
+                                </div>
+                            </td>
+                            <td class="customer-directory-actions-cell">
+                                <div class="customer-directory-actions">
+                                <a href="{% url 'edit_customer' customer.id %}" 
+                                class="customer-directory-action customer-directory-action-edit">
+                                Edit
+                                </a>
+
+                                <a href="{% url 'delete_customer' customer.id %}" 
+                                class="customer-directory-action customer-directory-action-delete"
+                                onclick="return confirm('Are you sure you want to delete {{ customer.name }}?')">
+                                Delete
+                                </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="customer-directory-empty-state">
+                                <div class="customer-directory-empty-icon">👥</div>
+                                <p>No customers found matching your criteria.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 QuickStock JA. Customer records are encrypted and private.</p>
+    </footer>
+
+    </body>
+    </html>

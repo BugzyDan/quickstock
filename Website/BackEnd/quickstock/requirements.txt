@@ -1,0 +1,18 @@
+# Core framework
+Django==5.2.4
+djangorestframework>=3.16
+python-dotenv>=1.0
+requests>=2.32,<3
+Pillow>=11.0,<12
+
+# App server for production
+gunicorn>=21.2
+sentry-sdk[django]>=2.13
+
+# Database drivers
+mysqlclient>=2.2.4     # enable when using MySQL
+psycopg[binary]>=3.2.1 # enable when using Postgres
+
+# Testing
+pytest>=8.3
+pytest-django>=4.9

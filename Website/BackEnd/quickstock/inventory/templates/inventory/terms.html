@@ -1,0 +1,81 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Terms of Service | QuickStock JA</title>
+  <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+  <script src="{% static 'inventory/js/terms.js' %}" defer></script>
+</head>
+
+<body class="page-terms">
+
+  <div class="page-wrapper">
+    
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+    <main class="main-text">
+      <section class="terms-header">
+        <h2>Terms of Service</h2>
+        <p class="last-updated"><strong>Effective Date:</strong> February 19, 2026</p>
+      </section>
+
+      <section class="intro">
+        <p>These Terms of Service (“Terms”) constitute a legally binding agreement between <strong>Kevon Campbell</strong>, t/a QuickStock JA (“Developer”), and the business or individual (“Subscriber”) accessing the Service. By creating an account, you agree to these Terms in full.</p>
+      </section>
+
+      <h3>1. The Service</h3>
+      <p>QuickStock JA is a cloud-based inventory and sales management system. The Developer grants you a limited, non-exclusive, revocable license to use the Service for legitimate business operations within the scope of your subscription.</p>
+
+      <h3>2. Subscription & Payment (WiPay)</h3>
+      <ul>
+        <li><strong>Billing Cycles:</strong> Subscriptions are billed annually. Monthly options may be introduced at the Developer’s discretion.</li>
+        <li><strong>Activation Requirement:</strong> Access is granted only after (1) explicit "clickwrap" acceptance of these Terms and (2) verification of successful payment through WiPay.</li>
+        <li><strong>Account Status:</strong> New accounts remain in <strong>Pending</strong> status until settlement. Late payments exceeding 7 days will result in <strong>Suspended</strong> status.</li>
+        <li><strong>No Refunds:</strong> Due to fixed infrastructure costs, all subscription payments are non-refundable.</li>
+      </ul>
+
+      <h3>3. Jamaica Data Protection Act (JDPA) Compliance</h3>
+      <p>In accordance with the <em>Data Protection Act, 2020</em> of Jamaica:</p>
+      <ul>
+        <li><strong>The Subscriber</strong> is the <strong>Data Controller</strong> and holds primary responsibility for the customer data entered into the system.</li>
+        <li><strong>QuickStock JA</strong> acts as the <strong>Data Processor</strong>, handling names, phone numbers, and emails solely to provide the Service.</li>
+        <li>The Developer implements standard security protocols (HTTPS/TLS) but the Subscriber warrants they have obtained necessary consent from their customers to record their data.</li>
+      </ul>
+
+      <h3>4. Intellectual Property</h3>
+      <p>All software, underlying logic (Python, C++), database schemas, and branding assets are the exclusive property of Kevon Campbell. Users may not copy, reverse-engineer, or redistribute any portion of the Service.</p>
+
+      <h3>5. Service Availability</h3>
+      <p>The Service is provided in its stable production release. While the Developer maintains a 99.9% uptime target, the Service is provided <strong>"as-is"</strong>. Maintenance windows will be communicated via the dashboard 24 hours in advance when possible.</p>
+
+      <h3>6. Limitation of Liability</h3>
+      <p>The Developer is not liable for indirect, incidental, or consequential damages, including loss of profits or business interruption. <strong>Total aggregate liability</strong> is capped at the subscription fees paid by the Subscriber in the <strong>three (3) months</strong> immediately preceding any claim.</p>
+
+      <h3>7. Termination</h3>
+      <p>Either party may terminate the agreement at the end of the current billing cycle. Upon termination, data will be held for 30 days to facilitate export before permanent deletion.</p>
+
+      <h3>8. Governing Law</h3>
+      <p>This Agreement is governed by the <strong>Laws of Jamaica</strong>. Any disputes shall be settled exclusively in the Courts of Jamaica.</p>
+
+      <section class="contact-info">
+        <h3>Contact</h3>
+        <p>For support or legal inquiries: <a href="mailto:support@quickstockja.com">support@quickstockja.com</a></p>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>

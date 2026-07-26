@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Inventory Item | QuickStock JA POS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/inventory_update.js' %}?v=item-barcode-scanner" defer></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-inventory-update">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    {% if request.user.profile.role == 'admin' %}
+    {% endif %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-link" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="item-workbench-shell">
+    <section class="item-hero-banner item-hero-banner-edit">
+        <div class="item-hero-copy">
+            <p class="item-hero-kicker">Inventory maintenance</p>
+            <h1>Refine an Existing Asset</h1>
+            <p>Update pricing, stock, and routing details while keeping a live view of the item identity and margin impact.</p>
+        </div>
+        <div class="item-hero-pills">
+            <span class="item-hero-pill">Current SKU locked</span>
+            <span class="item-hero-pill">Live field sync</span>
+            <span class="item-hero-pill">Location-aware editing</span>
+        </div>
+    </section>
+
+    <div class="item-workbench-grid">
+        <aside class="item-insight-rail">
+            <div class="item-rail-section">
+                <span class="item-rail-eyebrow">Live identity</span>
+                <h3>Current record</h3>
+            </div>
+
+            <div class="preview-box item-preview-box">
+                <span class="preview-label">Product Name</span>
+                <div class="preview-val" id="live_name">{{ item.name|default:"Draft_Item" }}</div>
+            </div>
+
+            <div class="preview-box item-preview-box">
+                <span class="preview-label">Generated SKU</span>
+                <div class="preview-val item-preview-code" id="live_sku">{{ item.sku|default:"---" }}</div>
+            </div>
+
+            <div class="preview-box item-preview-box">
+                <span class="preview-label">Location</span>
+                <div class="preview-val" id="live_location">Pending_Node</div>
+            </div>
+
+            <div class="item-margin-box">
+                <span class="preview-label">Potential Margin</span>
+                <div id="live_margin" class="margin-badge">0.0%</div>
+            </div>
+
+            <div class="item-ops-stack">
+                <div class="item-ops-card">
+                    <span class="label-caps">In stock now</span>
+                    <strong>{{ item.quantity|default:'0' }}</strong>
+                    <small>Units currently attached to this item record.</small>
+                </div>
+                <div class="item-ops-card">
+                    <span class="label-caps">Current currency</span>
+                    <strong>{{ item.currency|default:"JMD" }}</strong>
+                    <small>Review this before changing prices or importing fresh stock.</small>
+                </div>
+            </div>
+        </aside>
+
+        <section class="item-form-surface">
+            <div class="item-form-head">
+                <h2>Update asset record</h2>
+                <p>Adjust the master data for this inventory item without losing visibility into its current identity and pricing health.</p>
+            </div>
+
+            <form method="POST" class="item-form-layout">
+                {% csrf_token %}
+
+                <section class="item-form-section">
+                    <div class="item-section-head">
+                        <span class="label-caps">Identity</span>
+                        <h3>Product naming and code</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field full">
+                            <label>Barcode (scan or type)</label>
+                            <input
+                                type="text"
+                                id="item_barcode"
+                                class="item-barcode-input"
+                                name="barcode"
+                                value="{{ item.barcode|default:'' }}"
+                                placeholder="Scan barcode or type code"
+                                autocomplete="off"
+                                inputmode="numeric"
+                                autofocus
+                                data-barcode-scanner-field
+                            >
+                        </div>
+
+                        <div class="field full">
+                            <label>System SKU (3-letter prefix)</label>
+                            <input type="text" id="sku_preview" name="sku" class="sku-input" value="{{ item.sku|default:'' }}" readonly>
+                        </div>
+
+                        <div class="field full">
+                            <label>Product Nomenclature</label>
+                            <input type="text" name="name" id="name_input" value="{{ item.name|default:'' }}" placeholder="e.g. Royalton Roast Coffee" required>
+                        </div>
+
+                        <div class="field">
+                            <label>Category (type for SKU prefix)</label>
+                            <input type="text" id="category_input" name="category" list="category_options"
+                                   placeholder="e.g. Beverage" value="{{ item.category.name|default:'' }}"
+                                   oninput="updateSKU()" required>
+                            <datalist id="category_options">
+                                {% for c in categories %}
+                                <option value="{{ c.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div class="field">
+                            <label>Brand</label>
+                            <input type="text" id="brand_input" name="brand" value="{{ item.brand.name|default:'' }}" placeholder="Manufacturer" required>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="item-form-section">
+                    <div class="item-section-head">
+                        <span class="label-caps">Placement</span>
+                        <h3>Location and sourcing</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Network Node (Location)</label>
+                            <select name="location" id="location_select" onchange="syncLocation()" required>
+                                <option value="" disabled {% if not item %}selected{% endif %}>-- Assign Branch --</option>
+                                {% for loc in locations %}
+                                <option value="{{ loc.id }}" {% if current_location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field full">
+                            <label>Supplier Channel</label>
+                            <select name="supplier">
+                                <option value="" {% if not item %}selected{% endif %}>-- Direct Entry / No Supplier --</option>
+                                {% for s in suppliers %}
+                                <option value="{{ s.id }}" {% if item.supplier.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="item-form-section">
+                    <div class="item-section-head">
+                        <span class="label-caps">Commercials</span>
+                        <h3>Price, quantity, and currency</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Unit Cost (Paid)</label>
+                            <input type="number" id="unit_cost" name="cost_price" step="0.01" value="{{ item.cost_price|default:'' }}" oninput="calculateMargin()" required>
+                        </div>
+
+                        <div class="field">
+                            <label>Retail Price (Selling)</label>
+                            <input type="number" id="retail_price" name="selling_price" step="0.01" value="{{ item.price|default:'' }}" oninput="calculateMargin()" required>
+                        </div>
+
+                        <div class="field">
+                            <label>Stock Count</label>
+                            <input type="number" name="quantity" value="{{ item.quantity|default:'0' }}" min="0">
+                        </div>
+
+                        <div class="field">
+                            <label>Currency</label>
+                            <select name="currency">
+                                <option value="JMD" {% if item.currency == "JMD" or not item.currency %}selected{% endif %}>JMD ($)</option>
+                                <option value="USD" {% if item.currency == "USD" %}selected{% endif %}>USD ($)</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="actions item-form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'inventory' %}" class="btn btn-ghost">Back to Inventory</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+</body>
+</html>

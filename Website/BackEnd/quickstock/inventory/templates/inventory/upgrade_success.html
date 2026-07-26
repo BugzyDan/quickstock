@@ -1,0 +1,25 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QuickStock JA | Upgrade Successful</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+
+</head>
+
+<body class="page-upgrade">
+    <div class="success-wrap">
+        <div class="success-title">Payment successful</div>
+        <p class="success-text">Thanks for upgrading to QuickStock JA Pro. Your account will be activated shortly.</p>
+        <a href="{% url 'dashboard' %}" class="btn">Go to Dashboard</a>
+    </div>
+
+</body>
+
+</html>

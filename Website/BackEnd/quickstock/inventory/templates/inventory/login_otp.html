@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Login | QuickStock JA</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
+</head>
+
+<body class="auth-body page-login">
+    <div class="auth-container">
+        <div class="auth-brand">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="auth-logo" alt="QuickStock JA Logo">
+            </a>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-intro">
+                <h2>Enter Verification Code</h2>
+                <p>We emailed a 6-digit code to {{ username }}.</p>
+            </div>
+
+            <form method="POST" action="{% url 'login_otp' %}">
+                {% csrf_token %}
+
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="otp_code">Verification Code</label>
+                    <input id="otp_code" type="text" name="otp_code" required pattern="\d{6}" maxlength="6" placeholder="123456" inputmode="numeric"autocomplete="one-time-code">
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: var(--primary-blue); color: #fff; border: 1px solid var(--primary-blue);">Verify & Continue</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Didn’t get the code? Please check spam/junk and sign in again to resend.</p>
+                <a href="{% url 'login' %}" class="support-link">Back to login</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

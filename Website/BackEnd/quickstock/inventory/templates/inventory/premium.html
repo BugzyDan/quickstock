@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade to PRO - QuickStock JA</title>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+<body class="page-premium">
+    <div class="container">
+        <h1>Upgrade to PRO</h1>
+        <p>Unlock advanced features and take your QuickStock JA experience to the next level.</p>
+        
+        <div class="plan-card">
+            <h2>PRO Plan</h2>
+            <p>Access premium features:</p>
+            <ul style="list-style: none; padding: 0;">
+                <li>✅ Unlimited inventory items</li>
+                <li>✅ Advanced reporting</li>
+                <li>✅ Priority support</li>
+                <li>✅ Dark mode & custom themes</li>
+            </ul>
+            <p><strong>Price:</strong> $190</p>
+            <a href="{% url 'upgrade_pro' %}" class="upgrade-btn">Upgrade Now</a>
+        </div>
+
+        {% if user.userprofile.is_pro_active %}
+        <div class="current-plan">
+            You are currently on the <strong>PRO Plan</strong>. Expiration: {{ user.userprofile.pro_expires }}
+        </div>
+        {% elif user.userprofile.is_trial_active %}
+        <div class="current-plan">
+            You are currently on the <strong>Starter Trial</strong>. Ends: {{ user.userprofile.plan_end|date:"M d, Y" }}
+        </div>
+        {% elif user.userprofile.plan == 'TRIAL' %}
+        <div class="current-plan">
+            Your trial has ended. Please upgrade to continue.
+        </div>
+        {% elif user.userprofile.plan == 'PRO' %}
+        <div class="current-plan">
+            Your subscription has ended. Please renew to continue.
+        </div>
+        {% else %}
+        <div class="current-plan">
+            You are currently on the <strong>Free Plan</strong>.
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

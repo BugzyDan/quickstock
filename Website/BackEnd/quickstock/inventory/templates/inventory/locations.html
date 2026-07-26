@@ -1,0 +1,129 @@
+    {% load static theme_tags %}
+    <!DOCTYPE html>
+    <html lang="en"
+          data-theme="{{ request.user.profile.theme|default:'system' }}"
+          {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+          {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Locations | QuickStock JA</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=locations-spacing-advanced-color-20260705">
+        <script src="{% static 'inventory/js/theme.js' %}"></script>
+        <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    </head>
+    <body data-theme="{{ request.user.profile.theme|default:'system' }}"
+          {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+          class="page-locations page-nodes-ledger page-supplier-list">
+
+        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+        <nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+        <main class="content-container locations-shell">
+            <section class="locations-hero">
+                <div class="locations-hero-copy">
+                    <p class="locations-kicker">Branch network</p>
+                    <h1>Locations</h1>
+                    <p>Manage the branch structure that powers inventory placement, staff routing, and location-based selling across your workspace.</p>
+                    <div class="locations-chip-row">
+                        <span>Branch visibility</span>
+                        <span>Stock routing</span>
+                        <span>Operational coverage</span>
+                    </div>
+                </div>
+                <div class="locations-hero-actions">
+                    {% if is_pro_user %}
+                        <a href="{% url 'add_location' %}" class="btn-primary-action">+ Add Location</a>
+                    {% else %}
+                        <a href="{% url 'upgrade' %}" class="btn-primary-action status-locked">+ Upgrade To Add</a>
+                    {% endif %}
+                    <div class="locations-hero-note">
+                        <strong>Workspace mode</strong>
+                        <span>{% if is_pro_user %}Multi-location network active{% else %}Starter workspace{% endif %}</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="ledger-summary-strip">
+                <div class="summary-box summary-box-primary">
+                    <label>Active Locations</label>
+                    <span>{{ total_locations|stringformat:"02d" }}</span>
+                    <small>Live branches in this workspace</small>
+                </div>
+                <div class="summary-box">
+                    <label>Overall Asset Valuation</label>
+                    <span>${{ total_stock_value|floatformat:2 }}</span>
+                    <small>Inventory value across all locations</small>
+                </div>
+                <div class="summary-box">
+                    <label>Sync Status</label>
+                    <span class="text-neon">OPERATIONAL</span>
+                    <small>Branch data routing is available</small>
+                </div>
+            </div>
+
+            <div class="nodes-grid">
+                {% for loc in locations %}
+                <div class="node-ledger-entry">
+                    <div class="entry-topline">
+                        <span class="serial-no">Branch://{{ forloop.counter|stringformat:"02d" }}</span>
+                        <span class="location-type {% if loc.is_warehouse %}is-warehouse{% endif %}">
+                            {% if loc.is_warehouse %}Warehouse{% else %}Storefront{% endif %}
+                        </span>
+                    </div>
+                    <div class="entry-body">
+                        <h2 class="node-name">{{ loc.name|upper }}</h2>
+                        <p class="node-address">{{ loc.address|default:"No address on file yet." }}</p>
+                    </div>
+                    <div class="location-meta-grid">
+                        <div>
+                            <span class="meta-label">Country</span>
+                            <strong>{{ loc.get_country_code_display }}</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Role</span>
+                            <strong>{% if loc.name|lower == "main store" %}Primary Location{% elif loc.name|lower == "unassigned" %}Holding Node{% elif loc.is_warehouse %}Warehouse Node{% else %}Active Branch{% endif %}</strong>
+                        </div>
+                    </div>
+                    <div class="location-foot">
+                        <span class="location-foot-status">Branch routing ready</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-card">
+                    <p>NO ACTIVE NODES DETECTED IN LOCAL CLUSTER</p>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+
+    <footer class="brand-footer">
+            <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+    </body>
+    </html>

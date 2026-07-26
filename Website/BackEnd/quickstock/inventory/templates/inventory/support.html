@@ -1,0 +1,127 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support | QuickStock JA</title>
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=support-header-logo-match-20260721">
+  <script src="{% static 'inventory/js/theme.js' %}"></script>
+
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-support">
+  <div class="page-wrapper">
+
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+
+    <nav id="main-nav">
+      <a href="{% url 'about' %}"
+         class="{% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+        About
+      </a>
+    </nav>
+    <main class="support-dashboard-shell">
+      <section class="support-hero">
+        <div>
+          <h2>How can we help?</h2>
+          <p class="support-hero-copy">Search common solutions below or send a diagnostic ticket to our team.</p>
+        </div>
+        <div class="support-status-badge badge badge-success">Support Center Live</div>
+      </section>
+
+      <section class="support-card">
+        <h3>Common Solutions</h3>
+        <p class="support-intro">Start with the most common fixes before raising a case.</p>
+        <section class="support-accordion">
+        <div class="accordion-item">
+          <button type="button" class="accordion-header" aria-expanded="false" aria-controls="support-answer-login">
+            Can't log in to my account? <span>+</span>
+          </button>
+          <div id="support-answer-login" class="accordion-content">
+            <p>Ensure you are using the email registered during signup. If you've forgotten your password, use the <a href="{% url 'password_reset' %}">Reset Password</a> link. Ensure cookies are enabled in your browser.</p>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button type="button" class="accordion-header" aria-expanded="false" aria-controls="support-answer-wipay">
+            WiPay Payment not reflecting? <span>+</span>
+          </button>
+          <div id="support-answer-wipay" class="accordion-content">
+            <p>WiPay transactions usually settle instantly. If your account is still "Pending" after payment, please wait 5 minutes and refresh. If the issue persists, attach your WiPay Receipt ID to a support ticket below.</p>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button type="button" class="accordion-header" aria-expanded="false" aria-controls="support-answer-export">
+            How to export my inventory to CSV? <span>+</span>
+          </button>
+          <div id="support-answer-export" class="accordion-content">
+            <p>Navigate to <strong>Inventory > Export</strong>. You can choose between CSV or JSON formats for your accounting software or GCT filings.</p>
+          </div>
+        </div>
+        </section>
+      </section>
+
+      <hr>
+
+      <section class="support-card">
+      <h3>Still need help? Raise a case.</h3>
+      <p class="support-intro">We’ll include your recent system context and diagnostic logs automatically to help us solve your issue faster.</p>
+
+      <form method="POST" class="support-form">
+        {% csrf_token %}
+        <div class="support-field">
+          <label for="support-email">Account Email</label>
+          {% if is_authenticated %}
+            <input id="support-email" type="email" value="{{ request.user.email }}" readonly autocomplete="email">
+          {% else %}
+            <input id="support-email" name="email" type="email" value="{{ submitted_email }}" required autocomplete="email" placeholder="you@example.com">
+          {% endif %}
+        </div>
+        
+        <div class="support-field">
+          <label for="support-message">Message / Issue Details</label>
+          <textarea id="support-message" name="message" rows="4" required placeholder="Describe what you were doing when the issue occurred...">{{ submitted_message }}</textarea>
+        </div>
+
+        <button type="submit" class="btn-apply support-submit">Send to Support</button>
+      </form>
+      </section>
+
+      <section class="support-card support-diagnostics">
+        <h4>Diagnostic Bundle (Auto-Attached)</h4>
+        <div class="log-terminal">
+          {% for log in recent_logs %}
+            <div>[{{ log.created_at|date:"H:i:s" }}] {{ log.severity|upper }}: {{ log.action }}</div>
+          {% empty %}
+            <div>No session logs recorded.</div>
+          {% endfor %}
+        </div>
+        <p class="support-meta">Environment: {{ wipay_env|upper }} | Service: QuickStock Support</p>
+      </section>
+      
+</main>
+
+    <footer>
+
+    <script src="{% static 'inventory/js/support.js' %}" defer></script>
+      <p>&copy; 2026 QuickStock JA. All Rights Reserved.</p>
+    </footer>
+  </div>
+
+
+</body>
+</html>

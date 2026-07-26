@@ -1,0 +1,398 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+   
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Advanced Analytics | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=locations-spacing-advanced-color-20260705">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="quickstockAnalyticsConfig" type="application/json">
+        {
+            "themePref": "{{ request.user.profile.theme|default:'system'|escapejs }}",
+            "revenueTrends": {{ daily_trends_json|safe }},
+            "cashierData": {
+                "labels": {{ cashier_labels_json|safe }},
+                "values": {{ cashier_values_json|safe }}
+            },
+            "payablesPulse": {
+                "labels": {{ payables_labels_json|safe }},
+                "debit": {{ payables_debit_json|safe }},
+                "credit": {{ payables_credit_json|safe }},
+                "balance": {{ payables_balance_json|safe }}
+            }
+        }
+    </script>
+    <script src="{% static 'inventory/js/page_config.js' %}" defer></script>
+
+<script src="{% static 'inventory/js/advanced_reports.js' %}" defer></script>
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-advanced-reports">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main>
+    <section class="analytics-hero">
+        <div class="analytics-hero-copy">
+            <div class="analytics-eyebrow">Advanced Analysis</div>
+            <h2>See revenue rhythm, stock pressure, and supplier exposure in one view.</h2>
+            <p>
+                Track the business pulse across sales, inventory, cashier performance, and accounts payable
+                without jumping between screens.
+            </p>
+        </div>
+        <div class="analytics-hero-meta">
+            <div class="analytics-meta-card">
+                <span class="analytics-meta-label">Active period</span>
+                <strong>
+                    {{ current_period_label }}
+                </strong>
+            </div>
+            <div class="analytics-meta-card">
+                <span class="analytics-meta-label">Primary scope</span>
+                <strong>{{ user_location_name|default:"All locations" }}</strong>
+            </div>
+            <div class="analytics-meta-card analytics-meta-card-accent">
+                <span class="analytics-meta-label">Generated</span>
+                <strong>{{ now|date:"M d, Y g:i A" }}</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="analytics-insight-strip">
+        <article class="analytics-insight-card analytics-insight-card-blue">
+            <span class="analytics-insight-label">Sales leader</span>
+            {% if top_cashier %}
+                <strong>{{ top_cashier.cashier_name|default:"Unassigned" }}</strong>
+                <p>${{ top_cashier.total_gen|floatformat:2 }} across {{ top_cashier.trans_count }} transactions.</p>
+            {% else %}
+                <strong>No sales yet</strong>
+                <p>Once transactions land, the top cashier will appear here.</p>
+            {% endif %}
+        </article>
+        <article class="analytics-insight-card analytics-insight-card-green">
+            <span class="analytics-insight-label">Stock stability</span>
+            <strong>{{ stock_health_rate }}% healthy</strong>
+            <p>{{ healthy_item_count }} of {{ total_item_count }} tracked SKUs are above the alert threshold.</p>
+        </article>
+        <article class="analytics-insight-card analytics-insight-card-sand">
+            <span class="analytics-insight-label">Supplier settlements</span>
+            <strong>{{ supplier_payment_ratio }}% paid down</strong>
+            <p>{{ supplier_scope_label }} currently shows ${{ supplier_current_debt|floatformat:2 }} still outstanding.</p>
+        </article>
+    </section>
+
+    <section class="analytics-kpi-grid">
+        <article class="report-card analytics-kpi-card analytics-kpi-card-revenue">
+            <span class="analytics-kpi-label">Total Sales Revenue</span>
+            <strong class="analytics-kpi-value">${{ total_revenue|floatformat:2 }}</strong>
+            <p class="analytics-kpi-note">Captured across your recorded completed sales.</p>
+        </article>
+        <article class="report-card analytics-kpi-card analytics-kpi-card-alert">
+            <span class="analytics-kpi-label">Inventory Alerts</span>
+            <strong class="analytics-kpi-value">{{ low_stock_count }} Low Items</strong>
+            <p class="analytics-kpi-note">Items at or below the {{ low_stock_threshold }}-unit warning threshold.</p>
+        </article>
+        <article class="report-card analytics-kpi-card analytics-kpi-card-profit">
+            <span class="analytics-kpi-label">Potential Gross Profit</span>
+            <strong class="analytics-kpi-value">${{ potential_profit|floatformat:2 }}</strong>
+            <p class="analytics-kpi-note">Projected margin from current inventory on hand.</p>
+        </article>
+        <article class="report-card analytics-kpi-card analytics-kpi-card-average">
+            <span class="analytics-kpi-label">Average Sale</span>
+            <strong class="analytics-kpi-value">${{ avg_sale|floatformat:2 }}</strong>
+            <p class="analytics-kpi-note">Useful for spotting ticket-size changes over time.</p>
+        </article>
+    </section>
+
+    <section class="analytics-section">
+        <div class="analytics-section-heading">
+            <div>
+                <span class="analytics-section-label">Sales Pulse</span>
+                <h3>Revenue velocity</h3>
+            </div>
+            <div class="filter-group analytics-period-pills">
+                <a href="?period=D{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}" class="btn-filter {% if current_period == 'D' %}is-active{% endif %}">Day</a>
+                <a href="?period=W{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}" class="btn-filter {% if current_period == 'W' %}is-active{% endif %}">Week</a>
+                <a href="?period=M{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}" class="btn-filter {% if current_period == 'M' %}is-active{% endif %}">Month</a>
+                <a href="?period=Y{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}" class="btn-filter {% if current_period == 'Y' %}is-active{% endif %}">Year</a>
+            </div>
+        </div>
+
+        <div class="report-grid analytics-primary-grid">
+            <article class="report-card analytics-chart-card">
+                <div class="analytics-card-head">
+                    <div>
+                        <h4>Revenue Velocity</h4>
+                        <p>Monitor how sales volume is moving through the selected window.</p>
+                    </div>
+                </div>
+                <div class="chart-container analytics-chart-container">
+                    {% if daily_trends %}
+                        <canvas id="revenueChart"></canvas>
+                    {% else %}
+                        <div class="analytics-empty-state">
+                            <p>No sales velocity data found for this period.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+
+            <div class="analytics-side-column">
+                <article class="report-card analytics-export-card">
+                    <div class="analytics-card-head">
+                        <div>
+                            <h4>Export Center</h4>
+                            <p>Pull fresh files for finance, stock review, and supplier cleanup from the {{ current_period_label|lower }} lens.</p>
+                        </div>
+                    </div>
+                    <div class="analytics-export-actions">
+                        <a href="{% url 'export_data' 'sales' %}" class="btn-export btn-export-sales">Sales CSV</a>
+                        <a href="{% url 'export_data' 'inventory' %}" class="btn-export btn-export-inventory">Inventory XLSX</a>
+                        <a href="{% url 'export_data' 'suppliers' %}" class="btn-export btn-export-suppliers">Suppliers CSV</a>
+                    </div>
+                    <p class="analytics-card-footnote">Built {{ now|date:"M d, Y g:i A" }}</p>
+                </article>
+
+                <article class="report-card analytics-restock-card">
+                    <div class="analytics-card-head">
+                        <div>
+                            <h4>Restock Priority</h4>
+                            <p>{{ low_stock_count }} item{{ low_stock_count|pluralize }} currently need attention before they start slowing sales.</p>
+                        </div>
+                    </div>
+                    <div class="restock-grid">
+                        {% for item in low_stock_items %}
+                            <div class="restock-item">
+                                <div class="restock-item-top">
+                                    <span class="restock-item-name">{{ item.name }}</span>
+                                    <span class="restock-item-qty">{{ item.quantity }}</span>
+                                </div>
+                                <div class="restock-meter">
+                                    <div class="restock-meter-fill" style="width: {{ item.quantity }}0%;"></div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="analytics-empty-state analytics-empty-state-compact">
+                                <p>Stock levels are healthy right now.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="analytics-dual-grid">
+        <article class="report-card">
+            <div class="analytics-card-head">
+                <div>
+                    <span class="analytics-section-label">Team Snapshot</span>
+                    <h4>Cashier performance</h4>
+                </div>
+            </div>
+            <div class="analytics-cashier-layout">
+                <div class="analytics-cashier-chart">
+                    <canvas id="cashierChart"></canvas>
+                </div>
+                <div class="analytics-table-wrap">
+                    <div class="analytics-table-summary">
+                        {% if top_cashier %}
+                            <strong>{{ top_cashier.cashier_name|default:"Unassigned" }}</strong>
+                            <span>is currently leading this period.</span>
+                        {% else %}
+                            <strong>No cashier activity</strong>
+                            <span>Transactions will populate here as sales come in.</span>
+                        {% endif %}
+                    </div>
+                    <table class="analytics-table">
+                        <thead>
+                            <tr>
+                                <th>Cashier</th>
+                                <th>Trans.</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cashier in cashier_performance %}
+                            <tr>
+                                <td>{{ cashier.cashier_name|default:"Unassigned" }}</td>
+                                <td>{{ cashier.trans_count }}</td>
+                                <td class="analytics-table-value">${{ cashier.total_gen|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="analytics-table-empty">No records.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </article>
+
+        <article class="report-card analytics-valuation-card">
+            <div class="analytics-valuation-mark">$</div>
+            <div class="analytics-card-head analytics-card-head-light">
+                <div>
+                    <span class="analytics-section-label analytics-section-label-success">Inventory Value</span>
+                    <h4>Asset valuation</h4>
+                </div>
+            </div>
+            <div class="analytics-valuation-list">
+                <div class="analytics-valuation-row">
+                    <span>Total Purchase Cost</span>
+                    <strong>${{ total_purchase_cost|floatformat:2 }}</strong>
+                </div>
+                <div class="analytics-valuation-row">
+                    <span>Total Retail Value</span>
+                    <strong>${{ total_retail_value|floatformat:2 }}</strong>
+                </div>
+                <div class="analytics-valuation-divider"></div>
+                <div class="analytics-valuation-row analytics-valuation-row-emphasis">
+                    <span>Potential Gross Profit</span>
+                    <strong>${{ potential_profit|floatformat:2 }}</strong>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="analytics-section">
+        <div class="supplier-ledger-header">
+            <div>
+                <span class="analytics-section-label">Supplier Invoices</span>
+                <h3>Accounts payable analysis</h3>
+            </div>
+            <form method="get" class="analytics-filter-form">
+                <input type="hidden" name="period" value="{{ current_period }}">
+                <label for="supplierFilter">Supplier</label>
+                <select id="supplierFilter" name="supplier" onchange="this.form.submit()">
+                    <option value="" {% if not supplier_filter %}selected{% endif %}>All suppliers</option>
+                    {% for sup in supplier_list %}
+                        <option value="{{ sup.id }}" {% if sup.id|stringformat:'s' == supplier_filter %}selected{% endif %}>{{ sup.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <article class="report-card ledger-section analytics-ledger-card">
+            <div class="supplier-pulse-top">
+                <div>
+                    <h3>Supplier Ledger Pulse</h3>
+                    <p>Track invoice creation, settlements, and the balance still sitting on your books for {{ supplier_scope_label|lower }}.</p>
+                </div>
+                <div class="supplier-pulse-liability">
+                    <span>Outstanding Liability</span>
+                    <strong>${{ supplier_current_debt|floatformat:2 }}</strong>
+                </div>
+            </div>
+
+            <div class="supplier-pulse-metrics">
+                <div class="analytics-mini-card">
+                    <span>Cumulative Purchases</span>
+                    <strong>${{ supplier_total_purchases|floatformat:2 }}</strong>
+                </div>
+                <div class="analytics-mini-card analytics-mini-card-success">
+                    <span>Settlement Ratio</span>
+                    <strong>
+                        {% if supplier_total_purchases > 0 %}
+                            {% widthratio supplier_current_debt supplier_total_purchases 100 %}% Owed
+                        {% else %}
+                            0% Owed
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="analytics-mini-card" >
+                    <span>Last Payment Node  </span>
+                    <strong>{% if supplier_last_payment_date %}{{ supplier_last_payment_date|date:"M d, Y" }}{% else %}No record{% endif %}</strong>
+                </div>
+            </div>
+
+            <div class="supplier-pulse-chart-card">
+                <div class="supplier-pulse-legend">
+                    <h4>Invoice Flow vs. Balance Aging</h4>
+                    <div class="analytics-legend-list">
+                        <span><i class="legend-swatch legend-swatch-debt"></i>New Debt</span>
+                        <span><i class="legend-swatch legend-swatch-paid"></i>Payments</span>
+                        <span><i class="legend-swatch legend-swatch-balance"></i>Balance Line</span>
+                    </div>
+                </div>
+                <div class="supplier-pulse-chart">
+                    {% if supplier_latest_invoices %}
+                        <canvas id="payablesPulseChart"></canvas>
+                    {% else %}
+                        <div class="analytics-empty-state">
+                            <p>No supplier invoice activity available for this selection.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="analytics-ledger-footer">
+                <div class="supplier-global-header">
+                    <h3>Global Ledger Analysis</h3>
+                    <span>Aggregated Snapshot</span>
+                </div>
+                <div class="supplier-global-grid">
+                    <div class="analytics-mini-card">
+                        <span>Invoices</span>
+                        <strong>{{ supplier_invoice_count }}</strong>
+                    </div>
+                    <div class="analytics-mini-card">
+                        <span>Average Invoice</span>
+                        <strong>${{ supplier_avg_invoice|floatformat:2 }}</strong>
+                    </div>
+                    <div class="analytics-mini-card">
+                        <span>Average Balance</span>
+                        <strong class="analytics-danger-value">${{ supplier_avg_balance|floatformat:2 }}</strong>
+                    </div>
+                    <div class="analytics-mini-card">
+                        <span>Scope</span>
+                        <strong>{{ supplier_scope_label }}</strong>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+        
+    </div>
+    
+</footer>
+</body>
+</html>

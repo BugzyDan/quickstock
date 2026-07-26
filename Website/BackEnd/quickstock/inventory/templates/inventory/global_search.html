@@ -1,0 +1,145 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Search | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/global_search.js' %}" defer></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-global-search">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="business-search-shell">
+    <section class="business-search-hero">
+        <div class="business-search-hero-copy">
+            <p class="business-search-kicker">Unified business search</p>
+            <h1>Search The Business</h1>
+            <p>Products, customers, sales, suppliers, movements, payments, locations, and operational history in one place.</p>
+        </div>
+        <div class="business-search-hero-meta">
+            <div class="business-search-hero-chip">ERP-style object search</div>
+            <div class="business-search-hero-chip">Cross-module visibility</div>
+            <div class="business-search-hero-chip">Inventory-first workflow</div>
+        </div>
+    </section>
+
+    <section class="business-search-surface">
+        <form method="get" class="business-search-form">
+            <label class="business-search-field business-search-field-query">
+                <span>Search Query</span>
+                <input type="text" name="q" value="{{ q }}" placeholder="Battery, John Brown, Warehouse A, receipt number, supplier, SKU..." autocomplete="off" autofocus>
+            </label>
+            <label class="business-search-field">
+                <span>Focus</span>
+                <select name="scope">
+                    {% for value, label in scope_options %}
+                        <option value="{{ value }}" {% if scope == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit" class="business-search-submit">Search</button>
+        </form>
+
+        {% if q %}
+            <div class="business-search-summary">
+                <div class="business-search-summary-total">
+                    <span>Total Matches</span>
+                    <strong>{{ total_count }}</strong>
+                </div>
+                <div class="business-search-summary-grid">
+                    {% for entry in section_counts %}
+                        {% if entry.count %}
+                            <div class="business-search-summary-card">
+                                <span>{{ entry.title }}</span>
+                                <strong>{{ entry.count }}</strong>
+                                <small>{{ entry.module }}</small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </section>
+
+    {% if q %}
+        {% if total_count == 0 %}
+            <section class="business-search-empty">
+                <h2>No matches</h2>
+                <p>No business objects matched "<strong>{{ q }}</strong>". Try a product name, customer, location, payment reference, SKU, or supplier.</p>
+            </section>
+        {% else %}
+            <section class="business-search-results">
+                {% for section in sections %}
+                    <article class="business-search-section">
+                        <div class="business-search-section-head">
+                            <div>
+                                <p class="business-search-section-module">{{ section.module }}</p>
+                                <h2>{{ section.title }}</h2>
+                                <p>{{ section.description }}</p>
+                            </div>
+                            <div class="business-search-section-count">{{ section.count }}</div>
+                        </div>
+
+                        <div class="business-search-record-grid">
+                            {% for item in section.items %}
+                                <a href="{{ item.url }}" class="business-search-record">
+                                    <div class="business-search-record-head">
+                                        <strong>{{ item.title }}</strong>
+                                        {% if item.status %}<span>{{ item.status }}</span>{% endif %}
+                                    </div>
+                                    {% if item.subtitle %}<p class="business-search-record-subtitle">{{ item.subtitle }}</p>{% endif %}
+                                    {% if item.meta %}<p class="business-search-record-meta">{{ item.meta }}</p>{% endif %}
+                                    {% if item.detail %}<p class="business-search-record-detail">{{ item.detail }}</p>{% endif %}
+                                    <div class="business-search-record-action">{{ item.action_label }}</div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% endif %}
+    {% else %}
+        <section class="business-search-empty business-search-empty-ideas">
+            <h2>Search business objects</h2>
+            <div class="business-search-idea-grid">
+                <div class="business-search-idea-card">
+                    <strong>Products</strong>
+                    <p>Stock, sales history, transfers, and receipts.</p>
+                </div>
+                <div class="business-search-idea-card">
+                    <strong>Customers</strong>
+                    <p>Profiles, invoices, payments, and balances.</p>
+                </div>
+                <div class="business-search-idea-card">
+                    <strong>Locations</strong>
+                    <p>Warehouse activity, transfers, and current stock.</p>
+                </div>
+                <div class="business-search-idea-card">
+                    <strong>Operations</strong>
+                    <p>Receipts, movements, purchase orders, and audit trails.</p>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+</main>
+
+<footer>
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>
+</body>
+</html>

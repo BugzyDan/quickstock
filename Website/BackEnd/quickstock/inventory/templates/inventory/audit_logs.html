@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Logs | QuickStock JA</title>
+  <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+  <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-audit-logs page-dashboard">
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+    <nav id="main-nav">
+        <a href="{% url 'dashboard' %}"
+           class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            Dashboard
+        </a>
+
+        {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+        <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="18"
+                 height="18"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </a>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h2 style="margin: 0;">Audit Logs</h2>
+                <p style="margin: 5px 0 0; color: var(--muted); font-size: 0.85rem;">System activity and security events.</p>
+            </div>
+            <div class="header-actions">
+                {% if request.user.is_superuser or request.user.profile.is_pro_active %}
+                    <a class="btn-outline btn" href="{% url 'export_audit_csv' %}?q={{ q|urlencode }}&action={{ action|urlencode }}&severity={{ severity|urlencode }}&from={{ return_source|urlencode }}">Export CSV</a>
+                {% endif %}
+                <a class="btn" href="{% url return_url_name %}">{{ return_label }}</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <form method="get" class="filters">
+                    <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search message or user...">
+                    <select name="action">
+                        <option value="">All Actions</option>
+                        <option value="login" {% if action == 'login' %}selected{% endif %}>Login</option>
+                        <option value="logout" {% if action == 'logout' %}selected{% endif %}>Logout</option>
+                        <option value="sale" {% if action == 'sale' %}selected{% endif %}>Sale</option>
+                        <option value="payment" {% if action == 'payment' %}selected{% endif %}>Payment</option>
+                        <option value="staff" {% if action == 'staff' %}selected{% endif %}>Staff</option>
+                        <option value="inventory" {% if action == 'inventory' %}selected{% endif %}>Inventory</option>
+                        <option value="supplier" {% if action == 'supplier' %}selected{% endif %}>Supplier</option>
+                        <option value="invoice" {% if action == 'invoice' %}selected{% endif %}>Invoice</option>
+                        <option value="settings" {% if action == 'settings' %}selected{% endif %}>Settings</option>
+                    </select>
+                    <select name="severity">
+                        <option value="">All Severities</option>
+                        <option value="info" {% if severity == 'info' %}selected{% endif %}>Info</option>
+                        <option value="warn" {% if severity == 'warn' %}selected{% endif %}>Warning</option>
+                        <option value="error" {% if severity == 'error' %}selected{% endif %}>Error</option>
+                    </select>
+                    <button type="submit" class="btn">Apply</button>
+                    <a href="{% url 'audit_logs' %}?from={{ return_source|urlencode }}" class="btn-outline btn">Clear</a>
+                </form>
+                <div class="badge">Total: {{ page_obj.paginator.count }}</div>
+            </div>
+
+            <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Severity</th>
+                        <th>Message</th>
+                        <th>Metadata</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
+                        <td>{{ log.user.username|default:"system" }}</td>
+                        <td><span class="badge">{{ log.action }}</span></td>
+                        <td>
+                            <span class="badge {% if log.severity == 'error' %}badge-error{% elif log.severity == 'warn' %}badge-warn{% else %}badge-info{% endif %}">
+                                {{ log.severity }}
+                            </span>
+                        </td>
+                        <td>{{ log.message }}</td>
+                        <td style="font-family: monospace; font-size: 0.8rem;">{{ log.metadata }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: var(--muted);">No logs found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pagination">
+                <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+                <div style="display: flex; gap: 10px;">
+                    {% if page_obj.has_previous %}
+                        <a class="btn-outline btn" href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&action={{ action|urlencode }}&severity={{ severity|urlencode }}&from={{ return_source|urlencode }}">← Prev</a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a class="btn-outline btn" href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&action={{ action|urlencode }}&severity={{ severity|urlencode }}&from={{ return_source|urlencode }}">Next →</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>

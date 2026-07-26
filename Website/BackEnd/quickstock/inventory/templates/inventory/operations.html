@@ -1,0 +1,150 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Operations</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-center">
+
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+    <nav id="main-nav">
+        <a href="{% url 'dashboard' %}"
+           class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            Dashboard
+        </a>
+
+        {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+        <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+            <svg xmlns="http://w3.org/2000/svg"
+                 width="18"
+                 height="18"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2.5"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </a>
+    </nav>
+
+    <main class="ops-wrap">
+        <section class="ops-hero ops-suite-hero">
+            <div class="ops-hero-copy">
+                <p class="ops-hero-kicker">Operations hub</p>
+                <h1>Operations Center</h1>
+                <p>Run closeout, balance the drawer, and track delivery movement from one coordinated workspace.</p>
+                <div class="ops-hero-tags">
+                    <span>Daily closeout</span>
+                    <span>Cash control</span>
+                    <span>Collection follow-up</span>
+                </div>
+                <div class="ops-hero-actions" aria-label="Primary operations actions">
+                    <a href="{% url 'daily_summary' %}" class="ops-hero-action ops-hero-action-primary">Start Closeout</a>
+                    <a href="{% url 'cash_reconciliation' %}" class="ops-hero-action">Balance Drawer</a>
+                </div>
+            </div>
+            <div class="ops-hero-status ops-hero-status-grid">
+                <div class="ops-status-chip">
+                    <span>Closeout path</span>
+                    <strong>3-step flow</strong>
+                    <small>Review activity, reconcile tender, confirm handoffs</small>
+                </div>
+                <div class="ops-status-chip">
+                    <span>Control mode</span>
+                    <strong>Daily audit</strong>
+                    <small>Built for opening-to-close supervision</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="ops-sequence" aria-label="Recommended operations sequence">
+            <div class="ops-sequence-copy">
+                <span>Recommended order</span>
+                <strong>Close the day with fewer loose ends.</strong>
+            </div>
+            <div class="ops-sequence-steps">
+                <span>1. Summary</span>
+                <span>2. Reconcile</span>
+                <span>3. Follow up</span>
+            </div>
+        </section>
+
+        <section class="ops-grid">
+            <article class="ops-card ops-card-primary">
+                <div class="ops-card-topline">
+                    <span class="ops-card-index">01</span>
+                    <span class="ops-card-eyebrow">Start here</span>
+                </div>
+                <h3>Daily Summary</h3>
+                <p class="desc">A consolidated operational snapshot for the day (high-level KPIs + alerts).</p>
+                <ul class="ops-card-points">
+                    <li>Review sales, expenses, and lodgements.</li>
+                    <li>Spot alerts before the closing handoff.</li>
+                </ul>
+                <div class="ops-card-footer">
+                    <span class="ops-card-meta">Leadership review</span>
+                    <a href="{% url 'daily_summary' %}" class="ops-card-action">Open Summary <span aria-hidden="true">-&gt;</span></a>
+                </div>
+            </article>
+
+            <article class="ops-card">
+                <div class="ops-card-topline">
+                    <span class="ops-card-index">02</span>
+                    <span class="ops-card-eyebrow">Audit drawer</span>
+                </div>
+                <h3>Cash Reconciliation</h3>
+                <p class="desc">Compare expected vs actual cash and track variance resolution workflow.</p>
+                <ul class="ops-card-points">
+                    <li>Edit counted cash and machine totals.</li>
+                    <li>Resolve variance before reporting close.</li>
+                </ul>
+                <div class="ops-card-footer">
+                    <span class="ops-card-meta">Drawer control</span>
+                    <a href="{% url 'cash_reconciliation' %}" class="ops-card-action">Open Reconciliation <span aria-hidden="true">-&gt;</span></a>
+                </div>
+            </article>
+
+            <article class="ops-card">
+                <div class="ops-card-topline">
+                    <span class="ops-card-index">03</span>
+                    <span class="ops-card-eyebrow">Track handoffs</span>
+                </div>
+                <h3>Deliveries & Collections</h3>
+                <p class="desc">Track delivery status and collection progress to reduce outstanding delays.</p>
+                <ul class="ops-card-points">
+                    <li>See delivered, collected, and awaiting lines.</li>
+                    <li>Keep customer pickup follow-up visible.</li>
+                </ul>
+                <div class="ops-card-footer">
+                    <span class="ops-card-meta">Movement follow-up</span>
+                    <a href="{% url 'deliveries_collections' %}" class="ops-card-action">Open Deliveries <span aria-hidden="true">-&gt;</span></a>
+                </div>
+            </article>
+        </section>
+
+        <div class="ops-note ops-note-panel">
+            <strong>Shift handoff cue</strong>
+            <span>Use this page as the closing checklist: review the day, balance the drawer, then confirm deliveries and collections before the next shift starts.</span>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

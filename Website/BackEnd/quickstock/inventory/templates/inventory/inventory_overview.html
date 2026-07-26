@@ -1,0 +1,410 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Overview | QuickStock JA POS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-inventory page-inventory-overview">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<div class="main-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="inventory-flash-message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="inventory-card">
+        <section class="inventory-hero">
+            <div class="inventory-hero-copy">
+                <p class="inventory-kicker">Movement register</p>
+                <h2 id="inventory-overview-all">Inventory Overview</h2>
+                <p class="inventory-subtitle">Track locally received goods, imported stock, transfers, delayed fulfillment, live stock on hand, and customer collections in one operational view.</p>
+            </div>
+            <div class="inventory-hero-metrics">
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Active Items</span>
+                    <strong class="inventory-metric-value">{{ total_items }}</strong>
+                    <span class="inventory-metric-note">Items across your catalogue</span>
+                </article>
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Locations</span>
+                    <strong class="inventory-metric-value">{{ total_locations }}</strong>
+                    <span class="inventory-metric-note">Branches in the network</span>
+                </article>
+                <article class="inventory-metric-card">
+                    <span class="inventory-metric-label">Completed Transfers</span>
+                    <strong class="inventory-metric-value">{{ transfer_in_rows|length }}</strong>
+                    <span class="inventory-metric-note">Recent inbound movement rows</span>
+                </article>
+            </div>
+        </section>
+
+        <nav class="inventory-overview-quick-nav" aria-label="Inventory overview sections">
+            <a href="#inventory-overview-all" class="inventory-overview-nav-chip is-active">All</a>
+            <a href="#inventory-overview-operations" class="inventory-overview-nav-chip">Operations</a>
+            <a href="#inventory-overview-receiving" class="inventory-overview-nav-chip">Receiving</a>
+            <a href="#inventory-overview-imports" class="inventory-overview-nav-chip">Imported Goods</a>
+            <a href="#inventory-overview-transfers" class="inventory-overview-nav-chip">Transfers</a>
+            <a href="#inventory-overview-collection" class="inventory-overview-nav-chip">Customer Collection</a>
+            <a href="#inventory-overview-categories" class="inventory-overview-nav-chip">Category Summary</a>
+        </nav>
+
+        <section class="inventory-overview-attention" aria-labelledby="inventory-overview-attention-title">
+            <div class="inventory-overview-attention-head">
+                <div>
+                    <span class="inventory-overview-section-kicker">Attention</span>
+                    <h3 id="inventory-overview-attention-title">Exceptions to Review</h3>
+                </div>
+                {% if attention_items %}
+                    <span class="inventory-overview-attention-count">{{ attention_items|length }} signal{{ attention_items|length|pluralize }}</span>
+                {% else %}
+                    <span class="inventory-overview-attention-count inventory-overview-attention-clear">All clear</span>
+                {% endif %}
+            </div>
+            {% if attention_items %}
+                <div class="inventory-overview-attention-grid">
+                    {% for item in attention_items %}
+                        <article class="inventory-overview-attention-item inventory-overview-attention-{{ item.tone }}">
+                            <span>{{ item.label }}</span>
+                            <strong>{{ item.value }}</strong>
+                            <p>{{ item.detail }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="inventory-overview-attention-empty" role="status">
+                    <strong>No urgent exceptions</strong>
+                    <span>Receiving, transfers, customer pickup, and depleted item checks are calm right now.</span>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="inventory-overview-timeline" aria-labelledby="inventory-overview-timeline-title">
+            <div class="inventory-toolbar-heading inventory-overview-timeline-head">
+                <span class="inventory-overview-section-kicker">Movement timeline</span>
+                <h3 id="inventory-overview-timeline-title">Recent Operational Flow</h3>
+                <p>A compact stream of the latest receipts, transfers, and customer fulfillment events.</p>
+            </div>
+            <div class="inventory-overview-timeline-list">
+                {% for row in movement_timeline_rows %}
+                    <article class="inventory-overview-timeline-row">
+                        <time datetime="{{ row.timestamp|date:'c' }}">{{ row.timestamp|date:"M j, g:i A" }}</time>
+                        <div class="inventory-overview-timeline-copy">
+                            <span>{{ row.type }}</span>
+                            <strong>{{ row.label }}</strong>
+                            <small>{{ row.reference }}</small>
+                        </div>
+                        <div class="inventory-overview-timeline-meta">
+                            <strong>{{ row.quantity }} unit{{ row.quantity|pluralize }}</strong>
+                            <span>{{ row.location_name }}</span>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="inventory-empty-state inventory-overview-empty-state" role="status">No movement events are available for the timeline yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="inventory-movement-shell" id="inventory-overview-operations">
+            <div class="inventory-toolbar-heading inventory-movement-head">
+                <h3>Inventory Operations Dashboard</h3>
+                <p>Track inventory movement the way the floor experiences it: receiving, transfers, delayed fulfillment, collected lines, and live stock on hand.</p>
+            </div>
+
+            <span id="inventory-overview-receiving" class="inventory-overview-section-anchor" aria-hidden="true"></span>
+            <div class="inventory-movement-grid">
+                <article class="inventory-movement-card">
+                    <div class="inventory-movement-title-row">
+                        <h4>Locally Received Goods</h4>
+                        <span class="inventory-movement-count">{{ local_received_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in local_received_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No locally received goods recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card" id="inventory-overview-imports">
+                    <div class="inventory-movement-title-row">
+                        <h4>Imported Goods</h4>
+                        <span class="inventory-movement-count">{{ imported_received_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in imported_received_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No receipts from international suppliers recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card" id="inventory-overview-transfers">
+                    <div class="inventory-movement-title-row">
+                        <div>
+                            <h4>Transfer In</h4>
+                            <p class="inventory-movement-scope">Into {{ transfer_location_name }}</p>
+                        </div>
+                        <span class="inventory-movement-count">{{ transfer_in_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in transfer_in_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No inbound transfers posted yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card">
+                    <div class="inventory-movement-title-row">
+                        <div>
+                            <h4>Transfer Out</h4>
+                            <p class="inventory-movement-scope">From {{ transfer_location_name }}</p>
+                        </div>
+                        <span class="inventory-movement-count">{{ transfer_out_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in transfer_out_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No outbound transfers or customer purchases posted yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card" id="inventory-overview-collection">
+                    <div class="inventory-movement-title-row">
+                        <h4>Delivered From Uncollected</h4>
+                        <span class="inventory-movement-count">{{ delivered_from_uncollected_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in delivered_from_uncollected_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No held items have been picked up yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card">
+                    <div class="inventory-movement-title-row">
+                        <h4>Remaining In Store</h4>
+                        <span class="inventory-movement-count">{{ remaining_in_store_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in remaining_in_store_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No fully paid customer items are waiting in store.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="inventory-movement-card">
+                    <div class="inventory-movement-title-row">
+                        <h4>Collected</h4>
+                        <span class="inventory-movement-count">{{ collected_rows|length }}</span>
+                    </div>
+                    <div class="inventory-movement-table-wrap">
+                        <table class="inventory-movement-table">
+                            <thead>
+                                <tr><th>Item</th><th>Qty</th><th>Location</th><th>Reference</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for row in collected_rows %}
+                                <tr><td>{{ row.item_name }}</td><td>{{ row.quantity }}</td><td>{{ row.location_name }}</td><td>{{ row.reference }}</td><td>{{ row.status }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="inventory-movement-empty">No same-time customer pickups recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="inventory-overview-categories" id="inventory-overview-categories">
+            <div class="inventory-overview-catalogue-head">
+                <div class="inventory-toolbar-heading inventory-overview-head">
+                    <h3>Catalogue by Category</h3>
+                    <p>Scan every active item, its location stock, and total units on hand within each category.</p>
+                </div>
+                <dl class="inventory-overview-summary" aria-label="Catalogue summary">
+                    <div class="inventory-overview-summary-item">
+                        <dt>Categories</dt>
+                        <dd>{{ total_categories }}</dd>
+                    </div>
+                    <div class="inventory-overview-summary-item">
+                        <dt>Catalogue items</dt>
+                        <dd>{{ total_items }}</dd>
+                    </div>
+                    <div class="inventory-overview-summary-item">
+                        <dt>Units on hand</dt>
+                        <dd>{{ total_inventory_units }}</dd>
+                    </div>
+                </dl>
+            </div>
+            {% if grouped_inventory %}
+                <div class="inventory-overview-category-controls" aria-label="Catalogue category controls">
+                    <button type="button" class="inventory-overview-category-control" data-category-action="expand">Expand All</button>
+                    <button type="button" class="inventory-overview-category-control" data-category-action="collapse">Collapse All</button>
+                </div>
+            {% endif %}
+
+            <div class="inventory-overview-category-grid">
+                {% for group in grouped_inventory %}
+                    <article class="inventory-overview-category-card">
+                        <header class="inventory-overview-category-title-row">
+                            <div class="inventory-overview-category-name">
+                                <span>Category</span>
+                                <h4>{{ group.category }}</h4>
+                            </div>
+                            <div class="inventory-overview-category-stats" aria-label="{{ group.category }} stock summary">
+                                <span class="inventory-overview-category-stat">
+                                    <strong>{{ group.item_count }}</strong>
+                                    <small>item{{ group.item_count|pluralize }}</small>
+                                </span>
+                                <span class="inventory-overview-category-stat inventory-overview-category-units">
+                                    <strong>{{ group.total_quantity }}</strong>
+                                    <small>unit{{ group.total_quantity|pluralize }}</small>
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                class="inventory-overview-category-toggle"
+                                aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                                aria-controls="inventory-category-panel-{{ forloop.counter }}"
+                                data-category-toggle>
+                                <span class="inventory-overview-toggle-text">{% if forloop.first %}Hide Items{% else %}Show Items{% endif %}</span>
+                                <span class="inventory-overview-toggle-icon" aria-hidden="true"></span>
+                            </button>
+                        </header>
+                        <div class="inventory-overview-item-list" id="inventory-category-panel-{{ forloop.counter }}"{% if not forloop.first %} hidden{% endif %}>
+                            <div class="inventory-overview-item-guide" aria-hidden="true">
+                                <span>Item / Location stock</span>
+                                <span>On hand</span>
+                            </div>
+                            {% for row in group.items %}
+                                <div class="inventory-overview-item-row">
+                                    <div class="inventory-overview-item-copy">
+                                        <strong>{{ row.name }}</strong>
+                                        <span>{{ row.brand|default:"No brand" }} · {{ row.sku }}</span>
+                                        <small>{{ row.locations }}</small>
+                                    </div>
+                                    <div class="inventory-overview-item-qty" aria-label="{{ row.quantity }} units on hand">
+                                        <strong>{{ row.quantity }}</strong>
+                                        <span>units</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="inventory-empty-state inventory-overview-empty-state" role="status">No inventory items available to group by category.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="action-footer">
+            <div class="inventory-footer-meta">
+                <span class="inventory-footer-label">Movement View</span>
+                <strong>Operations by entity</strong>
+            </div>
+            <div class="inventory-footer-actions">
+                <a href="{% url 'inventory' %}" class="btn btn-outline">INVENTORY ITEMS</a>
+                <a href="{% url 'transfer_stock' %}" class="btn btn-outline inventory-transfer-btn">TRANSFER STOCK</a>
+                <a href="{% url 'receive_stock' %}" class="btn btn-primary">RECEIVE STOCK</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="{% static 'inventory/js/inventory_overview.js' %}"></script>
+</body>
+
+</html>

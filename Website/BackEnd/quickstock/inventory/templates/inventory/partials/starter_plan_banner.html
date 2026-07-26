@@ -1,0 +1,17 @@
+{% if show_starter_banner %}
+<div class="starter-plan-banner" data-starter-plan-banner>
+    <div class="starter-plan-banner-copy">
+        <span class="starter-plan-banner-label">
+            Starter plan active: {{ starter_items_used }} / {{ starter_item_limit }} items used.
+        </span>
+        <span class="starter-plan-banner-status">
+            {% if starter_items_remaining > 0 %}
+                {{ starter_items_remaining }} items remaining.
+            {% else %}
+                Limit reached.
+            {% endif %}
+        </span>
+    </div>
+    <a href="{% url 'upgrade' %}" class="starter-plan-banner-link">Upgrade to PRO</a>
+</div>
+{% endif %}

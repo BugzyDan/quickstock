@@ -1,0 +1,156 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cash Reconciliation | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script></head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-cash-reconciliation page-operations-reconciliation">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="recon-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="recon-flash {{ message.tags|default:'success' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="ops-hero ops-suite-hero recon-suite-hero">
+        <div class="ops-hero-copy">
+            <h1>Cash Reconciliation</h1>
+            <p>Balance the drawer against expected totals, compare physical cash with card machines, and surface variance before closeout is finalized.</p>
+            <div class="ops-hero-tags">
+                <span>Expected: ${{ expected_reconciliation_total|floatformat:2 }}</span>
+                <span>Actual: ${{ actual_reconciliation_total|floatformat:2 }}</span>
+                <span>Variance: ${{ variance|floatformat:2 }}</span>
+            </div>
+        </div>
+        <div class="ops-hero-status ops-hero-status-grid">
+            <div class="ops-status-chip">
+                <span>Selected date</span>
+                <strong>{{ selected_date }}</strong>
+                <small>Current reconciliation period</small>
+            </div>
+            <div class="ops-status-chip">
+                <span>Audit status</span>
+                {% if variance == 0 or variance == "0" or variance == "0.00" %}
+                    <strong>Balanced</strong>
+                    <small>No variance detected</small>
+                {% else %}
+                    <strong>Review required</strong>
+                    <small>Variance needs resolution</small>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="recon-card">
+        <div class="recon-head">
+            <h2>Cash Reconciliation &amp; Drawer Count</h2>
+            <p>Formula: Expected Total = Cash Sales + Card Sales. Actual Total = Physical Cash + Card Machine Totals.</p>
+        </div>
+
+        <form method="get" action="{% url 'cash_reconciliation' %}" class="ops-suite-toolbar ops-suite-toolbar-inline recon-toolbar">
+            <label for="reconDate">Calendar Date</label>
+            <input id="reconDate" type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+            <button type="submit">View Reconciliation</button>
+        </form>
+
+        <form method="post" class="recon-grid">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_cash_count">
+            <div class="recon-table-wrap">
+                <table class="recon-table">
+                    <thead>
+                        <tr>
+                            <th>Denomination</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>$5000</td><td><input class="recon-count-input" type="number" name="qty_5000" min="0" value="{{ cash_count.qty_5000 }}"></td><td>${{ cash_count.total_5000|floatformat:2 }}</td></tr>
+                        <tr><td>$2000</td><td><input class="recon-count-input" type="number" name="qty_2000" min="0" value="{{ cash_count.qty_2000 }}"></td><td>${{ cash_count.total_2000|floatformat:2 }}</td></tr>
+                        <tr><td>$1000</td><td><input class="recon-count-input" type="number" name="qty_1000" min="0" value="{{ cash_count.qty_1000 }}"></td><td>${{ cash_count.total_1000|floatformat:2 }}</td></tr>
+                        <tr><td>$500</td><td><input class="recon-count-input" type="number" name="qty_500" min="0" value="{{ cash_count.qty_500 }}"></td><td>${{ cash_count.total_500|floatformat:2 }}</td></tr>
+                        <tr><td>$100</td><td><input class="recon-count-input" type="number" name="qty_100" min="0" value="{{ cash_count.qty_100 }}"></td><td>${{ cash_count.total_100|floatformat:2 }}</td></tr>
+                        <tr><td>$50</td><td><input class="recon-count-input" type="number" name="qty_50" min="0" value="{{ cash_count.qty_50 }}"></td><td>${{ cash_count.total_50|floatformat:2 }}</td></tr>
+                        <tr><td>$20</td><td><input class="recon-count-input" type="number" name="qty_20" min="0" value="{{ cash_count.qty_20 }}"></td><td>${{ cash_count.total_20|floatformat:2 }}</td></tr>
+                        <tr><td>$10</td><td><input class="recon-count-input" type="number" name="qty_10" min="0" value="{{ cash_count.qty_10 }}"></td><td>${{ cash_count.total_10|floatformat:2 }}</td></tr>
+                        <tr><td>$5</td><td><input class="recon-count-input" type="number" name="qty_5" min="0" value="{{ cash_count.qty_5 }}"></td><td>${{ cash_count.total_5|floatformat:2 }}</td></tr>
+                        <tr><td>$1</td><td><input class="recon-count-input" type="number" name="qty_1" min="0" value="{{ cash_count.qty_1 }}"></td><td>${{ cash_count.total_1|floatformat:2 }}</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Actual Physical Cash:</td>
+                            <td>${{ actual_cash|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <aside class="recon-summary">
+                <div class="recon-metric">
+                    <span class="recon-label">Expected Cash + Card</span>
+                    <div class="recon-value">${{ expected_reconciliation_total|floatformat:2 }}</div>
+                    <div class="recon-breakdown">
+                        Cash: ${{ expected_cash|floatformat:2 }}<br>
+                        Card: ${{ expected_card_amount|floatformat:2 }}
+                    </div>
+                </div>
+
+                <div class="recon-metric">
+                    <span class="recon-label">Actual Cash + Card</span>
+                    <div class="recon-value">${{ actual_reconciliation_total|floatformat:2 }}</div>
+                    <div class="recon-breakdown">
+                        Physical: ${{ actual_cash|floatformat:2 }}<br>
+                        <label for="reconNcb">NCB</label>
+                        <input id="reconNcb" class="recon-card-input" type="number" name="ncb_machine_amount" min="0" step="0.01" value="{{ ncb_machine_amount|floatformat:2 }}">
+                        <label for="reconBns" class="recon-card-label">BNS</label>
+                        <input id="reconBns" class="recon-card-input" type="number" name="bns_machine_amount" min="0" step="0.01" value="{{ bns_machine_amount|floatformat:2 }}">
+                    </div>
+                </div>
+
+                <div class="recon-metric">
+                    <span class="recon-label">Variance</span>
+                    <div class="recon-value is-variance">${{ variance|floatformat:2 }}</div>
+                </div>
+
+                <div class="recon-status">
+                    <span class="recon-label">Audit Status</span>
+                    {% if variance == 0 or variance == "0" or variance == "0.00" %}
+                        <div class="recon-status-badge is-success">Balanced - No Variance</div>
+                    {% else %}
+                        <div class="recon-status-badge is-danger">Variance Detected - Review &amp; Resolve</div>
+                    {% endif %}
+                </div>
+
+                <div class="recon-actions">
+                    <button type="submit" class="qs-btn qs-btn-primary">Save Cash Count</button>
+                </div>
+            </aside>
+        </form>
+    </section>
+</main>
+
+<footer>
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,143 @@
+{% with current=request.resolver_match.url_name %}
+
+<!-- INVENTORY -->
+<div
+    class="sales-nav-item{% if current == 'inventory' or current == 'inventory_view' or current == 'inventory_overview' or current == 'inventory_add' or current == 'inventory_update' or current == 'add_item' or current == 'receive_stock' or current == 'transfer_stock' or current == 'locations' or current == 'add_location' or current == 'delete_location' %} is-active{% endif %}"
+    data-sales-nav-item
+>
+    <button
+        type="button"
+        class="sales-nav-trigger{% if current == 'inventory' or current == 'inventory_view' or current == 'inventory_overview' or current == 'inventory_add' or current == 'inventory_update' or current == 'add_item' or current == 'receive_stock' or current == 'transfer_stock' or current == 'locations' or current == 'add_location' or current == 'delete_location' %} active{% endif %}"
+        data-sales-nav-trigger
+        aria-expanded="false"
+    >
+        Inventory <span class="sales-nav-caret"></span>
+    </button>
+
+    <div class="sales-nav-menu" data-sales-nav-menu>
+        <a href="{% url 'inventory' %}"
+           class="{% if current == 'inventory' or current == 'inventory_view' or current == 'inventory_add' or current == 'inventory_update' or current == 'add_item' %}active{% endif %}">
+            Inventory Control
+        </a>
+
+        <a href="{% url 'inventory_overview' %}"
+           class="{% if current == 'inventory_overview' %}active{% endif %}">
+            Inventory Overview
+        </a>
+
+        <a href="{% url 'receive_stock' %}"
+           class="{% if current == 'receive_stock' %}active{% endif %}">
+            Receive Stock
+        </a>
+
+        <a href="{% url 'transfer_stock' %}"
+           class="{% if current == 'transfer_stock' %}active{% endif %}">
+            Transfer Stock
+        </a>
+
+        <a href="{% url 'locations' %}"
+           class="{% if current == 'locations' or current == 'add_location' or current == 'delete_location' %}active{% endif %}">
+            Locations
+        </a>
+    </div>
+</div>
+
+<!-- Operations -->
+
+<div
+    class="sales-nav-item{% if current == 'operations' or current == 'daily_summary' or current == 'daily_summary_date' or current == 'cash_reconciliation' or current == 'cash_reconciliation_date' or current == 'deliveries_collections' %} is-active{% endif %}"
+    data-sales-nav-item
+>
+    <button
+        type="button"
+        class="sales-nav-trigger{% if current == 'operations' or current == 'daily_summary' or current == 'daily_summary_date' or current == 'cash_reconciliation' or current == 'cash_reconciliation_date' or current == 'deliveries_collections' %} active{% endif %}"
+        data-sales-nav-trigger
+        aria-expanded="false"
+    >
+        Operations <span class="sales-nav-caret"></span>
+    </button>
+
+    <div class="sales-nav-menu" data-sales-nav-menu>
+        <a href="{% url 'operations' %}"
+           class="{% if current == 'operations' %}active{% endif %}">
+            Operations Center
+        </a>
+
+        <a href="{% url 'daily_summary' %}"
+           class="{% if current == 'daily_summary' or current == 'daily_summary_date' %}active{% endif %}">
+            Daily Summary
+        </a>
+
+        <a href="{% url 'cash_reconciliation' %}"
+           class="{% if current == 'cash_reconciliation' or current == 'cash_reconciliation_date' %}active{% endif %}">
+            Cash Reconciliation
+        </a>
+
+    
+        <a href="{% url 'deliveries_collections' %}"
+           class="{% if current == 'deliveries_collections' %}active{% endif %}">
+            Deliveries Collections
+        </a>
+    </div>
+</div>
+
+<!-- SALES -->
+<div
+    class="sales-nav-item{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} is-active{% endif %}"
+    data-sales-nav-item
+>
+    <button
+        type="button"
+        class="sales-nav-trigger{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} active{% endif %}"
+        data-sales-nav-trigger
+        aria-expanded="false"
+    >
+        Sales <span class="sales-nav-caret"></span>
+    </button>
+
+    <div class="sales-nav-menu" data-sales-nav-menu>
+        <a href="{% url 'sales' %}"
+           class="{% if current == 'sales' or current == 'cash_register' %}active{% endif %}">
+            Cash Register
+        </a>
+
+        <a href="{% url 'sales_quotation_list' %}"
+           class="{% if current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' %}active{% endif %}">
+            Quotations
+        </a>
+
+        <a href="{% url 'sales_invoice_list' %}"
+           class="{% if current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %}active{% endif %}">
+            Invoices
+        </a>
+    </div>
+</div>
+
+<!-- CONTACTS -->
+<div
+    class="sales-nav-item contacts-nav-item{% if current == 'customer_list' or current == 'customer_detail' or current == 'add_customer' or current == 'edit_customer' or current == 'delete_customer' or current == 'supplier_list' or current == 'supplier_add' or current == 'supplier_delete' or current == 'supplier_ledger' or current == 'add_invoice' %} is-active{% endif %}"
+    data-sales-nav-item
+>
+    <button
+        type="button"
+        class="sales-nav-trigger{% if current == 'customer_list' or current == 'customer_detail' or current == 'add_customer' or current == 'edit_customer' or current == 'delete_customer' or current == 'supplier_list' or current == 'supplier_add' or current == 'supplier_edit' or current == 'supplier_delete' or current == 'supplier_ledger' or current == 'add_invoice' %} active{% endif %}"
+        data-sales-nav-trigger
+        aria-expanded="false"
+    >
+        Contacts <span class="sales-nav-caret"></span>
+    </button>
+
+    <div class="sales-nav-menu" data-sales-nav-menu>
+        <a href="{% url 'customer_list' %}"
+           class="{% if current == 'customer_list' or current == 'customer_detail' or current == 'add_customer' or current == 'edit_customer' or current == 'delete_customer' %}active{% endif %}">
+            Customers
+        </a>
+
+        <a href="{% url 'supplier_list' %}"
+           class="{% if current == 'supplier_list' or current == 'supplier_add' or current == 'supplier_edit' or current == 'supplier_delete' or current == 'supplier_ledger' or current == 'add_invoice' %}active{% endif %}">
+            Suppliers
+        </a>
+    </div>
+</div>
+
+{% endwith %}

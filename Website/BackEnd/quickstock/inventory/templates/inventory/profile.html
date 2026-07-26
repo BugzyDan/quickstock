@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QuickStock JA | Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=profile-about-support-nav-lower-2-20260721">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+
+
+
+
+</head>
+
+<body class="page-profile" style="min-height:100vh; display:flex; flex-direction:column; padding:0;">
+
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True logout_only_operator_menu=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search" aria-label="Search the business">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main style="flex:1 0 auto; width:100%; padding-bottom: 60px;">
+    <div class="profile-container">
+        {% if messages %}
+            <div class="profile-message-stack">
+                {% for message in messages %}
+                    <div class="profile-flash profile-flash-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="profile-card profile-card-hero">
+            <div class="profile-header">
+                <div class="avatar-circle">{{ request.user.username|slice:":1"|upper }}</div>
+                <div class="user-meta">
+                    <span class="profile-eyebrow">Operator Identity</span>
+                    <h2>{{ request.user.username }}</h2>
+                    <span class="role-pill">{{ profile.get_role_display|default:profile.role|default:"Verified Operator" }}</span>
+                </div>
+                <div class="profile-health-pill">
+                    {% if profile.is_pro_active %}
+                        Pro Ready
+                    {% elif profile.is_trial_active %}
+                        Trial Active
+                    {% else %}
+                        Review Plan
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stats-row profile-stats-row">
+                <div class="stat-item">
+                    <div class="stat-label">Member Since</div>
+                    <div class="stat-value">{{ request.user.date_joined|date:"F j, Y" }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">System Tier</div>
+                    <div class="stat-value">
+                        {{ display_tier }}
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Renewal Window</div>
+                    <div class="stat-value">
+                        {% if renewal_date %}
+                            {{ renewal_date|date:"M d, Y" }}
+                        {% else %}
+                            Open
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Workspace</div>
+                    <div class="stat-value">
+                        {{ profile.default_location.name|default:"Unassigned" }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="performance-section profile-health-card">
+                <div class="profile-health-header">
+                    <span>Workspace Health</span>
+                    <span class="profile-health-status">
+                        {% if profile.status %}
+                            {{ profile.status|upper }}
+                        {% else %}
+                            ACTIVE
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill"></div>
+                </div>
+                <p class="profile-health-copy">
+                    Tenant-scoped data, secured account controls, and default-location routing are active for this operator.
+                </p>
+            </div>
+        </section>
+
+        <section class="profile-card">
+            <div class="profile-section-heading">
+                <div>
+                    <span class="profile-eyebrow">Account Details</span>
+                    <h3>Identity & access</h3>
+                </div>
+                <a href="{% url 'settings' %}" class="profile-inline-link">Open settings</a>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Network Email</span>
+                <span class="detail-value">{{ request.user.email|default:"Not added yet" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Current Session</span>
+                <span class="detail-value">{% now "H:i" %} GMT-5</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Plan Owner</span>
+                <span class="detail-value">
+                    {% if profile.parent_admin %}
+                        {{ profile.parent_admin.user.username }}
+                    {% else %}
+                        {{ request.user.username }}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Account Status</span>
+                <span class="detail-value">{{ profile.status|default:"active"|title }}</span>
+            </div>
+
+            <form method="POST" class="location-form">
+                {% csrf_token %}
+                <label for="default_location">Assigned Default Branch</label>
+                <select name="default_location" id="default_location">
+                    <option value="">Manual Selection Required</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc.id }}" {% if profile and profile.default_location and profile.default_location.id == loc.id %}selected{% endif %}>
+                            {{ loc.name }}
+                        </option>
+                    {% endfor %}
+            </form>
+        </section>
+
+        <section class="profile-card">
+            <div class="profile-section-heading">
+                <div>
+                    <span class="profile-eyebrow">Audit & Security</span>
+                    <h3>Last Login Security Activity</h3>
+                </div>
+                <span class="profile-inline-link" style="color: var(--success-green); font-weight: 800; font-size: 0.75rem; border: 1px solid var(--success-green); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Verified</span>
+            </div>
+            {% if recent_login_activity %}
+                <div class="detail-row" style="border-bottom: 1px solid var(--border-light); padding: 12px 0;">
+                    <span class="detail-label">Verification Timestamp</span>
+                    <span class="detail-value" style="font-weight: 700;">{{ recent_login_activity.created_at|date:"D, M d, Y" }} at {{ recent_login_activity.created_at|date:"h:i A" }}</span>
+                </div>
+                <div class="detail-row" style="border-bottom: 1px solid var(--border-light); padding: 12px 0;">
+                    <span class="detail-label">Device Descriptor</span>
+                    <span class="detail-value" style="font-weight: 700;">{{ recent_login_activity.display_device }}</span>
+                </div>
+                <div class="detail-row" style="border-bottom: 1px solid var(--border-light); padding: 12px 0;">
+                    <span class="detail-label">IP Address</span>
+                    <span class="detail-value" style="font-weight: 700;">{{ recent_login_activity.display_ip }}</span>
+                </div>
+                <div class="detail-row" style="padding: 12px 0;">
+                    <span class="detail-label">Session Guard Note</span>
+                    <span class="detail-value" style="color: var(--text-muted);">{{ recent_login_activity.message }}</span>
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem; padding: 12px 0;">
+                    No successful login logs recorded for this account.
+                </p>
+            {% endif %}
+        </section>
+
+        <section class="profile-card">
+            <div class="profile-section-heading">
+                <div>
+                    <span class="profile-eyebrow">Brand Output</span>
+                    <h3>Receipt and business identity</h3>
+                </div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Brand Name</span>
+                <span class="detail-value">{{ profile.receipt_brand_name|default:request.user.username }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Contact Phone</span>
+                <span class="detail-value">{{ profile.receipt_contact_phone|default:"Not added yet" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Contact Email</span>
+                <span class="detail-value">{{ profile.receipt_contact_email|default:request.user.email|default:"Not added yet" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ profile.receipt_address|default:"No receipt address configured" }}</span>
+            </div>
+        </section>
+
+        <section class="profile-card">
+            <div class="action-grid">
+                <a href="{% url 'dashboard' %}" class="btn-action btn-primary">Dashboard</a>
+                <a href="{% url 'settings' %}" class="btn-action btn-outline">System Settings</a>
+                <a href="{% url 'change_password' %}?from=profile" class="btn-action btn-outline">Change Password</a>
+                <a href="{% url 'support' %}" class="btn-action btn-outline">Support</a>
+            </div>
+
+            <form action="{% url 'logout' %}" method="post" class="profile-logout-form">
+                {% csrf_token %}
+                <button type="submit" class="terminate-link">Terminate Session</button>
+            </form>
+        </section>
+
+    </div>
+</main>
+
+<footer class="brand-footer">
+    <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+</footer>
+
+</body>
+
+</html>

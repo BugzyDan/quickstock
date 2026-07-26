@@ -1,0 +1,215 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickStock JA | Customer Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    
+    <script src="{% static 'inventory/js/customer_detail.js' %}" defer></script>
+</head>
+
+
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-customer-detail">
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+  <nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+    <main class="customer-detail-shell">
+        <section class="customer-profile-hero">
+            <div class="customer-profile-hero-copy">
+                <div class="customer-edit-breadcrumbs customer-profile-breadcrumbs">
+                    <a href="{% url 'customer_list' %}" class="row-link">Customer Directory</a>
+                    <span>/</span>
+                    <span>Profile</span>
+                </div>
+                <p class="customer-profile-kicker">Account intelligence</p>
+                <h2>{{ customer.name }}</h2>
+                <p class="customer-profile-subtitle">
+                    Keep this customer ready for quotations, invoices, follow-ups, and standing account instructions without losing note history.
+                </p>
+                <div class="customer-profile-contact-row">
+                    <span>{{ customer.email|default:"No email set" }}</span>
+                    <span>{{ customer.phone|default:"No phone set" }}</span>
+                </div>
+            </div>
+            <div class="customer-profile-hero-side">
+                <div class="customer-profile-hero-stat">
+                    <span class="customer-profile-hero-label">Account credit</span>
+                    <strong>${{ customer.credit_balance|floatformat:2 }}</strong>
+                    <small>Stored from invoice overpayments and ready for the next sale.</small>
+                </div>
+                <div class="customer-profile-action-row">
+                    <a href="{% url 'edit_customer' customer.id %}" class="customer-profile-action customer-profile-action-primary">Edit Customer</a>
+                    <a href="{% url 'customer_list' %}" class="customer-profile-action customer-profile-action-secondary">Back to Directory</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="customer-profile-stats">
+            <div class="customer-profile-stat-card">
+                <span class="customer-profile-stat-label">Joined</span>
+                <div class="customer-profile-stat-value customer-profile-stat-value-compact">{{ customer.created_at|date:"M d, Y" }}</div>
+            </div>
+            <div class="customer-profile-stat-card">
+                <span class="customer-profile-stat-label">Quotations</span>
+                <div class="customer-profile-stat-value">{{ customer_total_quotations }}</div>
+                <div class="customer-profile-stat-meta">Total value: ${{ customer_total_quote_amount|floatformat:2 }}</div>
+            </div>
+            <div class="customer-profile-stat-card">
+                <span class="customer-profile-stat-label">Invoices</span>
+                <div class="customer-profile-stat-value">{{ customer_total_invoices }}</div>
+                <div class="customer-profile-stat-meta">Total value: ${{ customer_total_invoice_amount|floatformat:2 }}</div>
+            </div>
+            <div class="customer-profile-stat-card">
+                <span class="customer-profile-stat-label">Note Entries</span>
+                <div class="customer-profile-stat-value">{{ note_entries|length }}</div>
+                <div class="customer-profile-stat-meta">Separate dated notes saved to this account timeline.</div>
+            </div>
+            <div class="customer-profile-stat-card customer-profile-stat-card-wide">
+                <span class="customer-profile-stat-label">Physical Address</span>
+                <div class="customer-profile-notes-copy">{{ customer.physical_address|default:"No physical address recorded." }}</div>
+            </div>
+            <div class="customer-profile-stat-card customer-profile-stat-card-wide">
+                <span class="customer-profile-stat-label">Business Address</span>
+                <div class="customer-profile-notes-copy">{{ customer.business_address|default:"No business address recorded." }}</div>
+            </div>
+            <div class="customer-profile-stat-card customer-profile-stat-card-wide">
+                <span class="customer-profile-stat-label">Profile Notes</span>
+                <div class="customer-profile-notes-copy">{{ customer.notes|default:"No profile notes added." }}</div>
+            </div>
+        </section>
+
+        <section class="panel customer-note-history-panel customer-records-panel">
+            <div class="panel-header">
+                <div>
+                    <h3>Account Notes</h3>
+                    <p>Saved note entries stay separate from the standing account profile notes above.</p>
+                </div>
+                <a href="{% url 'edit_customer' customer.id %}" class="row-link">Add Note</a>
+            </div>
+            {% if note_entries %}
+                <div class="customer-note-list customer-note-list-detail">
+                    {% for note in note_entries %}
+                        <article class="customer-note-entry">
+                            <div class="customer-note-meta">
+                                <strong>{{ note.created_by.get_full_name|default:note.created_by.username|default:"QuickStock" }}</strong>
+                                <span>{{ note.created_at|date:"M d, Y g:i A" }}</span>
+                            </div>
+                            <p>{{ note.body|linebreaksbr }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="customer-note-empty">
+                    <strong>No dated notes saved yet.</strong>
+                    <p>Use the edit page to start building a running note history for this customer.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="panel customer-records-panel">
+            <div class="panel-header">
+                <div>
+                    <h3>Quotations</h3>
+                    <p>All quotations linked to this customer.</p>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Quote</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Valid Until</th>
+                            <th>Total</th>
+                            <th>Open</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quotation in quotations %}
+                            <tr>
+                                <td>{{ quotation.quote_no }}</td>
+                                <td><span class="badge badge-{{ quotation.status }}">{{ quotation.get_status_display }}</span></td>
+                                <td>{{ quotation.created_at|date:"M d, Y" }}</td>
+                                <td>{{ quotation.valid_until|date:"M d, Y"|default:"-" }}</td>
+                                <td>${{ quotation.total_amount|floatformat:2 }}</td>
+                                <td><a class="row-link" href="{% url 'sales_quotation_detail' quotation.id %}">View</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="customer-profile-empty-row">No quotations found for this customer.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel customer-records-panel">
+            <div class="panel-header">
+                <div>
+                    <h3>Invoices</h3>
+                    <p>All invoices linked to this customer.</p>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Status</th>
+                            <th>Issued</th>
+                            <th>Location</th>
+                            <th>Total</th>
+                            <th>Open</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                            <tr>
+                                <td>{{ invoice.invoice_no }}</td>
+                                <td><span class="badge badge-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
+                                <td>{{ invoice.issued_at|date:"M d, Y" }}</td>
+                                <td>{{ invoice.location.name|default:"-" }}</td>
+                                <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                                <td><a class="row-link" href="{% url 'sales_invoice_detail' invoice.id %}">View</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="customer-profile-empty-row">No invoices found for this customer.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 QuickStock JA. Customer records are encrypted and private.</p>
+    </footer>
+</body>
+</html>

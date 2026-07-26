@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+myenv/
+.venv/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+Website/BackEnd/quickstock/.env
+Website/BackEnd/quickstock/.env.*
+
+# Django/runtime artifacts
+db.sqlite3
+*.sqlite3
+*.sqlite3-*
+*.log
+media/
+staticfiles/
+Website/BackEnd/*.sqlite3
+Website/BackEnd/*.sqlite3-*
+Website/BackEnd/media/
+Website/BackEnd/staticfiles/
+Website/BackEnd/quickstock/staticfiles/
+
+# Build/packaging output
+dist/
+build/
+*.spec
+Desktop_UI/dist/
+Desktop_UI/build/
+Desktop_UI/dist/Passwords.docx
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.codex
+
+# Desktop/UI runtime caches
+Desktop_UI/.env
+Desktop_UI/.env.*
+Desktop_UI/__pycache__/
+Desktop_UI/src/**/__pycache__/
+Desktop_UI/tests/**/__pycache__/

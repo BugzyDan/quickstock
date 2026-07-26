@@ -1,0 +1,31 @@
+# QuickStock JA - Python Dependencies
+# Copyright 2026 QuickStock JA - All Rights Reserved
+
+# GUI Framework
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# Environment & Configuration
+python-dotenv>=1.0.0
+
+# HTTP Requests (for API sync)
+requests>=2.31.0
+
+# Security & Encryption
+cryptography>=41.0.0
+passlib>=1.7.4
+keyring>=24.2.0
+
+# Utilities
+python-dateutil>=2.8.2
+
+# Optional: For Excel export
+openpyxl>=3.1.2
+pandas>=2.0.0
+
+# Optional: For barcode support
+python-barcode>=0.15.1
+
+# Development & Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0

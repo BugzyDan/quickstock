@@ -1,0 +1,107 @@
+{% load static %}
+<header>
+
+    <a href="{% url 'index' %}" class="logo-area">
+    <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo-img" alt="QuickStock Logo">
+    
+    <div class="logo-text-group">
+        <span class="logo-wordmark">
+            <span class="logo-quick">Quick</span> <span class="logo-stock">Stock</span> <span class="logo-ja">JA</span>
+        </span>
+        <p class="slogan">Inventory Simplified</p>
+    </div>
+
+    </a>
+
+    <div class="user-info app-user-info">
+        <div class="system-live-pill app-system-live-pill">
+            <span class="pulse-wrapper">
+                <span style="position: absolute; height: 100%; width: 100%; border-radius: 50%; background: var(--success-green); opacity: 0.75; animation: pulse 2s infinite;"></span>
+                <span style="position: relative; height: 8px; width: 8px; border-radius: 50%; background: var(--success-green);"></span>
+            </span>
+            <span class="pill-text">System Live</span>
+        </div>
+
+        {% if request.user.is_authenticated %}
+        <div class="user-dropdown-container">
+            <button id="userMenuBtn" type="button" class="app-user-menu-btn">
+                <div class="operator-meta">
+                    <div class="label">Operator</div>
+                    <div class="name">{{ request.user.username|upper }}</div>
+                </div>
+                {% if request.user.profile.plan_badge_label %}
+                <span style="color: {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#d97706{% else %}#64748b{% endif %}; font-size: 0.55rem; font-weight: 900; background: {% if request.user.profile.plan_badge_state == 'pro' %}rgba(0, 208, 132, 0.15){% elif request.user.profile.plan_badge_state == 'trial' %}rgba(245, 158, 11, 0.15){% else %}rgba(100, 116, 139, 0.1){% endif %}; padding: 2px 6px; border-radius: 4px; border: 1px solid {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#f59e0b{% else %}#cbd5e1{% endif %};">{{ request.user.profile.plan_badge_label }}</span>
+                {% endif %}
+                <div style="width: 26px; height: 26px; background: var(--primary-blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: white;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+            </button>
+            
+            <div id="userDropdown" class="dropdown-menu">
+                <a href="/profile/" class="dropdown-link">My Profile</a>
+                <a href="/settings/" class="dropdown-link">Settings</a>
+                <a href="/logout/" class="dropdown-link" style="color: var(--danger-red); border-bottom: none; font-weight: 800;">Logout</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if show_nav_toggle %}
+    <button type="button" class="nav-toggle mobile-nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+    {% endif %}
+</header>
+
+<div id="globalSearchOverlay" class="global-search-overlay" hidden></div>
+<aside
+    id="globalSearchPanel"
+    class="global-search-panel"
+    aria-hidden="true"
+    data-api-url="{% url 'global_search_panel_api' %}"
+    data-full-search-url="{% url 'global_search' %}"
+>
+    <div class="global-search-panel-head">
+        <h3>Search The Business</h3>
+        <button type="button" id="globalSearchClose" class="global-search-close" aria-label="Close search panel">×</button>
+    </div>
+
+    <form id="globalSearchPanelForm" class="global-search-panel-form">
+        <input
+            id="globalSearchPanelInput"
+            type="text"
+            name="q"
+            placeholder="Product, customer, receipt, supplier, warehouse, payment, SKU..."
+            autocomplete="off"
+        >
+        <select id="globalSearchPanelScope" name="scope">
+            <option value="all">All Business Objects</option>
+            <option value="products">Products</option>
+            <option value="customers">Customers</option>
+            <option value="sales">Sales</option>
+            <option value="invoices">Invoices</option>
+            <option value="suppliers">Suppliers</option>
+            <option value="purchase_orders">Purchase Orders</option>
+            <option value="movements">Inventory Movements</option>
+            <option value="locations">Locations</option>
+            <option value="transfers">Transfers</option>
+            <option value="receipts">Stock Receipts</option>
+            <option value="payments">Payments</option>
+            <option value="administration">Administration</option>
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="globalSearchPanelMeta" class="global-search-panel-meta"></div>
+    <div id="globalSearchPanelResults" class="global-search-panel-results">
+        <p class="global-search-placeholder">Start typing to search products, customers, sales, movements, suppliers, and payments.</p>
+    </div>
+
+    <div class="global-search-panel-foot">
+        <a id="globalSearchOpenFull" href="{% url 'global_search' %}">Open full search page</a>
+    </div>
+</aside>
+
+<script src="{% static 'inventory/js/global_search_panel.js' %}?v=mobile-search-nav-fix-1" defer></script>
+<script src="{% static 'inventory/js/sales_nav_menu.js' %}" defer></script>
+<script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>

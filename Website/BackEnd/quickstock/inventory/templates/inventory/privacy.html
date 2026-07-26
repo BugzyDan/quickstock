@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | QuickStock JA</title>
+  <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+
+<body class="page-privacy">
+  <div class="page-wrapper">
+        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+
+    <main class="main-text">
+      <section class="policy-header">
+        <h2>Privacy Policy</h2>
+        <p class="last-updated"><strong>Effective Date:</strong> February 19, 2026</p>
+      </section>
+
+      <p>QuickStock JA (“we,” “us,” or “the Developer”) is committed to protecting the privacy of your business and your customers. This policy outlines how we handle personal data in compliance with the <strong>Jamaica Data Protection Act (JDPA)</strong>.</p>
+
+      <h3>1. Roles under the JDPA</h3>
+      <p>For the purposes of the Data Protection Act:</p>
+      <ul>
+        <li><strong>The Subscriber (You):</strong> Is the <strong>Data Controller</strong>. You decide what customer data to collect and input into QuickStock JA.</li>
+        <li><strong>QuickStock JA:</strong> Is the <strong>Data Processor</strong>. We only process the data according to your instructions to provide the inventory service.</li>
+      </ul>
+
+      <h3>2. Information We Process</h3>
+      <p>We collect and process the following categories of information:</p>
+      <ul>
+        <li><strong>Account Data:</strong> Name, business address, TRN (if provided), and email address.</li>
+        <li><strong>Customer Data:</strong> Names, phone numbers, email addresses, physical addresses, and business addresses of your retail customers.</li>
+        <li><strong>Transaction Data:</strong> Inventory levels, sales records, and pricing information.</li>
+        <li><strong>Payment Metadata:</strong> We process subscription status via WiPay. <strong>Note:</strong> QuickStock JA does not store credit card numbers or bank details on our servers.</li>
+      </ul>
+
+      <h3>3. Purpose of Processing</h3>
+      <p>We use this data solely to:</p>
+      <ul>
+        <li>Facilitate inventory management and sales tracking for your business.</li>
+        <li>Manage your subscription and process payments via WiPay.</li>
+        <li>Maintain system security and prevent fraudulent activity.</li>
+        <li>Comply with legal and regulatory obligations in Jamaica.</li>
+      </ul>
+
+      <h3>4. Data Security & Storage</h3>
+      <p>Your data is stored on secure cloud infrastructure (DigitalOcean). We utilize:</p>
+      <ul>
+        <li><strong>Encryption:</strong> All data in transit is protected via HTTPS/TLS encryption.</li>
+        <li><strong>Access Control:</strong> Strict administrative protocols ensure only authorized technical staff can access the database for maintenance.</li>
+        <li><strong>Integrity:</strong> Regular backups are performed to prevent data loss.</li>
+      </ul>
+
+      <h3>5. Your Rights & Data Portability</h3>
+      <p>Under the JDPA, you have the right to:</p>
+      <ul>
+        <li><strong>Access & Export:</strong> Request a copy of your business data in a structured format.</li>
+        <li><strong>Correction:</strong> Update inaccurate information within your dashboard.</li>
+        <li><strong>Erasure:</strong> Request the deletion of your data upon account termination (subject to a 30-day cooling-off period).</li>
+      </ul>
+
+      <h3>6. Breach Notification</h3>
+      <p>In the unlikely event of a data breach that poses a risk to the rights and freedoms of individuals, we will notify you and the Office of the Information Commissioner (OIC) within 72 hours of becoming aware of the incident.</p>
+
+      <section class="contact-info">
+        <h3>Privacy Contact</h3>
+        <p>If you have questions regarding your data or wish to exercise your rights, contact our Data Privacy Lead at: <br>
+        <a href="mailto:support@quickstockja.com">support@quickstockja.com</a></p>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+
+  </div>
+  
+</body>
+</html>

@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deliveries & Collections | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-deliveries">
+    {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
+    <nav id="main-nav">
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+        {% include 'inventory/partials/app_shell_nav.html' %}
+        {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+        <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </a>
+    </nav>
+
+    <main class="ops-wrap">
+        <section class="ops-hero ops-suite-hero">
+            <div class="ops-hero-copy">
+                <p class="ops-hero-kicker">Field movement</p>
+                <h1>Deliveries & Collections</h1>
+                <p>Track later pickups, same-time collections, and paid goods still held at {{ collection_location_name }} for {{ report_date }}.</p>
+                <div class="ops-hero-tags">
+                    <span>{{ delivered_total_quantity }} units picked up after hold</span>
+                    <span>{{ collected_total_quantity }} units collected same time</span>
+                    <span>{{ remaining_total_quantity }} units remaining in store</span>
+                </div>
+            </div>
+            <div class="ops-hero-status ops-hero-status-grid">
+                <div class="ops-status-chip">
+                    <span>Delivered From Uncollected</span>
+                    <strong>{{ delivered_total_quantity }}</strong>
+                    <small>Held goods picked up on the selected date</small>
+                </div>
+                <div class="ops-status-chip">
+                    <span>Remaining In Store</span>
+                    <strong>{{ remaining_total_quantity }}</strong>
+                    <small>Fully paid goods awaiting customer pickup</small>
+                </div>
+            </div>
+        </section>
+
+        <form method="get" action="{% url 'deliveries_collections' %}" class="ops-suite-toolbar ops-suite-toolbar-inline">
+            <label for="deliveryDate">Calendar Date</label>
+            <input id="deliveryDate" type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+            <button type="submit">View Activity</button>
+        </form>
+
+        <section class="ops-grid">
+            <div class="ops-card ops-card-primary">
+                <h3>Delivered From Uncollected</h3>
+                <p class="desc">Paid items held in store and picked up on the selected day.</p>
+                <div class="ops-card-list">
+                    {% for group in delivered_today_grouped %}
+                        <div class="ops-category-group">
+                            <h4>{{ group.category }}</h4>
+                            {% for row in group.items %}
+                                <div class="data-row"><span>{{ row.name }}</span><strong>{{ row.quantity }}</strong></div>
+                            {% endfor %}
+                        </div>
+                    {% empty %}
+                        <p class="desc">No held items were picked up on this date.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="ops-card">
+                <h3>Collected Same Time</h3>
+                <p class="desc">Items the customer paid for and picked up immediately.</p>
+                <div class="ops-card-list">
+                    {% for group in collected_by_client_grouped %}
+                        <div class="ops-category-group">
+                            <h4>{{ group.category }}</h4>
+                            {% for row in group.items %}
+                                <div class="data-row"><span>{{ row.name }}</span><strong>{{ row.quantity }}</strong></div>
+                            {% endfor %}
+                        </div>
+                    {% empty %}
+                        <p class="desc">No same-time pickups were recorded for this date.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="ops-card">
+                <h3>Remaining In Store</h3>
+                <p class="desc">Fully paid items deliberately held for later customer pickup.</p>
+                <div class="ops-collection-order-list">
+                    {% for order in remaining_in_store_orders %}
+                        <article class="ops-collection-order">
+                            <div class="ops-collection-order-head">
+                                <div>
+                                    <strong>{{ order.invoice.invoice_no }}</strong>
+                                    <span>{% if order.invoice.customer %}{{ order.invoice.customer.name }}{% else %}Walk-in / Unassigned{% endif %}</span>
+                                </div>
+                                <span>{{ order.total_quantity }} unit{{ order.total_quantity|pluralize }}</span>
+                            </div>
+                            <p>{{ order.invoice.location.name|default:"Unassigned" }} · Held since {{ order.held_since|date:"M d, Y H:i" }}</p>
+                            <div class="ops-collection-order-items">
+                                {% for item in order.items %}
+                                    <span>{{ item.name }} × {{ item.quantity }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="ops-collection-order-actions">
+                                <a href="{% url 'sales_invoice_detail' order.invoice.id %}" class="qs-btn qs-btn-secondary">Open Invoice</a>
+                                {% if order.can_mark_collected %}
+                                <form method="post" action="{% url 'sales_invoice_mark_collected' order.invoice.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="qs-btn qs-btn-primary">Mark Picked Up</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% empty %}
+                        <p class="desc">No fully paid customer items are waiting in store.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 QuickStock JA. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ receipt_number }} | QuickStock JA</title>
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    {% if auto_print %}
+    <script>
+        window.addEventListener("load", function () {
+            window.print();
+        });
+    </script>
+    {% endif %}
+</head>
+<body class="page-receipt">
+    <div class="receipt-page-shell">
+        <div class="receipt-toolbar no-print">
+            <div class="receipt-toolbar-left">
+                <a href="{% url 'sales_history' %}" class="receipt-toolbar-link">Back to Sales History</a>
+                <a href="{% url 'cash_register' %}" class="receipt-toolbar-link">New Sale</a>
+            </div>
+            <div class="receipt-toolbar-actions">
+                <a href="{% url 'receipt_print' sale.id %}" class="receipt-toolbar-btn">Print</a>
+                <a href="{% url 'receipt_download_pdf' sale.id %}" class="receipt-toolbar-btn">Download PDF</a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="receipt-flash-stack no-print">
+            {% for message in messages %}
+            <div class="receipt-flash receipt-flash-{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <main class="receipt-card-xero">
+            <header class="receipt-hero">
+                <div class="receipt-brand-block">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" alt="{{ brand_name }}" class="receipt-brand-logo">
+                    {% endif %}
+                    <div>
+                        <p class="receipt-eyebrow">Completed Receipt</p>
+                        <h1>{{ brand_name }}</h1>
+                        <div class="receipt-brand-meta">
+                            {% if brand_address %}<span>{{ brand_address }}</span>{% endif %}
+                            {% if brand_phone %}<span>{{ brand_phone }}</span>{% endif %}
+                            {% if brand_email %}<span>{{ brand_email }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="receipt-status-panel">
+                    <span class="receipt-status-badge status-{{ sale.receipt_status }}">{{ sale.get_receipt_status_display }}</span>
+                    <div class="receipt-hero-total">{{ grand_total_display }}</div>
+                    <p>Receipt #{{ receipt_number }}</p>
+                </div>
+            </header>
+
+            <section class="receipt-meta-grid">
+                <div class="receipt-meta-card">
+                    <span class="receipt-meta-label">Issued</span>
+                    <strong>{{ sale.timestamp|date:"M d, Y" }}</strong>
+                    <small>{{ sale.timestamp|date:"h:i A" }}</small>
+                </div>
+                <div class="receipt-meta-card">
+                    <span class="receipt-meta-label">Cashier</span>
+                    <strong>{{ sale.cashier.username|default:"Deleted User" }}</strong>
+                    <small>{{ sale.get_tender_display }}</small>
+                </div>
+                <div class="receipt-meta-card">
+                    <span class="receipt-meta-label">Location</span>
+                    <strong>{{ sale.location.name|default:"Not assigned" }}</strong>
+                    <small>{{ sale.payment_reference|default:"No payment reference" }}</small>
+                </div>
+                <div class="receipt-meta-card">
+                    <span class="receipt-meta-label">Revision</span>
+                    <strong>v{{ sale.revision_number }}</strong>
+                    <small>{% if sale.previous_revision_id %}Corrected receipt{% else %}Original issue{% endif %}</small>
+                </div>
+            </section>
+
+            <section class="receipt-layout-grid">
+                <div class="receipt-main-column">
+                    <section class="receipt-section">
+                        <div class="receipt-section-head">
+                            <h2>Items</h2>
+                            <span>{{ receipt_items|length }} line{{ receipt_items|length|pluralize }}</span>
+                        </div>
+                        <div class="receipt-line-table-wrap">
+                            <table class="receipt-line-table">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Qty</th>
+                                        <th>Unit</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in receipt_items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.item_name }}</strong>
+                                            {% if item.description %}
+                                            <div class="receipt-line-description">{{ item.description }}</div>
+                                            {% endif %}
+                                            <div class="receipt-line-description">{{ item.line_meta }}</div>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price_display }}</td>
+                                        <td>{{ item.line_total_display }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="receipt-empty-row">No items were stored on this receipt.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="receipt-section">
+                        <div class="receipt-section-head">
+                            <h2>Notes</h2>
+                            <span>{% if sale.notes %}Saved with receipt{% else %}No note added{% endif %}</span>
+                        </div>
+                        <div class="receipt-note-block">
+                            {{ sale.notes|default:"No receipt note has been recorded for this sale."|linebreaksbr }}
+                        </div>
+                    </section>
+
+                    <section class="receipt-section">
+                        <div class="receipt-section-head">
+                            <h2>Revision History</h2>
+                            <span>{{ receipt_revisions|length }} correction{{ receipt_revisions|length|pluralize }}</span>
+                        </div>
+                        <div class="receipt-revision-list">
+                            {% for revision in receipt_revisions %}
+                            <article class="receipt-revision-card">
+                                <div class="receipt-revision-topline">
+                                    <strong>Revision {{ revision.revision_number }}</strong>
+                                    <span>{{ revision.created_at|date:"M d, Y h:i A" }}</span>
+                                </div>
+                                <p>{{ revision.reason }}</p>
+                                <div class="receipt-revision-meta">
+                                    <span>Edited by {{ revision.edited_by.username|default:"Unknown user" }}</span>
+                                    <span>Discount {{ revision.before_data.discount }} -> {{ revision.after_data.discount }}</span>
+                                    <span>Total {{ revision.before_data.total_price }} -> {{ revision.after_data.total_price }}</span>
+                                </div>
+                            </article>
+                            {% empty %}
+                            <div class="receipt-empty-state">No corrections have been recorded yet.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="receipt-side-column">
+                    <section class="receipt-section receipt-summary-panel">
+                        <div class="receipt-section-head">
+                            <h2>Summary</h2>
+                            <span>{{ tax_label }} included</span>
+                        </div>
+                        <div class="receipt-summary-row"><span>Subtotal</span><strong>{{ subtotal_display }}</strong></div>
+                        <div class="receipt-summary-row"><span>{{ tax_label }}</span><strong>{{ tax_amount_display }}</strong></div>
+                        <div class="receipt-summary-row"><span>Discount</span><strong>-{{ discount_display }}</strong></div>
+                        <div class="receipt-summary-row receipt-summary-total"><span>Total</span><strong>{{ grand_total_display }}</strong></div>
+                        <div class="receipt-summary-row"><span>Amount Paid:</span><strong>{{ amount_paid_display }}</strong></div>
+                        <div class="receipt-summary-row"><span>Change Given:</span><strong>{{ change_due_display }}</strong></div>
+                    </section>
+
+                    <section class="receipt-section">
+                        <div class="receipt-section-head">
+                            <h2>Customer</h2>
+                            <span>{% if sale.customer_name %}Assigned{% else %}Walk-in{% endif %}</span>
+                        </div>
+                        <div class="receipt-contact-list">
+                            <div><span>Name</span><strong>{{ sale.customer_name|default:"Walk-in customer" }}</strong></div>
+                            <div><span>Email</span><strong>{{ sale.customer_email|default:"Not captured" }}</strong></div>
+                            <div><span>Phone</span><strong>{{ sale.customer_phone|default:"Not captured" }}</strong></div>
+                        </div>
+                    </section>
+
+                    <section class="receipt-section no-print">
+                        <div class="receipt-section-head">
+                            <h2>Email Receipt</h2>
+                            <span>Cashier and above</span>
+                        </div>
+                        {% if can_email_receipt %}
+                        <form method="post" action="{% url 'receipt_email' sale.id %}" class="receipt-inline-form">
+                            {% csrf_token %}
+                            <label for="recipient_email">Recipient Email</label>
+                            <input id="recipient_email" type="email" name="recipient_email" value="{{ sale.customer_email|default:'' }}" placeholder="customer@example.com">
+                            <button type="submit" class="receipt-action-btn">Send Receipt</button>
+                        </form>
+                        {% endif %}
+                        <div class="receipt-log-stack">
+                            {% for email_log in email_logs %}
+                            <div class="receipt-log-row">
+                                <strong>{{ email_log.recipient_email }}</strong>
+                                <span>{{ email_log.status|title }} • {{ email_log.sent_at|date:"M d, h:i A" }}</span>
+                            </div>
+                            {% empty %}
+                            <div class="receipt-empty-state">No email deliveries recorded yet.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    {% if can_edit_receipt %}
+                    <section class="receipt-section no-print">
+                        <div class="receipt-section-head">
+                            <h2>Edit Receipt</h2>
+                            <span>Manager and admin</span>
+                        </div>
+                        <form method="post" action="{% url 'receipt_edit' sale.id %}" class="receipt-inline-form receipt-edit-form">
+                            {% csrf_token %}
+                            <label for="customer_name">Customer Name</label>
+                            <input id="customer_name" type="text" name="customer_name" value="{{ sale.customer_name|default:'' }}">
+
+                            <label for="customer_email_edit">Customer Email</label>
+                            <input id="customer_email_edit" type="email" name="customer_email" value="{{ sale.customer_email|default:'' }}">
+
+                            <label for="customer_phone">Customer Phone</label>
+                            <input id="customer_phone" type="text" name="customer_phone" value="{{ sale.customer_phone|default:'' }}">
+
+                            <label for="payment_reference">Payment Reference</label>
+                            <input id="payment_reference" type="text" name="payment_reference" value="{{ sale.payment_reference|default:'' }}">
+
+                            <label for="discount">Discount</label>
+                            <input id="discount" type="number" name="discount" step="0.01" min="0" value="{{ sale.discount|floatformat:2 }}">
+
+                            <label for="amount_paid">Amount Paid</label>
+                            <input id="amount_paid" type="number" name="amount_paid" step="0.01" min="0" value="{{ sale.amount_paid|floatformat:2 }}">
+
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" name="notes" rows="4">{{ sale.notes|default:'' }}</textarea>
+
+                            <label for="edit_reason">Edit Reason</label>
+                            <textarea id="edit_reason" name="edit_reason" rows="3" required placeholder="Explain why this correction is required."></textarea>
+
+                            <button type="submit" class="receipt-action-btn">Save Revision</button>
+                        </form>
+                    </section>
+                    {% endif %}
+
+                    {% if can_void_receipt %}
+                    <section class="receipt-section no-print">
+                        <div class="receipt-section-head">
+                            <h2>Void Receipt</h2>
+                            <span>Admin only</span>
+                        </div>
+                        <form method="post" action="{% url 'receipt_void' sale.id %}" class="receipt-inline-form">
+                            {% csrf_token %}
+                            <label for="void_reason">Required Reason</label>
+                            <textarea id="void_reason" name="void_reason" rows="3" required placeholder="State why this receipt is being voided."></textarea>
+                            <button type="submit" class="receipt-action-btn receipt-danger-btn">Void Receipt</button>
+                        </form>
+                    </section>
+                    {% endif %}
+                </aside>
+            </section>
+
+            <footer class="receipt-bottom-note">
+                <p>Thank you for choosing {{ thank_brand }}.</p>
+                <p>Print-friendly receipt generated by QuickStock JA.</p>
+                {% if sale.receipt_status == "voided" and sale.void_reason %}
+                <p class="receipt-void-copy">Voided: {{ sale.void_reason }}</p>
+                {% endif %}
+            </footer>
+        </main>
+    </div>
+<script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
+</body>
+</html>

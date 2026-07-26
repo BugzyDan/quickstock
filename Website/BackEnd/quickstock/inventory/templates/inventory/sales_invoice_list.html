@@ -1,0 +1,193 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales Invoices | QuickStock JA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-document-email-1">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-invoice-list page-supplier-list">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="sales-page-main ops-shell" style="padding-bottom: 56px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="qs-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="sales-page-head ops-hero ops-hero-sales">
+        <div class="ops-hero-copy">
+            <p class="ops-kicker">Sales desk</p>
+            <h1 class="sales-page-title">Sales Invoices</h1>
+            <p class="sales-page-subtitle">Create invoices from existing quotations or directly from inventory.</p>
+            <div class="sales-hero-details">
+                <div class="ops-chip-row">
+                    <span class="ops-chip">Issued vs paid</span>
+                    <span class="ops-chip">Customer lookup</span>
+                    <span class="ops-chip">Payment workflow</span>
+                </div>
+                <div class="sales-hero-meta">
+                    <strong>{{ invoice_summary.visible_count }} visible record{{ invoice_summary.visible_count|pluralize }}</strong>
+                    <span>Use a quotation for a faster billing handoff or start fresh from inventory.</span>
+                </div>
+            </div>
+        </div>
+        <div class="ops-actions sales-head-actions-compact">
+            <a href="{% url 'sales_invoice_create' %}?source=scratch" class="qs-btn qs-btn-primary sales-action-primary">+ New Invoice</a>
+            <a href="{% url 'sales_invoice_create' %}?source=quotation" class="sales-hero-secondary-link">Use Existing Quotation</a>
+        </div>
+    </section>
+
+    <section class="summary-grid sales-kpi-grid" aria-label="Invoice performance summary">
+        <div class="card col-3 sales-kpi-card">
+            <h3>Visible Invoices</h3>
+            <div class="data-row total"><span>Total</span><span>{{ invoice_summary.visible_count }}</span></div>
+            <div class="data-row"><span>From quotations</span><strong>{{ invoice_summary.quotation_backed_count }}</strong></div>
+            <div class="data-row"><span>Direct invoices</span><strong>{{ invoice_summary.direct_count }}</strong></div>
+        </div>
+        <div class="card col-3 sales-kpi-card">
+            <h3>Status Mix</h3>
+            <div class="data-row"><span>Issued</span><strong>{{ invoice_summary.issued_count }}</strong></div>
+            <div class="data-row"><span>Paid</span><strong>{{ invoice_summary.paid_count }}</strong></div>
+            <div class="data-row"><span>Void</span><strong>{{ invoice_summary.void_count }}</strong></div>
+        </div>
+        <div class="card col-3 sales-kpi-card sales-kpi-card-value">
+            <h3>Money In</h3>
+            <div class="data-row"><span>Paid total</span><strong>${{ invoice_summary.paid_total|floatformat:2 }}</strong></div>
+            <div class="data-row"><span>Open balance</span><strong style="color:#ea580c;">${{ invoice_summary.outstanding_total|floatformat:2 }}</strong></div>
+        </div>
+        <div class="card col-3 sales-kpi-card">
+            <h3>Document Value</h3>
+            <div class="data-row total"><span>Net total</span><span>${{ invoice_summary.effective_total|floatformat:2 }}</span></div>
+            <div class="data-row"><span>Payment tools</span><strong>{% if payments_enabled %}Enabled{% else %}Quick mark-paid only{% endif %}</strong></div>
+        </div>
+    </section>
+
+    <!-- Modern Filtering Interface -->
+    <form method="get" class="sales-filter-wrap-premium ops-toolbar ops-toolbar-inline">
+        <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search invoice #, quotation #, customer name, phone, or email...">
+        <select name="status">
+            <option value="">All Statuses</option>
+            <option value="issued" {% if status == 'issued' %}selected{% endif %}>Issued</option>
+            <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+            <option value="void" {% if status == 'void' %}selected{% endif %}>Void</option>
+        </select>
+        <button type="submit" class="qs-btn qs-btn-secondary sales-filter-submit">Filter</button>
+    </form>
+
+    <!-- Main Data Segment Card -->
+    <section class="sales-card ops-surface-card">
+        <div class="sales-table-wrap">
+            <table class="sales-table-premium" >
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Quote #</th>
+                        <th>Customer</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Pickup</th>
+                        <th>Issued</th>
+                        <th>Total</th>
+                        <th class="sales-table-action-heading">Actions</th>
+                    </tr>
+                </thead>
+                
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td class="invoice-bold-txt">{{ invoice.invoice_no|default:invoice.id }}</td>
+                        <td>{% if invoice.quotation_id %}{{ invoice.quotation.quote_no }}{% else %}<span style="color:var(--qs-text-muted); font-size:0.85rem;">Direct Invoice</span>{% endif %}</td>
+                        <td>{% if invoice.customer %}{{ invoice.customer.name }}{% else %}<span style="color:var(--qs-text-muted);">Walk-in / Unassigned</span>{% endif %}</td>
+                        <td>{{ invoice.location.name|default:"--" }}</td>
+                        <td><span class="sales-chip status-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
+                        <td><span class="sales-chip sales-pickup-list-status sales-pickup-list-status-{{ invoice.collection_status }}">{{ invoice.get_collection_status_display }}</span></td>
+                        <td>{{ invoice.issued_at|date:"M d, Y H:i" }}</td>
+                        <td class="invoice-bold-txt" style="color: var(--qs-primary);">
+                            ${{ invoice.effective_total_amount|floatformat:2 }}
+                            {% if invoice.credit_note_total_amount > 0 %}
+                                <div style="margin-top:4px; color:#b91c1c; font-size:0.72rem; font-weight:700;">Credit notes: ${{ invoice.credit_note_total_amount|floatformat:2 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="sales-table-actions">
+                            <a href="{% url 'sales_invoice_detail' invoice.id %}" class="action-link-premium">Open</a>
+                            {% if can_email_sales_documents and invoice.status != 'void' %}
+                                <span class="sales-list-email-control">
+                                    <span class="sales-action-separator" aria-hidden="true">|</span>
+                                    <a href="{% url 'sales_invoice_detail' invoice.id %}?email=1#sales-document-email" class="action-link-premium sales-list-email-action" aria-label="Review email delivery for invoice {{ invoice.invoice_no|default:invoice.id }}">Email</a>
+                                </span>
+                            {% endif %}
+                            {% if invoice.status == 'issued' %}
+                                <span class="sales-action-separator" aria-hidden="true">|</span>
+                                {% if can_manage_all_invoice_locations or invoice.location_id == invoice_action_location_id %}
+                                    {% if payments_enabled %}
+                                        <a href="{% url 'sales_invoice_payment' invoice.id %}" class="action-link-premium">Record Payment</a>
+                                    {% else %}
+                                        <form method="post" action="{% url 'sales_invoice_mark_paid' invoice.id %}" class="sales-inline-mark-paid-form">
+                                            {% csrf_token %}
+                                            <select name="pickup_status" aria-label="Pickup outcome for {{ invoice.invoice_no }}" required>
+                                                <option value="collected_now">Collected same time</option>
+                                                <option value="leave_in_store">Remaining in store</option>
+                                            </select>
+                                            <button type="submit" class="action-link-premium" style="border:0; background:transparent; padding:0; cursor:pointer;">Mark Paid</button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="sales-location-action-note">Switch location to collect</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="sales-empty-state">
+                            <strong>No invoices match this view.</strong>
+                            <span>Use an existing quotation or create a direct invoice from inventory to get started.</span>
+                            <a href="{% url 'sales_invoice_create' %}?source=scratch" class="qs-btn qs-btn-primary">Create Invoice</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-meta" style="padding: 16px 24px; text-align: center; font-size: 0.85rem; color: var(--qs-text-muted);">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+</body>
+</html>
