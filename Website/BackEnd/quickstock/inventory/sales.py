@@ -60,9 +60,14 @@ def finalize_sale(
             next_receipt_no = last_sale.receipt_no + 1
 
         cashier_profile = getattr(cashier, "profile", None) or UserProfile.for_user(cashier)
+        cashier_owner = cashier_profile.effective_owner
+        if cashier_owner.id != owner.id:
+            raise SaleWorkflowError("Cashier belongs to another tenant.", status=403)
+        if location.owner_id != owner.id:
+            raise SaleWorkflowError("Sale location belongs to another tenant.", status=403)
 
         sale = Sale.objects.create(
-            owner=cashier_profile.effective_owner,
+            owner=owner,
             cashier=cashier,
             shift=shift,
             location=location,
@@ -89,6 +94,12 @@ def finalize_sale(
             qty = int(quantity)
             price = Decimal(str(unit_price))
 
+            if item.owner_id != owner.id:
+                raise SaleWorkflowError(f"{item.name} belongs to another tenant.", status=403)
+            if stock_record.item_id != item.id:
+                raise SaleWorkflowError(f"Stock record does not match {item.name}.", status=400)
+            if stock_record.location_id != location.id:
+                raise SaleWorkflowError(f"{item.name} stock does not belong to {location.name}.", status=400)
             if qty <= 0:
                 raise SaleWorkflowError(f"Invalid quantity for {item.name}.")
             if price <= 0:

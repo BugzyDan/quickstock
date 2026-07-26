@@ -54,6 +54,7 @@ from .models import (
     UserVerification,
 )
 from .signals import create_user_verification, send_welcome_email
+from .sales import SaleWorkflowError, finalize_sale
 from .views import DOCUMENT_META_PREFIX, _compose_document_notes, _daily_reconciliation_context
 
 
@@ -2483,6 +2484,57 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertEqual(sale.subtotal, Decimal("400.00"))
         self.assertEqual(sale.gct_amount, Decimal("60.00"))
         self.assertEqual(sale.total_price, Decimal("450.00"))
+
+    def test_finalize_sale_rejects_stock_from_wrong_location_atomically(self):
+        owner = self._make_user("finalize-location-owner")
+        sale_location = self._make_location(owner, "Main Branch")
+        other_location = self._make_location(owner, "Warehouse")
+        shift = self._open_shift(owner, sale_location)
+        item = self._make_item(owner, sku="FINALIZE-WRONG-LOCATION", price="100.00", quantity=5)
+        wrong_stock = StockRecord.objects.create(item=item, location=other_location, quantity=5)
+
+        with self.assertRaises(SaleWorkflowError) as raised:
+            finalize_sale(
+                owner=owner,
+                cashier=owner,
+                location=sale_location,
+                shift=shift,
+                tender="cash",
+                line_items=[(item, wrong_stock, 1, item.price)],
+            )
+
+        self.assertIn("stock does not belong", raised.exception.message)
+        self.assertFalse(Sale.objects.filter(owner=owner).exists())
+        self.assertFalse(SaleItem.objects.exists())
+        self.assertEqual(StockRecord.objects.get(pk=wrong_stock.pk).quantity, 5)
+        shift.refresh_from_db()
+        self.assertEqual(shift.total_sales, Decimal("0.00"))
+
+    def test_finalize_sale_rejects_cross_tenant_item_atomically(self):
+        owner = self._make_user("finalize-tenant-owner")
+        other_owner = self._make_user("finalize-tenant-other")
+        location = self._make_location(owner, "Main Branch")
+        shift = self._open_shift(owner, location)
+        owner_item = self._make_item(owner, sku="FINALIZE-OWNER-ITEM", price="100.00", quantity=5)
+        foreign_item = self._make_item(other_owner, sku="FINALIZE-FOREIGN-ITEM", price="100.00", quantity=5)
+        owner_stock = StockRecord.objects.create(item=owner_item, location=location, quantity=5)
+
+        with self.assertRaises(SaleWorkflowError) as raised:
+            finalize_sale(
+                owner=owner,
+                cashier=owner,
+                location=location,
+                shift=shift,
+                tender="cash",
+                line_items=[(foreign_item, owner_stock, 1, foreign_item.price)],
+            )
+
+        self.assertIn("belongs to another tenant", raised.exception.message)
+        self.assertFalse(Sale.objects.filter(owner=owner).exists())
+        self.assertFalse(SaleItem.objects.exists())
+        self.assertEqual(StockRecord.objects.get(pk=owner_stock.pk).quantity, 5)
+        shift.refresh_from_db()
+        self.assertEqual(shift.total_sales, Decimal("0.00"))
 
     def test_api_sales_rolls_back_when_stock_is_insufficient(self):
         owner = self._make_user("rollback-owner")
