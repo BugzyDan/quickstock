@@ -2448,6 +2448,61 @@ class WeekTwoSalesIntegrityTests(TestCase):
             is_taxable=is_taxable,
         )
 
+    def test_customer_pos_receipt_and_history_views_require_allowed_roles(self):
+        owner = self._make_user("authz-role-owner")
+        profile = UserProfile.for_user(owner)
+        profile.role = "inventory_clerk"
+        profile.save(update_fields=["role"])
+        location = self._make_location(owner, "Main Branch")
+        customer = Customer.objects.create(owner=owner, name="Role Scoped Customer")
+        sale = Sale.objects.create(owner=owner, cashier=owner, location=location, total_price=Decimal("10.00"))
+
+        self.client.force_login(owner)
+        blocked_gets = (
+            reverse("customer_list"),
+            reverse("customer_detail", args=[customer.pk]),
+            reverse("pos_items"),
+            reverse("pos_item_lookup") + "?q=ANY",
+            reverse("view_receipt", args=[sale.pk]),
+            reverse("sales_history"),
+        )
+        for url in blocked_gets:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302, url)
+            self.assertIn(reverse("dashboard"), response["Location"])
+
+        delete_response = self.client.post(reverse("delete_customer", args=[customer.pk]))
+        self.assertEqual(delete_response.status_code, 302)
+        self.assertIn(reverse("dashboard"), delete_response["Location"])
+
+    def test_sales_history_is_scoped_by_sale_owner(self):
+        owner = self._make_user("history-scope-owner")
+        other_owner = self._make_user("history-scope-other")
+        owner_location = self._make_location(owner, "Main Branch")
+        other_location = self._make_location(other_owner, "Other Branch")
+        owner_sale = Sale.objects.create(
+            owner=owner,
+            cashier=owner,
+            location=owner_location,
+            receipt_no=101,
+            total_price=Decimal("10.00"),
+        )
+        other_sale = Sale.objects.create(
+            owner=other_owner,
+            cashier=other_owner,
+            location=other_location,
+            receipt_no=202,
+            total_price=Decimal("20.00"),
+        )
+
+        self.client.force_login(owner)
+        response = self.client.get(reverse("sales_history"))
+
+        self.assertEqual(response.status_code, 200)
+        sales = list(response.context["sales"])
+        self.assertIn(owner_sale, sales)
+        self.assertNotIn(other_sale, sales)
+
 
     def test_api_sales_creates_sale_atomically_and_deducts_stock(self):
         owner = self._make_user("sales-owner")

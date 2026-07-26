@@ -2732,6 +2732,7 @@ from django.shortcuts import redirect
 from .forms import CustomerForm
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def add_customer(request):
     owner = _inventory_owner_for_user(request.user)
     if not owner:
@@ -2760,6 +2761,7 @@ from .models import Customer
 from .forms import CustomerForm  # Ensure you have a CustomerForm defined
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def edit_customer(request, pk):
     customer = get_object_or_404(_customer_queryset_for_user(request.user), pk=pk)
     note_entries = customer.note_entries.select_related("created_by").all()
@@ -2790,6 +2792,7 @@ def edit_customer(request, pk):
     return render(request, 'inventory/edit_customer.html', context)
 
 @login_required
+@role_required(["admin", "manager"])
 def delete_customer(request, pk):
     customer = get_object_or_404(_customer_queryset_for_user(request.user), pk=pk)
     if request.method == 'POST':
@@ -5029,6 +5032,7 @@ def transfer_stock_view(request):
 
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def customer_list(request):
     query = request.GET.get('q', '')
     customers = _customer_queryset_for_user(request.user)
@@ -6732,6 +6736,7 @@ def cash_register(request):
     )
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def pos_items(request):
     """Return JSON list of POS items for the current user (location-aware)."""
     profile = UserProfile.objects.select_related("default_location").get(user=request.user)
@@ -6750,6 +6755,7 @@ def pos_items(request):
     return JsonResponse({"items": data})
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def pos_item_lookup(request):
     """Lookup a single item by SKU for fast barcode scans (location-aware for cashiers)."""
     code = (request.GET.get("q") or "").strip()
@@ -6778,6 +6784,7 @@ def pos_item_lookup(request):
 
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def jamdex_checkout(request):
     """
     Initiate a JAM-DEX payment intent and return provider response.
@@ -6858,6 +6865,7 @@ def jamdex_checkout(request):
 
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def card_checkout(request):
     """
     Initiate a card payment checkout URL for POS using WiPay configuration.
@@ -7535,11 +7543,13 @@ def receipt_void_view(request, sale_id):
 
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def view_receipt(request, sale_id):
     sale = get_object_or_404(_receipt_queryset_for_user(request.user), pk=sale_id)
     return render(request, "inventory/receipt.html", _receipt_build_context(request, sale))
 
 @login_required
+@role_required(["admin", "manager", "cashier"])
 def sales_history(request):
     """
     List all sales with filters for date range, location, cashier, and search query.
@@ -7548,7 +7558,7 @@ def sales_history(request):
     sales = Sale.objects.select_related("cashier", "location").all()
     if not request.user.is_superuser:
         owner = _inventory_owner_for_user(request.user)
-        sales = sales.filter(items__item__owner=owner).distinct()
+        sales = sales.filter(owner=owner)
     locations = _location_queryset_for_user(request.user).order_by("name")
 
     # --- Filters ---
