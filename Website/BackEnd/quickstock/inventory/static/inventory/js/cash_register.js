@@ -23,6 +23,8 @@
     let searchStateNode = null;
     let scanBuffer = "";
     let scanTimer = null;
+    let searchFetchTimer = null;
+    let activeSearchFetch = null;
     let globalScanBuffer = "";
     let globalScanTimer = null;
     let selectedPaymentChannel = "pos";
@@ -113,6 +115,15 @@
         } else {
             setSearchState('', 'idle');
         }
+    }
+
+    function scheduleServerSearch(query) {
+        if (!config.itemsUrl) return;
+        const q = String(query || '').trim();
+        if (searchFetchTimer) clearTimeout(searchFetchTimer);
+        searchFetchTimer = setTimeout(() => {
+            reloadItems(q);
+        }, q ? 180 : 0);
     }
 
     function clearProductSearch() {
@@ -311,20 +322,32 @@
         if (fromCache) updateOfflineStatus("cached");
     }
 
-    async function reloadItems() {
+    async function reloadItems(query = '') {
         if (!config.itemsUrl || !itemGrid) return;
+        const q = String(query || '').trim();
         try {
-            const res = await fetch(config.itemsUrl, { credentials: "same-origin" });
+            if (activeSearchFetch) activeSearchFetch.abort();
+            activeSearchFetch = new AbortController();
+            const url = new URL(config.itemsUrl, window.location.origin);
+            if (q) url.searchParams.set('q', q);
+            const res = await fetch(url.toString(), {
+                credentials: "same-origin",
+                signal: activeSearchFetch.signal
+            });
             if (!res.ok) throw new Error(`Unable to load items (${res.status})`);
             const data = await res.json();
             const items = data.items || [];
-            cacheItems(items);
+            if (!q) cacheItems(items);
             renderItems(items, false);
             updateOfflineStatus();
         } catch (e) {
+            if (e && e.name === 'AbortError') return;
             console.warn("Unable to refresh items", e);
             const cachedItems = readCachedItems();
-            if (cachedItems.length) renderItems(cachedItems, true);
+            if (cachedItems.length) {
+                renderItems(cachedItems, true);
+                filterProductCards(q);
+            }
         }
     }
 
@@ -745,6 +768,7 @@
             if (input !== sidebarSearchInput && sidebarSearchInput) sidebarSearchInput.value = input.value;
             setMobileSearchOpen(true);
             filterProductCards(input.value);
+            scheduleServerSearch(input.value);
         });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -802,6 +826,7 @@
         searchInput.addEventListener('input', () => {
             if (mobileSearchInput && !mobileSearchQuery.matches) mobileSearchInput.value = searchInput.value;
             filterProductCards(searchInput.value);
+            scheduleServerSearch(searchInput.value);
         });
     }
 

@@ -6742,7 +6742,9 @@ def cash_register(request):
     # ---------------------------
     # 3. GET: Initial Page Load
     # ---------------------------
-    items = _pos_items_queryset_for_user(request.user, profile)
+    pos_initial_limit = max(1, int(getattr(settings, "POS_INITIAL_ITEMS_LIMIT", 50)))
+    items_qs = _pos_items_queryset_for_user(request.user, profile)
+    items = items_qs[:pos_initial_limit]
     locations = _location_queryset_for_user(request.user).order_by("name")
     customers = _customer_queryset_for_user(request.user).order_by("name")
 
@@ -6772,7 +6774,7 @@ def cash_register(request):
             "tax_rate_percent": (tax_rate * Decimal("100")).quantize(Decimal("0.01")),
             "tax_label": tax_label,
             "location_assignment_required": current_role == "cashier" and not default_location,
-            "no_stock": bool(default_location) and not items.exists(),
+            "no_stock": bool(default_location) and not items_qs.exists(),
         },
     )
 
@@ -6782,6 +6784,19 @@ def pos_items(request):
     """Return JSON list of POS items for the current user (location-aware)."""
     profile = UserProfile.objects.select_related("default_location").get(user=request.user)
     items = _pos_items_queryset_for_user(request.user, profile)
+    query = (request.GET.get("q") or "").strip()
+    if query:
+        items = items.filter(
+            Q(name__icontains=query)
+            | Q(sku__istartswith=query)
+            | Q(barcode__istartswith=query)
+            | Q(barcode__iexact=query)
+        )
+        limit = max(1, int(getattr(settings, "POS_SEARCH_RESULT_LIMIT", 30)))
+    else:
+        limit = max(1, int(getattr(settings, "POS_INITIAL_ITEMS_LIMIT", 50)))
+
+    items = items[:limit]
 
     data = [
         {

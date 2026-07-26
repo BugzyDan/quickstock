@@ -2521,6 +2521,37 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertEqual(first_page.context["page_size"], 25)
         self.assertEqual(first_page.context["page_obj"].paginator.count, 30)
 
+    @override_settings(POS_INITIAL_ITEMS_LIMIT=10, POS_SEARCH_RESULT_LIMIT=7)
+    def test_pos_product_payloads_are_bounded(self):
+        owner = self._make_user("pos-search-bounds")
+        location = self._make_location(owner, "Main Branch")
+        owner.profile.default_location = location
+        owner.profile.save(update_fields=["default_location"])
+        self._open_shift(owner, location)
+        for index in range(25):
+            name = "Match Product" if index < 15 else "Other Product"
+            item = self._make_item(
+                owner,
+                name=f"{name} {index:02d}",
+                sku=f"POS-BOUND-{index:02d}",
+                price="100.00",
+                quantity=5,
+            )
+            StockRecord.objects.create(item=item, location=location, quantity=5)
+
+        self.client.force_login(owner)
+        initial_response = self.client.get(reverse("pos_items"))
+        search_response = self.client.get(reverse("pos_items"), {"q": "Match"})
+        register_response = self.client.get(reverse("cash_register"))
+
+        self.assertEqual(initial_response.status_code, 200)
+        self.assertEqual(search_response.status_code, 200)
+        self.assertEqual(register_response.status_code, 200)
+        self.assertEqual(len(initial_response.json()["items"]), 10)
+        self.assertEqual(len(search_response.json()["items"]), 7)
+        self.assertEqual(len(register_response.context["items"]), 10)
+        self.assertTrue(all("Match" in item["name"] for item in search_response.json()["items"]))
+
     def test_legacy_inventory_api_post_requires_csrf(self):
         owner = self._make_user("legacy-inventory-csrf")
         self._make_location(owner, "Main Branch")
