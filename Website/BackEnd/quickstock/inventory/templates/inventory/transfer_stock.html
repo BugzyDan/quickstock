@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Transfer | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/inventory.js' %}" defer></script>
 </head>
@@ -154,7 +154,7 @@
 
                 <div class="transfer-field">
                     <label class="label-caps" for="from-location">From location</label>
-                    <select name="from_location" id="from-location" required>
+                    <select name="from_location" id="from-location" data-preferred-location-id="{{ preferred_source_location_id }}" required>
                         <option value="">Select item first...</option>
                     </select>
                 </div>

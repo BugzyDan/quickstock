@@ -10,6 +10,7 @@
         }
         if (panel) {
             panel.hidden = !expanded;
+            panel.classList.toggle("is-collapsed", !expanded);
         }
     }
 
@@ -86,8 +87,14 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
+    function initInventoryOverview() {
         initCategoryToggles();
         initQuickNav();
-    });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initInventoryOverview);
+    } else {
+        initInventoryOverview();
+    }
 })();

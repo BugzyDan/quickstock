@@ -5,10 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sales Invoices | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-document-email-1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
+    <script src="{% static 'inventory/js/sales_documents_list.js' %}?v=20260729-sales-doc-actions-fit-4" defer></script>
     
 </head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-invoice-list page-supplier-list">
@@ -107,11 +108,37 @@
     </form>
 
     <!-- Main Data Segment Card -->
-    <section class="sales-card ops-surface-card">
+    <section class="sales-card ops-surface-card sales-document-list-card" data-sales-document-list data-document-label="invoice">
+        <div class="sales-bulk-actions-bar" data-sales-bulk-bar hidden>
+            <div class="sales-bulk-summary">
+                <strong><span data-sales-selected-count>0</span> selected</strong>
+                <span>Batch invoice actions</span>
+            </div>
+            <div class="sales-bulk-actions">
+                <button type="button" class="qs-btn qs-btn-secondary sales-bulk-action" data-sales-bulk-action="email">Send Selected via Email</button>
+                <button type="button" class="qs-btn qs-btn-secondary sales-bulk-action" data-sales-bulk-action="csv">Export Selected to CSV</button>
+                <button type="button" class="qs-btn qs-btn-primary sales-bulk-action" data-sales-bulk-action="print">Print Selected PDFs</button>
+            </div>
+        </div>
         <div class="sales-table-wrap">
             <table class="sales-table-premium" >
+                <colgroup>
+                    <col class="sales-col-select">
+                    <col class="sales-col-invoice">
+                    <col class="sales-col-quote">
+                    <col class="sales-col-customer">
+                    <col class="sales-col-location">
+                    <col class="sales-col-status">
+                    <col class="sales-col-pickup">
+                    <col class="sales-col-issued">
+                    <col class="sales-col-total">
+                    <col class="sales-col-actions">
+                </colgroup>
                 <thead>
                     <tr>
+                        <th class="sales-select-column">
+                            <input type="checkbox" class="sales-row-select-all" data-sales-select-all aria-label="Select all visible invoices">
+                        </th>
                         <th>Invoice #</th>
                         <th>Quote #</th>
                         <th>Customer</th>
@@ -126,13 +153,42 @@
                 
                 <tbody>
                     {% for invoice in invoices %}
-                    <tr>
+                    <tr data-sales-document-row>
+                        <td class="sales-select-column">
+                            <input
+                                type="checkbox"
+                                class="sales-row-select"
+                                data-sales-row-select
+                                data-doc-number="{{ invoice.invoice_no|default:invoice.id }}"
+                                data-doc-type="Invoice"
+                                data-customer="{% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in / Unassigned{% endif %}"
+                                data-status="{{ invoice.get_status_display }}"
+                                data-total="${{ invoice.effective_total_amount|floatformat:2 }}"
+                                data-open-url="{% url 'sales_invoice_detail' invoice.id %}"
+                                data-email-url="{% if can_email_sales_documents and invoice.status != 'void' %}{% url 'sales_invoice_detail' invoice.id %}?email=1#sales-document-email{% endif %}"
+                                data-print-url="{% url 'sales_invoice_detail' invoice.id %}#print-invoice"
+                                aria-label="Select invoice {{ invoice.invoice_no|default:invoice.id }}">
+                        </td>
                         <td class="invoice-bold-txt">{{ invoice.invoice_no|default:invoice.id }}</td>
                         <td>{% if invoice.quotation_id %}{{ invoice.quotation.quote_no }}{% else %}<span style="color:var(--qs-text-muted); font-size:0.85rem;">Direct Invoice</span>{% endif %}</td>
                         <td>{% if invoice.customer %}{{ invoice.customer.name }}{% else %}<span style="color:var(--qs-text-muted);">Walk-in / Unassigned</span>{% endif %}</td>
                         <td>{{ invoice.location.name|default:"--" }}</td>
                         <td><span class="sales-chip status-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
-                        <td><span class="sales-chip sales-pickup-list-status sales-pickup-list-status-{{ invoice.collection_status }}">{{ invoice.get_collection_status_display }}</span></td>
+                        <td>
+                            <span class="sales-chip sales-pickup-list-status sales-pickup-list-status-{{ invoice.collection_status }}" title="{{ invoice.get_collection_status_display }}">
+                                {% if invoice.collection_status == "pending_payment" %}
+                                    Pending pay
+                                {% elif invoice.collection_status == "collected_immediately" %}
+                                    Collected
+                                {% elif invoice.collection_status == "collected_after_hold" %}
+                                    Picked up
+                                {% elif invoice.collection_status == "awaiting_collection" %}
+                                    In store
+                                {% else %}
+                                    Not tracked
+                                {% endif %}
+                            </span>
+                        </td>
                         <td>{{ invoice.issued_at|date:"M d, Y H:i" }}</td>
                         <td class="invoice-bold-txt" style="color: var(--qs-primary);">
                             ${{ invoice.effective_total_amount|floatformat:2 }}
@@ -140,19 +196,18 @@
                                 <div style="margin-top:4px; color:#b91c1c; font-size:0.72rem; font-weight:700;">Credit notes: ${{ invoice.credit_note_total_amount|floatformat:2 }}</div>
                             {% endif %}
                         </td>
-                        <td class="sales-table-actions">
-                            <a href="{% url 'sales_invoice_detail' invoice.id %}" class="action-link-premium">Open</a>
+                        <td class="sales-table-actions sales-document-row-actions">
+                            <a href="{% url 'sales_invoice_detail' invoice.id %}" class="action-link-premium sales-row-primary-action">Open</a>
+                            <div class="sales-row-action-menu">
+                                <button type="button" class="sales-row-menu-toggle" data-sales-menu-toggle aria-haspopup="true" aria-expanded="false" aria-label="More actions for invoice {{ invoice.invoice_no|default:invoice.id }}">More</button>
+                                <div class="sales-row-menu-panel" data-sales-menu-panel>
                             {% if can_email_sales_documents and invoice.status != 'void' %}
-                                <span class="sales-list-email-control">
-                                    <span class="sales-action-separator" aria-hidden="true">|</span>
-                                    <a href="{% url 'sales_invoice_detail' invoice.id %}?email=1#sales-document-email" class="action-link-premium sales-list-email-action" aria-label="Review email delivery for invoice {{ invoice.invoice_no|default:invoice.id }}">Email</a>
-                                </span>
+                                    <a href="{% url 'sales_invoice_detail' invoice.id %}?email=1#sales-document-email" class="sales-menu-action sales-list-email-action" aria-label="Review email delivery for invoice {{ invoice.invoice_no|default:invoice.id }}">Email PDF</a>
                             {% endif %}
                             {% if invoice.status == 'issued' %}
-                                <span class="sales-action-separator" aria-hidden="true">|</span>
                                 {% if can_manage_all_invoice_locations or invoice.location_id == invoice_action_location_id %}
                                     {% if payments_enabled %}
-                                        <a href="{% url 'sales_invoice_payment' invoice.id %}" class="action-link-premium">Record Payment</a>
+                                        <a href="{% url 'sales_invoice_payment' invoice.id %}" class="sales-menu-action">Record Payment</a>
                                     {% else %}
                                         <form method="post" action="{% url 'sales_invoice_mark_paid' invoice.id %}" class="sales-inline-mark-paid-form">
                                             {% csrf_token %}
@@ -160,18 +215,21 @@
                                                 <option value="collected_now">Collected same time</option>
                                                 <option value="leave_in_store">Remaining in store</option>
                                             </select>
-                                            <button type="submit" class="action-link-premium" style="border:0; background:transparent; padding:0; cursor:pointer;">Mark Paid</button>
+                                            <button type="submit" class="sales-menu-action sales-menu-submit">Mark Paid</button>
                                         </form>
                                     {% endif %}
                                 {% else %}
                                     <span class="sales-location-action-note">Switch location to collect</span>
                                 {% endif %}
                             {% endif %}
+                                    <button type="button" class="sales-menu-action sales-menu-action-muted" data-sales-print-one data-print-url="{% url 'sales_invoice_detail' invoice.id %}#print-invoice">Print</button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="sales-empty-state">
+                        <td colspan="10" class="sales-empty-state">
                             <strong>No invoices match this view.</strong>
                             <span>Use an existing quotation or create a direct invoice from inventory to get started.</span>
                             <a href="{% url 'sales_invoice_create' %}?source=scratch" class="qs-btn qs-btn-primary">Create Invoice</a>

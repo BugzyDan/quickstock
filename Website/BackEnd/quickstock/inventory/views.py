@@ -70,7 +70,11 @@ from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.utils.dateparse import parse_datetime
 from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.http import (
+    url_has_allowed_host_and_scheme,
+    urlsafe_base64_decode,
+    urlsafe_base64_encode,
+)
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import os
@@ -81,8 +85,11 @@ from urllib.parse import urlencode, urlsplit
 # Local imports
 # ---------------------------
 from .decorators import role_required
+from .accounting import get_or_create_accounting_integration, queue_existing_accounting_data
 from .forms import SupplierForm
 from .models import (
+    AccountingIntegration,
+    AccountingSyncRecord,
     CashShift,
     CashMovement,
     CashReconciliation,
@@ -249,6 +256,14 @@ def _safe_int(value, default=0):
         return default
 
 
+def _format_money(value):
+    return f"{Decimal(value or '0.00'):,.2f}"
+
+
+def _clean_inventory_capacity(value):
+    return max(1, _safe_int(value, INVENTORY_CAPACITY))
+
+
 def _normalize_email_address(value: str) -> str:
     """Accept any syntactically valid email address, regardless of provider."""
     email = (value or "").strip().lower()
@@ -361,13 +376,18 @@ def _daily_summary_comment_payload(notes: str) -> dict:
     }
 
 
-def _document_adjustments_from_request(request, default_tax_rate: Decimal) -> tuple[dict, Decimal]:
+def _document_adjustments_from_request(request, default_tax_rate: Decimal, customer=None) -> tuple[dict, Decimal]:
     tax_mode = (request.POST.get("tax_mode") or "default").strip().lower()
     if tax_mode not in {"default", "none", "custom"}:
         tax_mode = "default"
 
     tax_rate_percent = _safe_decimal(request.POST.get("tax_rate_percent", "0"), default="0")
-    if tax_mode == "default":
+    customer_tax_exempt = bool(getattr(customer, "is_tax_exempt", False))
+    if customer_tax_exempt:
+        tax_mode = "none"
+        tax_rate = Decimal("0.00")
+        tax_rate_percent = Decimal("0.00")
+    elif tax_mode == "default":
         tax_rate = default_tax_rate
         tax_rate_percent = (default_tax_rate * Decimal("100")).quantize(Decimal("0.01"))
     elif tax_mode == "none":
@@ -388,6 +408,8 @@ def _document_adjustments_from_request(request, default_tax_rate: Decimal) -> tu
         "discount_type": discount_type,
         "discount_value": str(discount_value.quantize(Decimal("0.01"))),
     }
+    if customer_tax_exempt:
+        meta["customer_tax_exempt"] = "true"
     return meta, tax_rate
 
 
@@ -831,16 +853,13 @@ def _customer_queryset_for_user(user):
     owner = _inventory_owner_for_user(user)
     if not owner:
         return Customer.objects.none()
-    if owner.is_superuser:
-        return Customer.objects.all()
     return Customer.objects.filter(owner=owner)
 
 def _stock_queryset_for_user(user):
     owner = _inventory_owner_for_user(user)
-    qs = StockRecord.objects.all()
-    if not owner.is_superuser:
-        qs = qs.filter(item__owner=owner)
-    return qs
+    if not owner:
+        return StockRecord.objects.none()
+    return StockRecord.objects.filter(item__owner=owner)
 
 
 def _pos_items_queryset_for_user(user, profile=None):
@@ -865,6 +884,29 @@ def _pos_items_queryset_for_user(user, profile=None):
         return items.filter(id__in=location_item_ids)
 
     return items.none()
+
+
+def _pos_stock_quantity_for_item(item, location=None):
+    if location:
+        quantity = (
+            item.stock_at_locations.filter(location=location).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+        if quantity:
+            return int(quantity)
+        if (location.name or "").strip().lower() == "main store":
+            return int(item.total_quantity or 0)
+        return 0
+    return int(item.total_quantity or 0)
+
+
+def _pos_stock_badge(quantity):
+    quantity = int(quantity or 0)
+    if quantity <= 0:
+        return {"label": "Out of stock", "tone": "out"}
+    if quantity <= 3:
+        return {"label": f"Low Stock: {quantity:,}", "tone": "low"}
+    return {"label": f"{quantity:,} in stock", "tone": "stocked"}
 
 
 def _location_queryset_for_user(user):
@@ -1112,8 +1154,8 @@ def _log_action(user, action, message, metadata=None, severity="info", required=
 def _owner_financial_history_summary(user):
     """Return durable financial dependencies that make account deletion unsafe."""
     return {
-        "sales": Sale.objects.filter(Q(owner=user) | Q(location__owner=user)).count(),
-        "sales_invoices": SalesInvoice.objects.filter(owner=user).count(),
+        "sales": Sale.objects.filter(Q(owner=user) | Q(location__owner=user)).exclude(receipt_status="draft").count(),
+        "sales_invoices": SalesInvoice.objects.filter(owner=user).exclude(status="draft").count(),
         "sales_payments": SalesInvoicePayment.objects.filter(
             Q(owner=user) | Q(invoice__owner=user)
         ).count(),
@@ -1140,11 +1182,42 @@ def _owner_financial_history_summary(user):
     }
 
 
+def _discard_user_draft_records(user):
+    """
+    Remove unposted drafts so account deletion is not converted into archive mode
+    by records that never became durable financial history.
+    """
+    if not user or not getattr(user, "pk", None):
+        return
+
+    owned_location_ids = list(Location.objects.filter(owner=user).values_list("id", flat=True))
+    draft_sales = Sale.objects.filter(
+        Q(owner=user) | Q(location_id__in=owned_location_ids) | Q(cashier=user),
+        receipt_status="draft",
+    )
+    draft_invoice_ids = list(
+        SalesInvoice.objects
+        .filter(owner=user, status="draft", payments__isnull=True, credit_notes__isnull=True)
+        .values_list("id", flat=True)
+    )
+    draft_quotation_ids = list(
+        SalesQuotation.objects.filter(owner=user, status="draft").values_list("id", flat=True)
+    )
+
+    if draft_invoice_ids:
+        SalesInvoiceItem.objects.filter(invoice_id__in=draft_invoice_ids)._raw_delete(connection.alias)
+        SalesInvoice.objects.filter(id__in=draft_invoice_ids)._raw_delete(connection.alias)
+    if draft_quotation_ids:
+        SalesQuotationItem.objects.filter(quotation_id__in=draft_quotation_ids).delete()
+        SalesQuotation.objects.filter(id__in=draft_quotation_ids).delete()
+    draft_sales.delete()
+
+
 def _user_has_financial_history(user):
     return any(
         queryset.exists()
         for queryset in (
-            SalesInvoice.objects.filter(created_by=user),
+            SalesInvoice.objects.filter(created_by=user).exclude(status="draft"),
             SalesInvoicePayment.objects.filter(received_by=user),
             SalesInvoicePaymentReversal.objects.filter(reversed_by=user),
             SalesInvoiceCreditNote.objects.filter(created_by=user),
@@ -1154,7 +1227,7 @@ def _user_has_financial_history(user):
             SupplierInvoicePaymentReversal.objects.filter(reversed_by=user),
             SupplierInvoiceAdjustment.objects.filter(created_by=user),
             SupplierInvoiceRefund.objects.filter(received_by=user),
-            Sale.objects.filter(cashier=user),
+            Sale.objects.filter(cashier=user).exclude(receipt_status="draft"),
             CashShift.objects.filter(Q(owner=user) | Q(cashier=user)),
             CashMovement.objects.filter(Q(owner=user) | Q(recorded_by=user)),
             CashReconciliation.objects.filter(Q(owner=user) | Q(reconciled_by=user)),
@@ -1415,6 +1488,10 @@ def _manual_sales_invoice_payment_methods():
     ]
 
 
+def _sales_invoice_payment_method_requires_reference(method):
+    return method not in {"cash", "account_credit"}
+
+
 def _sales_invoice_credit_note_reason_choices():
     return list(SalesInvoiceCreditNote.REASON_CHOICES)
 
@@ -1670,6 +1747,8 @@ def deliveries_collections(request):
         "delivered_today_grouped": _daily_summary_items_grouped_by_category(delivered_lines),
         "collected_by_client_grouped": _daily_summary_items_grouped_by_category(collected_lines),
         "awaiting_collection_grouped": _daily_summary_items_grouped_by_category(remaining_lines),
+        "is_closeout_wizard": request.GET.get("closeout") == "1",
+        "next_closeout_url": reverse("operations"),
     }
     return render(request, "inventory/deliveries_collections.html", context)
 
@@ -1684,8 +1763,45 @@ def cash_reconciliation(request, date=None):
     profile = UserProfile.for_user(request.user)
     owner_user = _inventory_owner_for_user(request.user)
     selected_date = _parse_operations_date(request, date)
+    is_closeout_wizard = request.GET.get("closeout") == "1" or request.POST.get("closeout") == "1"
+    next_closeout_url = f"{reverse('deliveries_collections')}?{urlencode({'date': selected_date.strftime('%Y-%m-%d'), 'closeout': '1'})}"
+    selected_shift = None
+    selected_shift_expected_cash = Decimal("0.00")
+    selected_shift_id = request.POST.get("shift_id") or request.GET.get("shift")
+    if selected_shift_id:
+        shift_qs = CashShift.objects.select_related("cashier", "location").filter(pk=selected_shift_id)
+        if not request.user.is_superuser:
+            shift_qs = shift_qs.filter(Q(owner=owner_user) | Q(cashier=request.user))
+        selected_shift = shift_qs.first()
+        if selected_shift and selected_shift.is_closed:
+            selected_shift = None
+        if selected_shift:
+            selected_shift_expected_cash = selected_shift.reconciliation_totals()["expected_cash"]
+
     if request.method == "POST":
         action = (request.POST.get("action") or "").strip()
+        if action == "close_shift":
+            if not selected_shift:
+                messages.error(request, "Open shift not found or already closed.")
+                return redirect(
+                    f"{reverse('cash_reconciliation')}?{urlencode({'date': selected_date.strftime('%Y-%m-%d')})}"
+                )
+            try:
+                selected_shift.close_shift(
+                    request.POST.get("counted_cash"),
+                    actor=request.user,
+                    notes=(request.POST.get("notes") or "").strip(),
+                )
+                messages.success(request, "Shift closeout finalized.")
+                if is_closeout_wizard:
+                    return redirect(next_closeout_url)
+                return redirect("dashboard")
+            except (ValidationError, TypeError, ValueError, InvalidOperation) as exc:
+                messages.error(request, str(exc))
+                return redirect(
+                    f"{reverse('cash_reconciliation')}?{urlencode({'date': selected_date.strftime('%Y-%m-%d'), 'shift': selected_shift.id})}"
+                )
+
         if action == "update_cash_count":
             cash_count, _ = DailyCashCount.objects.get_or_create(
                 owner=owner_user,
@@ -1758,6 +1874,10 @@ def cash_reconciliation(request, date=None):
         "is_pro_user": _is_pro_user(owner_user),
         "selected_date": selected_date.strftime("%Y-%m-%d"),
         "report_date": selected_date.strftime("%B %-d, %Y") if os.name != "nt" else selected_date.strftime("%B %#d, %Y"),
+        "selected_shift": selected_shift,
+        "selected_shift_expected_cash": selected_shift_expected_cash,
+        "is_closeout_wizard": is_closeout_wizard,
+        "next_closeout_url": next_closeout_url,
     }
     context.update(_daily_reconciliation_context(owner_user, selected_date))
     return render(request, "inventory/cash_reconciliation.html", context)
@@ -2278,6 +2398,8 @@ def daily_summary(request, date=None):
         "aged_awaiting_count": aged_awaiting_count,
         "pending_transfer_count": pending_transfer_count,
         "daily_activity_value_total": (invoice_total + quotation_total).quantize(Decimal("0.01")),
+        "is_closeout_wizard": request.GET.get("closeout") == "1",
+        "next_closeout_url": f"{reverse('cash_reconciliation')}?{urlencode({'date': selected_date.strftime('%Y-%m-%d'), 'closeout': '1'})}",
     }
     return render(request, "inventory/daily_summary.html", context)
 
@@ -2290,12 +2412,92 @@ def operations(request):
     """
     profile = UserProfile.for_user(request.user)
     owner_user = _inventory_owner_for_user(request.user)
+    selected_date = _parse_operations_date(request)
+    selected_date_string = selected_date.strftime("%Y-%m-%d")
+    closeout_query = {"date": selected_date_string, "closeout": "1"}
+
+    summary_line_count = 0
+    if _sales_invoice_payments_available():
+        payments = SalesInvoicePayment.objects.unreversed().filter(payment_date__date=selected_date)
+        if owner_user and not owner_user.is_superuser:
+            payments = payments.filter(owner=owner_user)
+        summary_line_count += payments.count()
+
+    invoices = SalesInvoice.objects.filter(issued_at__date=selected_date)
+    quotations = SalesQuotation.objects.filter(created_at__date=selected_date)
+    if owner_user and not owner_user.is_superuser:
+        invoices = invoices.filter(owner=owner_user)
+        quotations = quotations.filter(owner=owner_user)
+    summary_line_count += invoices.count() + quotations.count()
+
+    reconciliation_context = _daily_reconciliation_context(owner_user, selected_date)
+    variance = reconciliation_context["variance"]
+    variance_abs = abs(variance).quantize(Decimal("0.01"))
+    drawer_balanced = variance == Decimal("0.00")
+
+    collection_location = getattr(profile, "default_location", None)
+    if collection_location and collection_location.owner_id != getattr(owner_user, "id", None):
+        collection_location = None
+    collection_lines = _sales_collection_activity_lines(
+        owner_user,
+        selected_date=selected_date,
+        location=collection_location,
+    )
+    awaiting_collection = _daily_summary_item_totals(collection_lines["remaining_in_store"])
+    awaiting_total_quantity = sum((row["quantity"] for row in awaiting_collection), 0)
+
+    open_shift_qs = CashShift.objects.select_related("cashier", "location").filter(is_closed=False)
+    if owner_user and not owner_user.is_superuser:
+        open_shift_qs = open_shift_qs.filter(owner=owner_user)
+    open_shift_count = open_shift_qs.count()
+    active_shift = open_shift_qs.order_by("-opened_at").first()
+    cash_reconciliation_params = dict(closeout_query)
+    if active_shift:
+        cash_reconciliation_params["shift"] = active_shift.id
+
+    summary_status = (
+        "Pending Review"
+        if summary_line_count
+        else "No Activity Yet"
+    )
+    summary_status_tone = "warning" if summary_line_count else "neutral"
+    reconciliation_status = (
+        "Drawer Balanced"
+        if drawer_balanced
+        else f"${variance_abs:,.2f} Variance"
+    )
+    reconciliation_status_tone = "success" if drawer_balanced else "danger"
+    collection_status = (
+        "All Collections Cleared"
+        if awaiting_total_quantity == 0
+        else f"{awaiting_total_quantity:,} Awaiting Pickup"
+    )
+    collection_status_tone = "success" if awaiting_total_quantity == 0 else "warning"
+    shift_status = (
+        f"{open_shift_count} Open Shift{'' if open_shift_count == 1 else 's'}"
+        if open_shift_count
+        else "No Open Shifts"
+    )
+
     return render(
         request,
         "inventory/operations.html",
         {
             "profile": profile,
             "is_pro_user": _is_pro_user(owner_user),
+            "selected_date": selected_date_string,
+            "summary_line_count": summary_line_count,
+            "summary_status": summary_status,
+            "summary_status_tone": summary_status_tone,
+            "reconciliation_status": reconciliation_status,
+            "reconciliation_status_tone": reconciliation_status_tone,
+            "collection_status": collection_status,
+            "collection_status_tone": collection_status_tone,
+            "open_shift_count": open_shift_count,
+            "shift_status": shift_status,
+            "start_closeout_url": f"{reverse('daily_summary')}?{urlencode(closeout_query)}",
+            "balance_drawer_url": f"{reverse('cash_reconciliation')}?{urlencode(cash_reconciliation_params)}",
+            "deliveries_closeout_url": f"{reverse('deliveries_collections')}?{urlencode(closeout_query)}",
         },
     )
 
@@ -2775,6 +2977,28 @@ def edit_customer(request, pk):
     note_entries = customer.note_entries.select_related("created_by").all()
 
     if request.method == 'POST':
+        if request.POST.get("post_note") == "1":
+            new_note = (request.POST.get("new_note") or "").strip()
+            if not new_note:
+                messages.error(request, "Add a note before posting to the timeline.")
+                return redirect("edit_customer", pk=customer.pk)
+            with transaction.atomic():
+                CustomerNote.objects.create(
+                    customer=customer,
+                    owner=customer.owner,
+                    created_by=request.user,
+                    body=new_note,
+                )
+                _log_action(
+                    request.user,
+                    "customer",
+                    "Customer note added",
+                    {"customer_id": customer.id, "customer_name": customer.name},
+                    required=True,
+                )
+            messages.success(request, "Account note posted to the customer timeline.")
+            return redirect('customer_detail', pk=customer.pk)
+
         form = CustomerForm(request.POST, instance=customer)
         if form.is_valid():
             with transaction.atomic():
@@ -3715,7 +3939,7 @@ def login_redirect(request):
 
 
 @login_required
-@role_required(["admin", "manager"])
+@role_required(["admin", "manager"], allow_superuser=True)
 def admin_dashboard(request):
     """Legacy route: send admin users to the shared dashboard view."""
     if request.user.is_superuser:
@@ -3833,7 +4057,7 @@ def super_admin_dashboard(request):
 # ---------------------------
 @login_required
 
-@role_required(["admin", "manager", "cashier"])
+@role_required(["admin", "manager", "cashier"], allow_superuser=True)
 def dashboard_view(request):
     """
     Main dashboard view.
@@ -3845,6 +4069,7 @@ def dashboard_view(request):
         return redirect("super_admin_dashboard")
 
     profile = getattr(request.user, "profile", None)
+    is_admin = bool(profile and profile.role == "admin")
 
     # Cashier should go directly to POS
     if profile and profile.role == "cashier":
@@ -3890,11 +4115,16 @@ def dashboard_view(request):
             stock_qs = stock_qs.filter(location=active_location, item__is_deleted=False, item__status="active")
             low_stock_count = stock_qs.filter(quantity__lte=low_stock_threshold).count()
             total_inventory = stock_qs.aggregate(total=Sum("quantity"))["total"] or 0
+            dashboard_inventory_capacity = _clean_inventory_capacity(active_location.inventory_capacity)
         else:
             location_id = "all"
 
     # Default totals for "All Locations"
     if location_id == "all":
+        dashboard_inventory_capacity = (
+            locations.aggregate(total=Sum("inventory_capacity"))["total"]
+            or INVENTORY_CAPACITY
+        )
         global_low_stock_items_qs = (
             item_qs.filter(is_deleted=False, status="active")
             .filter(
@@ -3906,7 +4136,7 @@ def dashboard_view(request):
         )
         # Treat any low branch balance as a global stock-integrity warning.
         low_stock_count = global_low_stock_items_qs.count()
-        total_inventory = item_qs.filter(is_deleted=False, status="active").aggregate(total=Sum("total_quantity"))["total"] or 0
+        total_inventory = stock_qs.filter(item__is_deleted=False, item__status="active").aggregate(total=Sum("quantity"))["total"] or 0
 
     pos_total_sales = sales_qs.aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
     invoice_total = (
@@ -3920,14 +4150,24 @@ def dashboard_view(request):
             or Decimal("0.00")
         )
     total_sales = pos_total_sales + invoice_total + quotation_total
-    inventory_percent = int(min(100, (total_inventory / INVENTORY_CAPACITY) * 100)) if INVENTORY_CAPACITY else 0
-    inventory_remaining = max(0, INVENTORY_CAPACITY - int(total_inventory or 0))
+    dashboard_inventory_capacity = _clean_inventory_capacity(dashboard_inventory_capacity)
+    raw_inventory_percent = int((total_inventory / dashboard_inventory_capacity) * 100) if dashboard_inventory_capacity else 0
+    inventory_percent = min(100, raw_inventory_percent)
+    inventory_remaining = max(0, dashboard_inventory_capacity - int(total_inventory or 0))
+    inventory_over_capacity = max(0, int(total_inventory or 0) - dashboard_inventory_capacity)
     total_inventory_display = f"{int(total_inventory or 0):,}"
-    inventory_capacity_display = f"{INVENTORY_CAPACITY:,}"
-    if inventory_percent >= 100:
+    inventory_capacity_display = f"{dashboard_inventory_capacity:,}"
+    if inventory_over_capacity > 0:
+        inventory_capacity_status = f"{inventory_over_capacity:,} units over capacity"
+    elif inventory_percent >= 100:
         inventory_capacity_status = "Capacity Reached"
     else:
         inventory_capacity_status = f"{inventory_remaining:,} units remaining"
+    inventory_capacity_note = (
+        "Usage is capped at 100% for display. Increase branch capacity if this reflects real stock."
+        if inventory_over_capacity > 0
+        else ""
+    )
 
     today = timezone.localdate()
     today_start = timezone.make_aware(datetime.combine(today, datetime.min.time()))
@@ -4034,7 +4274,7 @@ def dashboard_view(request):
             daily_revenue_map[day_key] = daily_revenue_map.get(day_key, Decimal("0.00")) + (row["total"] or Decimal("0.00"))
 
     daily_revenue = [
-        {"day": day, "total": total}
+        {"day": day, "total": total, "total_display": _format_money(total)}
         for day, total in sorted(daily_revenue_map.items(), key=lambda item: item[0])
     ]
 
@@ -4042,6 +4282,18 @@ def dashboard_view(request):
     recent_logs = []
     if profile and profile.role == "admin":
         recent_logs = _audit_log_queryset_for_user(request.user).order_by("-created_at")[:5]
+
+    open_shift_qs = CashShift.objects.filter(is_closed=False)
+    if owner_user and not owner_user.is_superuser:
+        open_shift_qs = open_shift_qs.filter(owner=owner_user)
+    if active_location:
+        open_shift_qs = open_shift_qs.filter(location=active_location)
+    open_shifts = list(open_shift_qs.select_related("cashier", "location").order_by("-opened_at")[:3])
+    open_shift_count = open_shift_qs.count()
+    open_shift_alert_params = {"date": today.strftime("%Y-%m-%d")}
+    if open_shift_count == 1 and open_shifts:
+        open_shift_alert_params["shift"] = open_shifts[0].id
+    open_shift_alert_url = f"{reverse('cash_reconciliation')}?{urlencode(open_shift_alert_params)}"
 
     recent_login_activity = (
         AuditLog.objects.filter(user=request.user, action="login_success")
@@ -4079,22 +4331,51 @@ def dashboard_view(request):
     else:
         display_tier = "TRIAL"
 
+    accounting_integration = None
+    accounting_sync_counts = {}
+    xero_configured = bool(
+        getattr(settings, "XERO_CLIENT_ID", "")
+        and getattr(settings, "XERO_CLIENT_SECRET", "")
+        and getattr(settings, "XERO_REDIRECT_URI", "")
+    )
+    if is_admin:
+        accounting_integration = get_or_create_accounting_integration(
+            owner_user,
+            provider=AccountingIntegration.PROVIDER_XERO,
+        )
+        accounting_sync_counts = {
+            row["status"]: row["total"]
+            for row in AccountingSyncRecord.objects.filter(
+                owner=owner_user,
+                integration=accounting_integration,
+            ).values("status").annotate(total=Count("id"))
+        }
+
     context = {
         "total_sales": total_sales,
+        "total_sales_display": _format_money(total_sales),
         "low_stock_count": low_stock_count,
         "low_stock_threshold": low_stock_threshold,
         "total_inventory": total_inventory,
         "total_inventory_display": total_inventory_display,
-        "inventory_capacity": INVENTORY_CAPACITY,
+        "inventory_capacity": dashboard_inventory_capacity,
         "inventory_capacity_display": inventory_capacity_display,
         "inventory_percent": inventory_percent,
+        "raw_inventory_percent": raw_inventory_percent,
         "inventory_remaining": inventory_remaining,
+        "inventory_over_capacity": inventory_over_capacity,
         "inventory_capacity_status": inventory_capacity_status,
+        "inventory_capacity_note": inventory_capacity_note,
         "profile": profile,
         "recent_logs": recent_logs,
+        "open_shifts": open_shifts,
+        "open_shift_count": open_shift_count,
+        "open_shift_alert_url": open_shift_alert_url,
         "recent_login_activity": recent_login_activity,
         "today_revenue": today_revenue,
+        "today_revenue_display": _format_money(today_revenue),
         "yesterday_revenue": yesterday_revenue,
+        "yesterday_revenue_display": _format_money(yesterday_revenue),
         "revenue_change_amount": revenue_change_amount,
         "revenue_change_label": revenue_change_label,
         "revenue_change_status": revenue_change_status,
@@ -4110,6 +4391,9 @@ def dashboard_view(request):
         "daily_revenue": daily_revenue,
         "renewal_date": renewal_date,
         "display_tier": display_tier,
+        "accounting_integration": accounting_integration,
+        "accounting_sync_counts": accounting_sync_counts,
+        "xero_configured": xero_configured,
     }
     return render(request, "inventory/dashboard.html", context)
 
@@ -4229,10 +4513,11 @@ def delete_account(request):
         user = request.user
         profile = getattr(user, "profile", None)
 
-        history = _owner_financial_history_summary(user)
-        if any(history.values()):
-            reason = "Account purge blocked because financial history must be retained."
-            with transaction.atomic():
+        with transaction.atomic():
+            _discard_user_draft_records(user)
+            history = _owner_financial_history_summary(user)
+            if any(history.values()):
+                reason = "Account purge blocked because financial history must be retained."
                 archived_at = timezone.now()
                 for model in (Supplier, Customer, Location):
                     model.objects.filter(owner=user).update(
@@ -4251,17 +4536,17 @@ def delete_account(request):
                     severity="warn",
                     required=True,
                 )
-            payload = {
-                "ok": False,
-                "code": "financial_history_protected",
-                "message": reason,
-                "archived": True,
-                "history": history,
-            }
-            if "application/json" in (request.headers.get("Accept") or ""):
-                return JsonResponse(payload, status=409)
-            messages.error(request, "Account deletion is unavailable while financial history exists. The account and records were archived.")
-            return redirect("settings")
+                payload = {
+                    "ok": False,
+                    "code": "financial_history_protected",
+                    "message": reason,
+                    "archived": True,
+                    "history": history,
+                }
+                if "application/json" in (request.headers.get("Accept") or ""):
+                    return JsonResponse(payload, status=409)
+                messages.error(request, "Account deletion is unavailable while financial history exists. The account and records were archived.")
+                return redirect("settings")
 
         try:
             with transaction.atomic():
@@ -4281,9 +4566,11 @@ def delete_account(request):
 
                     # Clear newer transactional records that protect Items and Customers
                     if _sales_invoice_payments_available():
-                        SalesInvoicePayment.objects.filter(
+                        sales_payments = SalesInvoicePayment.objects.filter(
                             Q(invoice__owner=owner_user) | Q(received_by_id__in=org_user_ids)
-                        ).delete()
+                        )
+                        if sales_payments.exists():
+                            sales_payments.delete()
                     SalesInvoice.objects.filter(owner=owner_user).delete()
                     SalesQuotation.objects.filter(owner=owner_user).delete()
 
@@ -4327,9 +4614,11 @@ def delete_account(request):
                     owned_location_ids = list(Location.objects.filter(owner=user).values_list("id", flat=True))
                     Sale.objects.filter(Q(owner=user) | Q(location_id__in=owned_location_ids) | Q(cashier=user)).delete()
                     if _sales_invoice_payments_available():
-                        SalesInvoicePayment.objects.filter(
+                        sales_payments = SalesInvoicePayment.objects.filter(
                             Q(invoice__owner=user) | Q(received_by=user)
-                        ).delete()
+                        )
+                        if sales_payments.exists():
+                            sales_payments.delete()
                     SalesInvoice.objects.filter(owner=user).delete()
                     SalesQuotation.objects.filter(owner=user).delete()
                     CashShift.objects.filter(Q(location_id__in=owned_location_ids) | Q(cashier=user)).delete()
@@ -4719,9 +5008,16 @@ def inventory_view(request):
     if effective_owner:
         _seed_inventory_from_shared_json(effective_owner)
 
+    locations = _location_queryset_for_user(request.user).order_by("name")
     items = _item_queryset_for_user(request.user).select_related("category", "brand") \
                         .prefetch_related("stock_at_locations__location") \
                         .all()
+    location_param = request.GET.get("location", "").strip()
+    active_location = None
+    if location_param.isdigit():
+        active_location = locations.filter(pk=location_param).first()
+        if active_location:
+            items = items.filter(stock_at_locations__location=active_location).distinct()
 
     # --- Search ---
     query = request.GET.get("q", "").strip()
@@ -4769,9 +5065,23 @@ def inventory_view(request):
     for item in page_obj:
         totals = {}
         for record in item.stock_at_locations.all():
+            if active_location and record.location_id != active_location.id:
+                continue
             location_name = record.location.name if record.location else "Unknown"
             totals[location_name] = totals.get(location_name, 0) + record.quantity
+        row_quantity = (
+            totals.get(active_location.name, 0)
+            if active_location
+            else item.total_quantity or 0
+        )
         item.location_totals = totals
+        item.location_totals_display = {
+            location_name: f"{int(qty or 0):,}"
+            for location_name, qty in totals.items()
+        }
+        item.row_quantity = int(row_quantity or 0)
+        item.quantity_display = f"{item.row_quantity:,}"
+        item.price_display = _format_money(item.price)
 
     context = {
         "items": page_obj,
@@ -4784,6 +5094,9 @@ def inventory_view(request):
         "starter_items_used": total_item_count,
         "starter_items_remaining": starter_items_remaining,
         "is_pro_user": is_pro_user,
+        "active_location": active_location,
+        "current_location_id": active_location.id if active_location else "",
+        "locations": locations,
     }
 
     return render(request, "inventory/inventory.html", context)
@@ -4796,6 +5109,23 @@ def inventory_overview_view(request):
     if effective_owner:
         _seed_inventory_from_shared_json(effective_owner)
 
+    def normalize_category_name(value):
+        cleaned = re.sub(r"\s+", " ", (value or "General").strip()) or "General"
+        lower = cleaned.lower()
+        if len(lower) > 3 and lower.endswith("s"):
+            lower = lower[:-1]
+        return lower
+
+    def display_category_name(value):
+        normalized = normalize_category_name(value)
+        return normalized.replace("-", " ").title()
+
+    def compact_location_label(value):
+        cleaned = re.sub(r"\s+", " ", (value or "Unassigned").strip()) or "Unassigned"
+        if "," in cleaned:
+            cleaned = cleaned.split(",", 1)[0]
+        return cleaned.title()
+
     overview_items = (
         _item_queryset_for_user(request.user)
         .select_related("category", "brand")
@@ -4804,8 +5134,7 @@ def inventory_overview_view(request):
     )
     total_items = overview_items.count()
     total_locations = Location.objects.filter(owner=effective_owner).count() if effective_owner else 0
-    grouped_inventory = []
-    current_category = None
+    grouped_inventory_map = {}
     total_inventory_units = 0
     empty_catalogue_item_count = 0
     profile = (
@@ -4818,22 +5147,34 @@ def inventory_overview_view(request):
         active_location = None
 
     for item in overview_items:
-        category_name = (item.category.name if item.category else "General").strip() or "General"
-        if current_category is None or current_category["category"] != category_name:
+        raw_category_name = (item.category.name if item.category else "General").strip() or "General"
+        category_key = normalize_category_name(raw_category_name)
+        current_category = grouped_inventory_map.get(category_key)
+        if current_category is None:
             current_category = {
-                "category": category_name,
+                "category": display_category_name(raw_category_name),
+                "category_aliases": set(),
                 "items": [],
                 "item_count": 0,
                 "total_quantity": 0,
             }
-            grouped_inventory.append(current_category)
+            grouped_inventory_map[category_key] = current_category
+        current_category["category_aliases"].add(raw_category_name)
 
         location_parts = []
         total_quantity = 0
         for record in item.stock_at_locations.all():
             location_name = record.location.name if record.location else "Unassigned"
-            total_quantity += int(record.quantity or 0)
-            location_parts.append(f"{location_name}: {record.quantity}")
+            quantity = int(record.quantity or 0)
+            total_quantity += quantity
+            location_parts.append(
+                {
+                    "name": location_name,
+                    "label": compact_location_label(location_name),
+                    "quantity": quantity,
+                    "quantity_display": f"{quantity:,}",
+                }
+            )
 
         current_category["items"].append(
             {
@@ -4841,7 +5182,8 @@ def inventory_overview_view(request):
                 "brand": item.brand.name if item.brand else "",
                 "sku": item.sku or "PENDING",
                 "quantity": total_quantity,
-                "locations": ", ".join(location_parts) if location_parts else "No locations assigned",
+                "quantity_display": f"{total_quantity:,}",
+                "location_badges": location_parts,
             }
         )
         if total_quantity <= 0:
@@ -4849,6 +5191,16 @@ def inventory_overview_view(request):
         current_category["item_count"] += 1
         current_category["total_quantity"] += total_quantity
         total_inventory_units += total_quantity
+
+    grouped_inventory = sorted(grouped_inventory_map.values(), key=lambda group: group["category"])
+    for group in grouped_inventory:
+        aliases = sorted(group["category_aliases"], key=str.lower)
+        plural_alias = next((alias for alias in aliases if alias.strip().lower().endswith("s")), None)
+        if plural_alias:
+            group["category"] = re.sub(r"\s+", " ", plural_alias.strip()).title()
+        group["category_aliases"] = aliases
+        group["has_merged_aliases"] = len({alias.lower() for alias in aliases}) > 1
+        group["total_quantity_display"] = f"{int(group['total_quantity'] or 0):,}"
 
     movement_context = _build_inventory_movement_context(effective_owner, active_location=active_location)
     remaining_in_store_quantity = int(movement_context.get("remaining_in_store_quantity") or 0)
@@ -4907,6 +5259,12 @@ def transfer_stock_view(request):
 
     items = _item_queryset_for_user(request.user).order_by("name")
     locations = Location.objects.filter(owner=owner).order_by("name")
+    preferred_location_param = request.GET.get("location", "").strip()
+    preferred_source_location = (
+        locations.filter(pk=preferred_location_param).first()
+        if preferred_location_param.isdigit()
+        else None
+    )
 
     # --- GET: PREPARE DATA FOR DROPDOWNS ---
     location_rows = [{"id": loc.id, "name": loc.name} for loc in locations]
@@ -5053,6 +5411,7 @@ def transfer_stock_view(request):
         'locations': locations,
         'stock_json': formatted_stock,
         'transfer_confirmation': transfer_confirmation,
+        'preferred_source_location_id': preferred_source_location.id if preferred_source_location else "",
     })
    
 
@@ -5118,18 +5477,52 @@ def customer_detail(request, pk):
         invoices = invoices.filter(owner=owner_user)
 
     customer_total_quotations = quotations.count()
-    customer_total_invoices = invoices.count()
+    invoice_filter = (request.GET.get("invoice_filter") or request.GET.get("invoice_status") or "all").strip().lower()
+    if invoice_filter not in {"all", "open", "paid"}:
+        invoice_filter = "all"
+
+    invoice_rows = list(invoices)
+    open_invoices = [
+        invoice
+        for invoice in invoice_rows
+        if invoice.status == "issued" and invoice.balance_due > Decimal("0.00")
+    ]
+    paid_invoices = [invoice for invoice in invoice_rows if invoice.status == "paid"]
+    if invoice_filter == "open":
+        visible_invoices = open_invoices
+    elif invoice_filter == "paid":
+        visible_invoices = paid_invoices
+    else:
+        visible_invoices = invoice_rows
+
+    customer_total_invoices = len(invoice_rows)
     customer_total_quote_amount = quotations.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
-    customer_total_invoice_amount = invoices.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
+    customer_total_invoice_amount = sum(
+        (invoice.effective_total_amount for invoice in invoice_rows),
+        Decimal("0.00"),
+    )
+    customer_outstanding_balance = sum(
+        (invoice.balance_due for invoice in open_invoices),
+        Decimal("0.00"),
+    )
+    invoice_filter_counts = {
+        "all": customer_total_invoices,
+        "open": len(open_invoices),
+        "paid": len(paid_invoices),
+    }
 
     context = {
         "customer": customer,
         "quotations": quotations,
-        "invoices": invoices,
+        "invoices": visible_invoices,
         "customer_total_quotations": customer_total_quotations,
         "customer_total_invoices": customer_total_invoices,
         "customer_total_quote_amount": customer_total_quote_amount,
         "customer_total_invoice_amount": customer_total_invoice_amount,
+        "customer_outstanding_balance": customer_outstanding_balance,
+        "customer_open_invoice_count": len(open_invoices),
+        "invoice_filter": invoice_filter,
+        "invoice_filter_counts": invoice_filter_counts,
         "note_entries": note_entries,
     }
     return render(request, "inventory/customer_detail.html", context)
@@ -5875,8 +6268,28 @@ def locations_page(request):
     locations = _location_queryset_for_user(request.user).order_by('name')
     is_pro_user = _is_pro_user(owner_user)
 
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "update_capacity":
+            location = _location_queryset_for_user(request.user).filter(pk=request.POST.get("location_id")).first()
+            if not location:
+                messages.error(request, "Branch not found.")
+                return redirect("locations")
+            capacity = _clean_inventory_capacity(request.POST.get("inventory_capacity"))
+            location.inventory_capacity = capacity
+            location.save(update_fields=["inventory_capacity"])
+            _log_action(
+                request.user,
+                "location",
+                "Branch inventory capacity updated",
+                {"location_id": location.id, "capacity": capacity},
+            )
+            messages.success(request, f"{location.name} capacity updated to {capacity:,} units.")
+            return redirect("locations")
+
     # --- Stats ---
     total_locations = locations.count()
+    total_capacity = locations.aggregate(total=Sum("inventory_capacity"))["total"] or 0
     total_stock_value = _stock_queryset_for_user(request.user).aggregate(
         total=Sum(F('quantity') * F('item__price'), output_field=DecimalField())
     )['total'] or 0
@@ -5885,7 +6298,10 @@ def locations_page(request):
         "profile": profile,
         "locations": locations,
         "total_locations": total_locations,
+        "total_capacity": total_capacity,
+        "total_capacity_display": f"{int(total_capacity):,}",
         "total_stock_value": total_stock_value,
+        "total_stock_value_display": _format_money(total_stock_value),
         "is_pro_user": is_pro_user,
     }
 
@@ -6271,7 +6687,7 @@ def cash_register(request):
 
     if request.method == "GET" and default_location and not active_shift:
             messages.warning(request, "Register is not open. Please open a shift before processing sales.")
-            return redirect('open_shift') # This matches the name in urls.py
+            return redirect(f"{reverse('open_shift')}?{urlencode({'next': reverse('cash_register')})}")
     
     _get_unassigned_location(owner_user)
     _dedupe_default_locations(owner_user)
@@ -6744,7 +7160,7 @@ def cash_register(request):
     # ---------------------------
     pos_initial_limit = max(1, int(getattr(settings, "POS_INITIAL_ITEMS_LIMIT", 50)))
     items_qs = _pos_items_queryset_for_user(request.user, profile)
-    items = items_qs[:pos_initial_limit]
+    items = list(items_qs.prefetch_related("stock_at_locations")[:pos_initial_limit])
     locations = _location_queryset_for_user(request.user).order_by("name")
     customers = _customer_queryset_for_user(request.user).order_by("name")
 
@@ -6754,6 +7170,12 @@ def cash_register(request):
     current_role = getattr(profile, "role", "cashier") or "cashier"
     default_location_id = getattr(profile, "default_location_id", "") or ""
     default_location_name = getattr(default_location, "name", "")
+    for item in items:
+        stock_quantity = _pos_stock_quantity_for_item(item, default_location)
+        stock_badge = _pos_stock_badge(stock_quantity)
+        item.pos_stock_quantity = stock_quantity
+        item.pos_stock_label = stock_badge["label"]
+        item.pos_stock_tone = stock_badge["tone"]
     
     return render(
         request,
@@ -6796,18 +7218,22 @@ def pos_items(request):
     else:
         limit = max(1, int(getattr(settings, "POS_INITIAL_ITEMS_LIMIT", 50)))
 
-    items = items[:limit]
+    items = list(items.prefetch_related("stock_at_locations")[:limit])
 
-    data = [
-        {
+    data = []
+    for item in items:
+        stock_quantity = _pos_stock_quantity_for_item(item, profile.default_location)
+        stock_badge = _pos_stock_badge(stock_quantity)
+        data.append({
             "id": item.id,
             "name": item.name,
             "price": float(item.price),
             "sku": item.sku or "",
             "barcode": item.barcode or "",
-        }
-        for item in items
-    ]
+            "stock_quantity": stock_quantity,
+            "stock_label": stock_badge["label"],
+            "stock_tone": stock_badge["tone"],
+        })
     return JsonResponse({"items": data})
 
 @login_required
@@ -6827,6 +7253,8 @@ def pos_item_lookup(request):
     if not item:
         return JsonResponse({"success": False, "error": "Item not found."}, status=404)
 
+    stock_quantity = _pos_stock_quantity_for_item(item, profile.default_location)
+    stock_badge = _pos_stock_badge(stock_quantity)
     return JsonResponse({
         "success": True,
         "item": {
@@ -6835,6 +7263,9 @@ def pos_item_lookup(request):
             "price": float(item.price),
             "sku": item.sku or "",
             "barcode": getattr(item, "barcode", None) or "",
+            "stock_quantity": stock_quantity,
+            "stock_label": stock_badge["label"],
+            "stock_tone": stock_badge["tone"],
         }
     })
 
@@ -7209,41 +7640,62 @@ def _receipt_build_pdf_bytes(lines):
 
 def _receipt_pdf_lines(context):
     sale = context["sale"]
+    width = 62
+
+    def rule(char="-"):
+        return char * width
+
+    def amount_row(label, value):
+        label = str(label)
+        value = str(value)
+        return f"{label[:38]:<38}{value:>24}"
+
+    def item_row(description, amount):
+        description = str(description)
+        amount = str(amount)
+        return f"{description[:42]:<42}{amount:>20}"
+
     lines = [
-        context["brand_name"],
-        context.get("brand_address") or "",
-        " ".join(part for part in [context.get("brand_phone") or "", context.get("brand_email") or ""] if part).strip(),
+        context["brand_name"].center(width),
+        (context.get("brand_address") or "").center(width),
+        " ".join(part for part in [context.get("brand_phone") or "", context.get("brand_email") or ""] if part).strip().center(width),
         "",
-        f"Receipt #{_receipt_document_number(sale)}",
-        f"Status: {sale.get_receipt_status_display()}",
-        f"Date: {timezone.localtime(sale.timestamp).strftime('%Y-%m-%d %I:%M %p')}",
-        f"Cashier: {getattr(sale.cashier, 'username', 'Deleted User')}",
-        f"Location: {getattr(sale.location, 'name', '')}",
+        context["grand_total_display"].center(width),
+        f"Receipt #{_receipt_document_number(sale)}".center(width),
+        f"{timezone.localtime(sale.timestamp).strftime('%d %b %Y %I:%M %p')} | {sale.get_receipt_status_display()}".center(width),
+        "",
+        rule(),
+        amount_row("Description", "Amount"),
+        rule(),
     ]
+    for line_item in context["receipt_items"]:
+        lines.append(item_row(line_item["item_name"], line_item["line_total_display"]))
+        if line_item["line_meta"]:
+            lines.append(f"  {line_item['line_meta']}")
+    lines.extend(
+        [
+            rule(),
+            amount_row("Subtotal", context["subtotal_display"]),
+            amount_row(context["tax_label"], context["tax_amount_display"]),
+            amount_row("Discount", f"-{context['discount_display']}"),
+            rule("="),
+            amount_row("Amount Paid", context["amount_paid_display"]),
+            amount_row("Change", context["change_due_display"]),
+            amount_row("Total", context["grand_total_display"]),
+            rule("="),
+            "",
+            f"Cashier: {getattr(sale.cashier, 'username', 'Deleted User')}",
+            f"Location: {getattr(sale.location, 'name', '')}",
+            f"Tender: {sale.get_tender_display()}",
+        ]
+    )
     if sale.customer_name:
         lines.append(f"Customer: {sale.customer_name}")
     if sale.payment_reference:
         lines.append(f"Payment Ref: {sale.payment_reference}")
-    lines.append("")
-    for line_item in context["receipt_items"]:
-        lines.append(
-            f"{line_item['quantity']} x {line_item['item_name']}  {line_item['line_total_display']}"
-        )
-        if line_item["line_meta"]:
-            lines.append(f"    {line_item['line_meta']}")
-    lines.extend(
-        [
-            "",
-            f"Subtotal: {context['subtotal_display']}",
-            f"Tax: {context['tax_amount_display']}",
-            f"Discount: {context['discount_display']}",
-            f"Total: {context['grand_total_display']}",
-            f"Amount Paid: {context['amount_paid_display']}",
-            f"Change: {context['change_due_display']}",
-        ]
-    )
     if sale.notes:
         lines.extend(["", "Notes:", sale.notes])
+    lines.extend(["", f"Thanks, {context['thank_brand']}"])
     return [line for line in lines if line is not None]
 
 
@@ -7279,7 +7731,7 @@ def _receipt_build_context(request, sale, *, auto_print=False):
     if not logo_url:
         logo_url = static("images/QuickStock_Logo.jpg")
 
-    brand_name = getattr(location, "name", "") or owner_profile.receipt_brand_name or "QuickStock JA"
+    brand_name = owner_profile.receipt_brand_name or getattr(location, "name", "") or "QuickStock JA"
     thank_brand = owner_profile.receipt_brand_name or "QuickStock JA"
     brand_email = owner_profile.receipt_contact_email or ""
     brand_phone = owner_profile.receipt_contact_phone or ""
@@ -7321,6 +7773,8 @@ def _receipt_build_context(request, sale, *, auto_print=False):
         "brand_email": brand_email,
         "brand_phone": brand_phone,
         "brand_address": brand_address,
+        "branch_name": getattr(location, "name", "") or "",
+        "currency_code": "JMD",
         "thank_brand": thank_brand,
         "receipt_number": _receipt_document_number(sale),
         "subtotal_display": f"${_receipt_money(subtotal):.2f}",
@@ -8882,6 +9336,45 @@ def settings_view(request):
                     messages.success(request, "System logistics updated.")
                     return redirect("settings")
 
+                if request.POST.get("action") == "update_accounting_integration":
+                    if not is_admin:
+                        messages.error(request, "Only Administrators can update accounting integrations.")
+                        return redirect("settings")
+
+                    provider = request.POST.get("provider") or AccountingIntegration.PROVIDER_XERO
+                    if provider not in dict(AccountingIntegration.PROVIDER_CHOICES):
+                        messages.error(request, "Unsupported accounting provider.")
+                        return redirect("settings")
+
+                    integration = get_or_create_accounting_integration(owner_user, provider=provider)
+                    requested_status = request.POST.get("status") or AccountingIntegration.STATUS_DISCONNECTED
+                    if requested_status not in dict(AccountingIntegration.STATUS_CHOICES):
+                        requested_status = AccountingIntegration.STATUS_DISCONNECTED
+
+                    integration.status = requested_status
+                    integration.sync_sales = request.POST.get("sync_sales") == "1"
+                    integration.sync_sales_invoices = request.POST.get("sync_sales_invoices") == "1"
+                    integration.sync_purchase_invoices = request.POST.get("sync_purchase_invoices") == "1"
+                    integration.sync_inventory_items = request.POST.get("sync_inventory_items") == "1"
+                    integration.save(
+                        update_fields=[
+                            "status",
+                            "sync_sales",
+                            "sync_sales_invoices",
+                            "sync_purchase_invoices",
+                            "sync_inventory_items",
+                            "updated_at",
+                        ]
+                    )
+
+                    queued_count = 0
+                    if request.POST.get("queue_existing") == "1" and integration.is_ready_for_sync:
+                        queued_count = len(queue_existing_accounting_data(owner_user, provider=provider))
+
+                    suffix = f" {queued_count} existing record(s) queued." if queued_count else ""
+                    messages.success(request, f"{integration.get_provider_display()} integration settings saved.{suffix}")
+                    return redirect("settings")
+
                 # --- 2. Personal preferences (Available to all) ---
                 updates = []
                 theme = request.POST.get("theme")
@@ -8913,8 +9406,15 @@ def settings_view(request):
 
                     logo_file = request.FILES.get("brand_logo_file")
                     logo_url = request.POST.get("brand_logo_url", "").strip()
+                    remove_logo = request.POST.get("remove_brand_logo") == "1"
 
-                    if logo_file:
+                    if remove_logo:
+                        if brand_owner.receipt_logo:
+                            brand_owner.receipt_logo.delete(save=False)
+                        brand_owner.receipt_logo = None
+                        brand_owner.receipt_logo_url = ""
+                        brand_updates.extend(["receipt_logo", "receipt_logo_url"])
+                    elif logo_file:
                         try:
                             brand_owner.receipt_logo = _validate_receipt_logo_upload(logo_file)
                         except ValidationError as exc:
@@ -9014,6 +9514,7 @@ def settings_view(request):
         "brand_defaults": {
             "name": brand_owner.receipt_brand_name if brand_owner else "",
             "logo": display_logo,
+            "logo_url": brand_owner.receipt_logo_url if brand_owner else "",
             "email": brand_owner.receipt_contact_email if brand_owner else "",
             "phone": brand_owner.receipt_contact_phone if brand_owner else "",
         },
@@ -9111,6 +9612,8 @@ from .decorators import role_required # Assuming this is your custom decorator
 @login_required
 @role_required(["cashier", "manager", "admin"])
 def open_shift(request):
+    next_url = _safe_next_url(request, "cash_register")
+
     # 1. Get user profile and ensure they have a default location assigned
     try:
         profile = UserProfile.objects.select_related("default_location").get(user=request.user)
@@ -9128,13 +9631,17 @@ def open_shift(request):
     active_shift = CashShift.get_active_shift(request.user)
     if active_shift:
         messages.info(request, "You already have an active shift session. Reconcile it before opening another shift.")
-        return redirect('cash_register')
+        return redirect(next_url)
 
     if request.method == "POST":
         opening_cash = _safe_decimal(request.POST.get("opening_cash", "0.00"))
         if opening_cash < Decimal("0.00"):
             messages.error(request, "Opening cash cannot be negative.")
-            return render(request, "inventory/open_shift.html", {"profile": profile, "location_name": default_location.name})
+            return render(request, "inventory/open_shift.html", {
+                "profile": profile,
+                "location_name": default_location.name,
+                "next_url": next_url,
+            })
         try:
             with transaction.atomic():
                 CashShift.objects.create(
@@ -9146,17 +9653,18 @@ def open_shift(request):
                 )
         except IntegrityError:
             messages.info(request, "A shift was opened already. Reconcile it before opening another shift.")
-            return redirect("cash_register")
+            return redirect(next_url)
         
         # Log and Notify
         _log_action(request.user, "shift_open", f"Register opened at {default_location.name}")
         messages.success(request, f"Shift started at {default_location.name} with ${opening_cash} float.")
         
-        return redirect('cash_register')
+        return redirect(next_url)
 
     return render(request, "inventory/open_shift.html", {
         "profile": profile,
-        "location_name": default_location.name
+        "location_name": default_location.name,
+        "next_url": next_url,
     })
 
 @login_required
@@ -9689,17 +10197,24 @@ def add_location(request):
         name = request.POST.get("name")
         address = request.POST.get("address")
         country_code = (request.POST.get("country_code") or "JM").upper()
+        inventory_capacity = _clean_inventory_capacity(request.POST.get("inventory_capacity"))
         
         if name:
             try:
                 # We use .strip() to avoid "PRIORY " being different from "PRIORY"
                 new_node = Location.objects.create(
-                    owner=request.user,
+                    owner=_inventory_owner_for_user(request.user),
                     name=name.upper().strip(), 
                     address=address,
                     country_code=country_code,
+                    inventory_capacity=inventory_capacity,
                 )
-                _log_action(request.user, "node_add", f"System expansion: {name}")
+                _log_action(
+                    request.user,
+                    "node_add",
+                    f"System expansion: {name}",
+                    {"location_id": new_node.id, "capacity": inventory_capacity},
+                )
                 messages.success(request, f"Node {new_node.name} is now online.")
                 return redirect("locations") 
                 
@@ -9817,6 +10332,12 @@ def supplier_ledger(request, supplier_id):
     total_invoiced = Decimal("0.00")
     total_paid = Decimal("0.00")
     total_adjustments = Decimal("0.00")
+    aging_buckets = {
+        "Current": {"count": 0, "total": Decimal("0.00")},
+        "1-30 Days": {"count": 0, "total": Decimal("0.00")},
+        "31-60 Days": {"count": 0, "total": Decimal("0.00")},
+        "60+ Days": {"count": 0, "total": Decimal("0.00")},
+    }
     for inv in invoices:
         inv.display_invoice_no = f"#{str(inv.invoice_no or '').lstrip('#')}"
         inv.payment_entries = sorted(
@@ -9837,6 +10358,10 @@ def supplier_ledger(request, supplier_id):
         total_adjustments += inv.recorded_adjustment_amount
         running_balance += inv.net_balance
         inv.cumulative_balance = running_balance
+        inv.aging_label = inv.aging_bucket
+        if inv.aging_label in aging_buckets:
+            aging_buckets[inv.aging_label]["count"] += 1
+            aging_buckets[inv.aging_label]["total"] += inv.remaining_balance
 
     balance_due = max(running_balance, Decimal("0.00"))
     supplier_credit = max(-running_balance, Decimal("0.00"))
@@ -9847,6 +10372,20 @@ def supplier_ledger(request, supplier_id):
         .first()
     )
 
+    if request.GET.get("statement") == "vendor" and request.GET.get("format") == "pdf":
+        lines = _supplier_statement_pdf_lines(
+            supplier=supplier,
+            invoices=invoices,
+            total_invoiced=total_invoiced,
+            total_paid=total_paid,
+            total_adjustments=total_adjustments,
+            balance_due=balance_due,
+            supplier_credit=supplier_credit,
+        )
+        response = HttpResponse(_receipt_build_pdf_bytes(lines), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="vendor-statement-{supplier.id}.pdf"'
+        return response
+
     return render(request, 'inventory/supplier_ledger.html', {
         'supplier': supplier,
         'invoices': invoices,
@@ -9855,12 +10394,55 @@ def supplier_ledger(request, supplier_id):
         'total_adjustments': total_adjustments,
         'balance_due': balance_due,
         'supplier_credit': supplier_credit,
+        'aging_buckets': aging_buckets,
         'last_payment_date': last_payment.payment_date if last_payment else "No Payments",
         'can_reverse_payments': (
             request.user.is_superuser
             or getattr(getattr(request.user, "profile", None), "role", None) == "admin"
         ),
     })
+
+
+def _supplier_statement_pdf_lines(
+    *,
+    supplier,
+    invoices,
+    total_invoiced,
+    total_paid,
+    total_adjustments,
+    balance_due,
+    supplier_credit,
+):
+    generated_at = timezone.localtime(timezone.now()).strftime("%b %d, %Y %I:%M %p")
+    lines = [
+        "QuickStock JA",
+        f"Vendor Statement: {supplier.name}",
+        f"Generated: {generated_at}",
+        "",
+        f"Total Invoiced: ${Decimal(total_invoiced or 0).quantize(Decimal('0.01'))}",
+        f"Net Payments: ${Decimal(total_paid or 0).quantize(Decimal('0.01'))}",
+        f"Credits / Voids: ${Decimal(total_adjustments or 0).quantize(Decimal('0.01'))}",
+        f"Outstanding Balance: ${Decimal(balance_due or 0).quantize(Decimal('0.01'))}",
+        f"Supplier Credit: ${Decimal(supplier_credit or 0).quantize(Decimal('0.01'))}",
+        "",
+        "Invoice | Issue | Due | Terms | Status | Debit | Credits | Balance",
+    ]
+    for inv in invoices:
+        lines.append(
+            " | ".join(
+                [
+                    str(inv.display_invoice_no or inv.invoice_no or inv.id),
+                    inv.date_issued.strftime("%Y-%m-%d") if inv.date_issued else "-",
+                    inv.due_date.strftime("%Y-%m-%d") if inv.due_date else "-",
+                    inv.get_payment_terms_display() if hasattr(inv, "get_payment_terms_display") else "-",
+                    str(inv.status),
+                    f"${Decimal(inv.amount or 0).quantize(Decimal('0.01'))}",
+                    f"${Decimal(inv.recorded_credit_total or 0).quantize(Decimal('0.01'))}",
+                    f"${Decimal(inv.remaining_balance or 0).quantize(Decimal('0.01'))}",
+                ]
+            )
+        )
+    return lines
 
 
 def _refresh_supplier_invoice_financial_state(invoice):
@@ -9910,7 +10492,9 @@ def add_invoice(request, supplier_id):
     if request.method == "POST":
         invoice_no = request.POST.get("invoice_no")
         amount = _safe_decimal(request.POST.get("amount", "0") or "0")
-        status = request.POST.get("status", "Pending")
+        raw_terms = request.POST.get("payment_terms") or request.POST.get("status") or SupplierInvoice.TERMS_DUE_ON_RECEIPT
+        status = "Paid" if raw_terms in {"Paid", "paid_now"} else "Pending"
+        payment_terms = raw_terms if raw_terms in SupplierInvoice.PAYMENT_TERM_DAYS else SupplierInvoice.TERMS_DUE_ON_RECEIPT
 
         # Accept both "location_id" and legacy "location" form fields.
         raw_location = request.POST.get("location_id") or request.POST.get("location") or ""
@@ -9926,13 +10510,11 @@ def add_invoice(request, supplier_id):
                     {
                         "supplier": supplier,
                         "locations": locations,
+                        "payment_term_choices": SupplierInvoice.PAYMENT_TERM_CHOICES,
                         "today": timezone.now().date(),
                     },
                 )
    
-        if status not in {"Pending", "Paid"}:
-            status = "Pending"
-        
         date_issued = request.POST.get("date_issued")
 
         # VALIDATION
@@ -9944,6 +10526,7 @@ def add_invoice(request, supplier_id):
                 {
                     "supplier": supplier, 
                     "locations": locations, # Pass back on error
+                    "payment_term_choices": SupplierInvoice.PAYMENT_TERM_CHOICES,
                     "today": timezone.now().date()
                 },
             )
@@ -9970,6 +10553,7 @@ def add_invoice(request, supplier_id):
                     {
                         "supplier": supplier,
                         "locations": locations,
+                        "payment_term_choices": SupplierInvoice.PAYMENT_TERM_CHOICES,
                         "today": timezone.now().date(),
                     },
                 )
@@ -10013,6 +10597,7 @@ def add_invoice(request, supplier_id):
                 paid_amount=Decimal("0.00"),
                 status="Pending",
                 date_issued=date_issued,
+                payment_terms=payment_terms,
             )
             initial_payment = None
             if status == "Paid":
@@ -10048,6 +10633,8 @@ def add_invoice(request, supplier_id):
                     "location_id": getattr(location, "id", None),
                     "amount": str(amount),
                     "status": invoice.status,
+                    "payment_terms": invoice.payment_terms,
+                    "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
                     "initial_payment_id": getattr(initial_payment, "id", None),
                 },
                 required=True,
@@ -10062,6 +10649,7 @@ def add_invoice(request, supplier_id):
         {
             "supplier": supplier, 
             "locations": locations, # The vital piece
+            "payment_term_choices": SupplierInvoice.PAYMENT_TERM_CHOICES,
             "today": timezone.now().date()
         },
     )
@@ -10075,7 +10663,16 @@ def invoice_detail(request, invoice_id):
         .filter(supplier__owner=_inventory_owner_for_user(request.user))
     )
     invoice = get_object_or_404(invoice_qs, id=invoice_id)
-    return render(request, "inventory/invoice_detail.html", {"invoice": invoice})
+    owner_profile = UserProfile.for_user(invoice.supplier.owner)
+    return render(
+        request,
+        "inventory/invoice_detail.html",
+        {
+            "invoice": invoice,
+            "profile": owner_profile,
+            "currency_code": "JMD",
+        },
+    )
 
 
 @login_required
@@ -10437,6 +11034,18 @@ def download_software(request):
 
 from .models import CashShift
 
+
+def _safe_next_url(request, fallback_name):
+    fallback_url = reverse(fallback_name)
+    next_url = (request.POST.get("next") or request.GET.get("next") or "").strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return fallback_url
+
 @login_required
 @role_required(["cashier", "manager", "admin"])
 def close_shift_view(request, shift_id):
@@ -10630,6 +11239,7 @@ def _create_sales_invoice_from_quotation(user, owner_user, quote_id, selected_lo
     if not owner_user.is_superuser:
         quotation_qs = quotation_qs.filter(owner=owner_user)
     quotation = get_object_or_404(quotation_qs, pk=quote_id)
+    _expire_stale_sales_quotations(owner_user)
 
     with transaction.atomic():
         locked_quote = (
@@ -10637,6 +11247,14 @@ def _create_sales_invoice_from_quotation(user, owner_user, quote_id, selected_lo
             .select_related("customer")
             .get(pk=quotation.pk)
         )
+
+        if (
+            locked_quote.status == "draft"
+            and locked_quote.valid_until
+            and locked_quote.valid_until < timezone.localdate()
+        ):
+            locked_quote.status = "expired"
+            locked_quote.save(update_fields=["status"])
 
         if locked_quote.status != "draft":
             existing = getattr(locked_quote, "converted_invoice", None)
@@ -10690,6 +11308,7 @@ def _create_sales_invoice_from_quotation(user, owner_user, quote_id, selected_lo
             customer=locked_quote.customer,
             location=selected_location,
             status="issued",
+            due_date=locked_quote.valid_until,
             notes=locked_quote.notes,
             subtotal=locked_quote.subtotal,
             tax_amount=locked_quote.tax_amount,
@@ -10753,6 +11372,8 @@ def _sales_document_email_context(document, document_kind, recipient_email=""):
     document_date_value = document.issued_at if is_invoice else document.created_at
     if timezone.is_aware(document_date_value):
         document_date_value = timezone.localtime(document_date_value)
+    expiry_date = document.due_date if is_invoice else document.valid_until
+    expiry_label = "Due Date" if is_invoice else "Valid Until"
 
     customer = document.customer
     brand_name = re.sub(
@@ -10786,7 +11407,11 @@ def _sales_document_email_context(document, document_kind, recipient_email=""):
         "document_number": document_number,
         "status_display": document.get_status_display(),
         "document_date": document_date_value.strftime("%B %d, %Y at %I:%M %p"),
+        "expiry_date": expiry_date,
+        "expiry_label": expiry_label,
+        "expiry_date_display": expiry_date.strftime("%B %d, %Y") if expiry_date else "",
         "valid_until": document.valid_until if not is_invoice else None,
+        "due_date": document.due_date if is_invoice else None,
         "location_name": getattr(location, "name", "") or "",
         "line_items": line_items,
         "subtotal_display": f"${subtotal:.2f}",
@@ -10819,8 +11444,8 @@ def _sales_document_email_pdf_lines(context):
         f"Date: {context['document_date']}",
         f"Customer: {context['customer_name']}",
     ]
-    if context.get("valid_until"):
-        lines.append(f"Valid Until: {context['valid_until'].strftime('%B %d, %Y')}")
+    if context.get("expiry_date"):
+        lines.append(f"{context['expiry_label']}: {context['expiry_date'].strftime('%B %d, %Y')}")
     if context.get("location_name"):
         lines.append(f"Location: {context['location_name']}")
 
@@ -10874,10 +11499,24 @@ def _send_sales_document_email(document, document_kind, recipient_email):
     return context
 
 
+def _expire_stale_sales_quotations(owner_user=None):
+    """Move unconverted draft quotes past their validity date into expired state."""
+    today = timezone.localdate()
+    stale_quotes = SalesQuotation.objects.filter(
+        status="draft",
+        valid_until__isnull=False,
+        valid_until__lt=today,
+    )
+    if owner_user is not None and not owner_user.is_superuser:
+        stale_quotes = stale_quotes.filter(owner=owner_user)
+    return stale_quotes.update(status="expired")
+
+
 @login_required
 @role_required(["admin", "manager", "cashier"])
 def sales_quotation_list(request):
     owner_user = _inventory_owner_for_user(request.user)
+    _expire_stale_sales_quotations(owner_user)
     quotations = SalesQuotation.objects.select_related("customer", "created_by", "converted_invoice")
     if not owner_user.is_superuser:
         quotations = quotations.filter(owner=owner_user)
@@ -10892,7 +11531,7 @@ def sales_quotation_list(request):
             | Q(customer__phone__icontains=q)
             | Q(customer__email__icontains=q)
         )
-    if status in {"draft", "converted", "cancelled"}:
+    if status in {"draft", "converted", "cancelled", "expired"}:
         quotations = quotations.filter(status=status)
 
     visible_quotations = list(quotations.order_by("-created_at"))
@@ -10903,6 +11542,7 @@ def sales_quotation_list(request):
         "draft_count": sum(1 for quote in visible_quotations if quote.status == "draft"),
         "converted_count": sum(1 for quote in visible_quotations if quote.status == "converted"),
         "cancelled_count": sum(1 for quote in visible_quotations if quote.status == "cancelled"),
+        "expired_count": sum(1 for quote in visible_quotations if quote.status == "expired"),
         "expiring_soon_count": sum(
             1
             for quote in visible_quotations
@@ -10931,6 +11571,9 @@ def sales_quotation_create(request):
     customers = _customer_queryset_for_user(request.user).order_by("name")
     items = _item_queryset_for_user(request.user).filter(status="active").order_by("name")
     default_tax_rate = _get_tax_rate_for_location(getattr(profile, "default_location", None))
+    selected_customer_id = _safe_int(request.GET.get("customer_id"), 0)
+    if selected_customer_id and not customers.filter(pk=selected_customer_id).exists():
+        selected_customer_id = 0
 
     if request.method == "POST":
         customer_id = (request.POST.get("customer_id") or "").strip()
@@ -11019,7 +11662,7 @@ def sales_quotation_create(request):
             messages.error(request, "Add at least one valid line item to save the quotation.")
             return redirect("sales_quotation_create")
 
-        adjustment_meta, tax_rate = _document_adjustments_from_request(request, default_tax_rate)
+        adjustment_meta, tax_rate = _document_adjustments_from_request(request, default_tax_rate, customer)
         discount_amount, tax_amount, total_amount = _calculate_document_totals(
             subtotal,
             taxable_subtotal,
@@ -11066,6 +11709,7 @@ def sales_quotation_create(request):
         "customers": customers,
         "items": items,
         "default_tax_rate_percent": int(default_tax_rate * 100),
+        "selected_customer_id": selected_customer_id,
     }
     return render(request, "inventory/sales_quotation_form.html", context)
 
@@ -11074,6 +11718,7 @@ def sales_quotation_create(request):
 @role_required(["admin", "manager", "cashier"])
 def sales_quotation_detail(request, quote_id):
     owner_user = _inventory_owner_for_user(request.user)
+    _expire_stale_sales_quotations(owner_user)
     quotations = SalesQuotation.objects.select_related("customer", "created_by", "converted_invoice")
     if not owner_user.is_superuser:
         quotations = quotations.filter(owner=owner_user)
@@ -11211,11 +11856,15 @@ def sales_quotation_convert_to_invoice(request, quote_id):
 @role_required(["admin", "manager", "cashier"])
 def sales_invoice_create(request):
     owner_user = _inventory_owner_for_user(request.user)
+    _expire_stale_sales_quotations(owner_user)
     profile = UserProfile.for_user(request.user)
 
     customers = _customer_queryset_for_user(request.user).order_by("name")
     items = _item_queryset_for_user(request.user).filter(status="active").order_by("name")
     locations = _location_queryset_for_user(request.user).order_by("name")
+    selected_customer_id = _safe_int(request.GET.get("customer_id"), 0)
+    if selected_customer_id and not customers.filter(pk=selected_customer_id).exists():
+        selected_customer_id = 0
 
     draft_quotations = SalesQuotation.objects.select_related("customer").filter(status="draft")
     if not owner_user.is_superuser:
@@ -11280,6 +11929,15 @@ def sales_invoice_create(request):
         customer_id = (request.POST.get("customer_id") or "").strip()
         customer_name = (request.POST.get("customer_name") or "").strip()
         notes = (request.POST.get("notes") or "").strip()
+        due_date_raw = (request.POST.get("due_date") or "").strip()
+        if due_date_raw:
+            try:
+                due_date = datetime.fromisoformat(due_date_raw).date()
+            except ValueError:
+                messages.error(request, "Invalid invoice due date.")
+                return redirect(f"{reverse('sales_invoice_create')}?source=scratch")
+        else:
+            due_date = timezone.localdate() + timedelta(days=7)
         selected_location = _resolve_sales_invoice_location(request.user, request.POST.get("location_id"))
         if not selected_location:
             messages.error(request, "Choose a valid location for this invoice.")
@@ -11385,7 +12043,7 @@ def sales_invoice_create(request):
                 return redirect(f"{reverse('sales_invoice_create')}?source=scratch")
 
         default_tax_rate = _get_tax_rate_for_location(selected_location)
-        adjustment_meta, tax_rate = _document_adjustments_from_request(request, default_tax_rate)
+        adjustment_meta, tax_rate = _document_adjustments_from_request(request, default_tax_rate, customer)
         discount_amount, tax_amount, total_amount = _calculate_document_totals(
             subtotal,
             taxable_subtotal,
@@ -11404,6 +12062,7 @@ def sales_invoice_create(request):
                 customer=customer,
                 location=selected_location,
                 status="issued",
+                due_date=due_date,
                 notes=stored_notes,
                 subtotal=subtotal.quantize(Decimal("0.01")),
                 tax_amount=tax_amount,
@@ -11454,6 +12113,8 @@ def sales_invoice_create(request):
         "default_tax_rate_percent": int(_get_tax_rate_for_location(_resolve_sales_invoice_location(request.user)) * 100),
         "payment_methods": SalesInvoicePayment.METHOD_CHOICES,
         "source": source,
+        "selected_customer_id": selected_customer_id,
+        "default_due_date": timezone.localdate() + timedelta(days=7),
     }
     return render(request, "inventory/sales_invoice_form.html", context)
 
@@ -11964,6 +12625,10 @@ def sales_invoice_payment(request, invoice_id):
 
         if amount <= 0 and credit_to_apply <= 0:
             messages.error(request, "Enter a payment amount or apply customer credit before saving.")
+            return redirect("sales_invoice_payment", invoice_id=invoice.id)
+
+        if amount > 0 and _sales_invoice_payment_method_requires_reference(method) and not reference:
+            messages.error(request, "Enter a reference or transaction ID for non-cash payments.")
             return redirect("sales_invoice_payment", invoice_id=invoice.id)
 
         if credit_to_apply > Decimal("0.00") and not invoice.customer:

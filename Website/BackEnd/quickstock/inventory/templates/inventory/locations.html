@@ -9,8 +9,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Locations | QuickStock JA</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=locations-spacing-advanced-color-20260705">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
         <script src="{% static 'inventory/js/theme.js' %}"></script>
         <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     </head>
@@ -45,6 +45,14 @@
 </nav>
 
         <main class="content-container locations-shell">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <section class="locations-hero">
                 <div class="locations-hero-copy">
                     <p class="locations-kicker">Branch network</p>
@@ -77,8 +85,13 @@
                 </div>
                 <div class="summary-box">
                     <label>Overall Asset Valuation</label>
-                    <span>${{ total_stock_value|floatformat:2 }}</span>
+                    <span>${{ total_stock_value_display }}</span>
                     <small>Inventory value across all locations</small>
+                </div>
+                <div class="summary-box">
+                    <label>Total Branch Capacity</label>
+                    <span>{{ total_capacity_display }}</span>
+                    <small>Configured unit capacity across branches</small>
                 </div>
                 <div class="summary-box">
                     <label>Sync Status</label>
@@ -109,6 +122,24 @@
                             <span class="meta-label">Role</span>
                             <strong>{% if loc.name|lower == "main store" %}Primary Location{% elif loc.name|lower == "unassigned" %}Holding Node{% elif loc.is_warehouse %}Warehouse Node{% else %}Active Branch{% endif %}</strong>
                         </div>
+                        <div>
+                            <span class="meta-label">Capacity</span>
+                            <strong>{{ loc.inventory_capacity|default:1000 }} units</strong>
+                        </div>
+                    </div>
+                    <form method="post" class="location-capacity-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_capacity">
+                        <input type="hidden" name="location_id" value="{{ loc.id }}">
+                        <label for="capacity-{{ loc.id }}">Branch capacity</label>
+                        <div>
+                            <input id="capacity-{{ loc.id }}" type="number" name="inventory_capacity" min="1" step="1" value="{{ loc.inventory_capacity|default:1000 }}" inputmode="numeric" required>
+                            <button type="submit">Update</button>
+                        </div>
+                    </form>
+                    <div class="location-card-actions" aria-label="{{ loc.name }} quick actions">
+                        <a href="{% url 'inventory' %}?location={{ loc.id }}&sort=quantity&dir=desc" class="location-card-action">View Branch Inventory -&gt;</a>
+                        <a href="{% url 'transfer_stock' %}?location={{ loc.id }}" class="location-card-action location-card-action-muted">Transfer Stock</a>
                     </div>
                     <div class="location-foot">
                         <span class="location-foot-status">Branch routing ready</span>

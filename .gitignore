@@ -14,6 +14,7 @@ myenv/
 *.env
 Website/BackEnd/quickstock/.env
 Website/BackEnd/quickstock/.env.*
+!Website/BackEnd/quickstock/.env.example
 
 # Django/runtime artifacts
 db.sqlite3

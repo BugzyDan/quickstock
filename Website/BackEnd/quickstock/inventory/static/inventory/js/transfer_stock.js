@@ -251,6 +251,13 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             stockList.innerHTML = '<p class="transfer-empty-copy">No source balances available for this item yet.</p>';
         }
+        const preferredLocationId = fromSelect.dataset.preferredLocationId || '';
+        if (preferredLocationId && !fromSelect.value) {
+            const preferredOption = Array.from(fromSelect.options).find(option => option.value === preferredLocationId);
+            if (preferredOption) {
+                fromSelect.value = preferredLocationId;
+            }
+        }
         validateForm();
     }
 

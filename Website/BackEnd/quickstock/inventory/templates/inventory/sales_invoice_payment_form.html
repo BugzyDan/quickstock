@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Payment | {{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-pickup-lifecycle-1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     <script id="salesInvoicePaymentConfig" type="application/json">
@@ -15,7 +15,7 @@
             "availableCustomerCredit": "{{ available_customer_credit|floatformat:2 }}"
         }
     </script>
-    <script src="{% static 'inventory/js/sales_invoice_payment.js' %}" defer></script>
+    <script src="{% static 'inventory/js/sales_invoice_payment.js' %}?v=20260729-collection-desk-1" defer></script>
     
 </head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-invoice-payment page-supplier-list">
@@ -111,7 +111,10 @@
                     <div class="sales-payment-grid">
                         <label class="sales-payment-field">
                             <span>Amount To Record ($)</span>
-                            <input type="number" id="payment-amount-input" name="amount" min="0" step="0.01" value="{{ default_payment_amount|floatformat:2 }}" required>
+                            <div class="sales-payment-input-action">
+                                <input type="number" id="payment-amount-input" name="amount" min="0" step="0.01" value="{{ default_payment_amount|floatformat:2 }}" required>
+                                <button type="button" class="sales-payment-max-btn" id="pay-full-balance-button">Pay Full Balance</button>
+                            </div>
                         </label>
                         {% if invoice.customer %}
                         <label class="sales-payment-field">
@@ -122,15 +125,15 @@
                         {% endif %}
                         <label class="sales-payment-field">
                             <span>Payment Method</span>
-                            <select name="payment_method" required>
+                            <select name="payment_method" id="payment-method-select" required>
                                 {% for value, label in payment_methods %}
                                     <option value="{{ value }}" {% if value == default_payment_method %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
                             </select>
                         </label>
                         <label class="sales-payment-field">
-                            <span>Reference / Transaction ID</span>
-                            <input type="text" name="reference" maxlength="80" placeholder="Cheque #, auth code, wire ID">
+                            <span>Reference / Transaction ID <small id="payment-reference-required-copy" class="sales-payment-required-note" hidden>Required for non-cash</small></span>
+                            <input type="text" name="reference" id="payment-reference-input" maxlength="80" placeholder="Cheque #, auth code, wire ID">
                         </label>
                         <label class="sales-payment-field">
                             <span>Payment Date & Time</span>
@@ -145,20 +148,23 @@
                         </p>
                         <div class="sales-pickup-options">
                             <label class="sales-pickup-option">
-                                <input type="radio" name="pickup_status" value="collected_now" checked>
+                                <input type="radio" name="pickup_status" value="collected_now" id="collected-now-radio" checked>
                                 <span class="sales-pickup-option-copy">
                                     <strong>Customer collected items now</strong>
                                     <small>Record the goods as picked up immediately with this final payment.</small>
                                 </span>
                             </label>
                             <label class="sales-pickup-option">
-                                <input type="radio" name="pickup_status" value="leave_in_store">
+                                <input type="radio" name="pickup_status" value="leave_in_store" id="leave-in-store-radio">
                                 <span class="sales-pickup-option-copy">
                                     <strong>Keep paid items in store</strong>
                                     <small>Hold the goods for a later customer pickup and show them under Remaining In Store.</small>
                                 </span>
                             </label>
                         </div>
+                        <p class="sales-pickup-lock-note" id="pickup-lock-note" hidden>
+                            Collection release unlocks when recorded payment plus applied credit fully clears the balance.
+                        </p>
                     </fieldset>
 
                     <label class="sales-payment-field">

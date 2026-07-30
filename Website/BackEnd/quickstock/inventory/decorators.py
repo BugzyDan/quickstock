@@ -43,7 +43,7 @@ def pro_required(view_func):
         return redirect('upgrade')
     return wrapper
 
-def role_required(allowed_roles):
+def role_required(allowed_roles, *, allow_superuser=False):
     """
     RBAC decorator: Restricts access based on UserProfile roles.
     """
@@ -56,7 +56,13 @@ def role_required(allowed_roles):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if request.user.is_superuser:
-                return view_func(request, *args, **kwargs)
+                if allow_superuser:
+                    return view_func(request, *args, **kwargs)
+                messages.error(
+                    request,
+                    "Platform superusers use the Super Admin dashboard for tenant oversight.",
+                )
+                return redirect('super_admin_dashboard')
 
             profile = getattr(request.user, 'profile', None)
             

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deliveries & Collections | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
 </head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-deliveries">
@@ -34,6 +34,11 @@
                     <span>{{ collected_total_quantity }} units collected same time</span>
                     <span>{{ remaining_total_quantity }} units remaining in store</span>
                 </div>
+                {% if is_closeout_wizard %}
+                    <div class="ops-wizard-actions">
+                        <a href="{{ next_closeout_url }}" class="ops-wizard-next">Finish Closeout -&gt;</a>
+                    </div>
+                {% endif %}
             </div>
             <div class="ops-hero-status ops-hero-status-grid">
                 <div class="ops-status-chip">
@@ -50,6 +55,9 @@
         </section>
 
         <form method="get" action="{% url 'deliveries_collections' %}" class="ops-suite-toolbar ops-suite-toolbar-inline">
+            {% if is_closeout_wizard %}
+                <input type="hidden" name="closeout" value="1">
+            {% endif %}
             <label for="deliveryDate">Calendar Date</label>
             <input id="deliveryDate" type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
             <button type="submit">View Activity</button>

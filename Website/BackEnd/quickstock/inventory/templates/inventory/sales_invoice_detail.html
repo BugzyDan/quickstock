@@ -6,8 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260721-document-actions-2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
 </head>
@@ -42,6 +42,7 @@
             <p class="sales-page-subtitle">
                 {% if invoice.customer %}{{ invoice.customer.name }}{% else %}Walk-in / Unassigned{% endif %}
                 • Issued {{ invoice.issued_at|date:"M d, Y H:i" }}
+                {% if invoice.due_date %}• Due {{ invoice.due_date|date:"M d, Y" }}{% endif %}
             </p>
             <div class="ops-chip-row"><span class="ops-chip">{{ invoice.get_status_display }}</span><span class="ops-chip">Balance ${{ balance_due|floatformat:2 }}</span></div>
         </div>
@@ -117,6 +118,8 @@
             </div>
             <div class="summary-row-premium"><span>Invoice #</span><strong>{{ invoice.invoice_no }}</strong></div>
             <div class="summary-row-premium"><span>Linked Quotation</span><strong>{{ invoice.quotation.quote_no|default:"--" }}</strong></div>
+            <div class="summary-row-premium"><span>Issue Date</span><strong>{{ invoice.issued_at|date:"M d, Y H:i" }}</strong></div>
+            <div class="summary-row-premium"><span>Due Date</span><strong>{{ invoice.due_date|date:"M d, Y"|default:"--" }}</strong></div>
             <div class="summary-row-premium"><span>Location</span><strong>{{ invoice.location.name|default:"--" }}</strong></div>
             <div class="summary-row-premium"><span>Subtotal</span><strong>${{ invoice.subtotal|floatformat:2 }}</strong></div>
             <div class="summary-row-premium"><span>Discount Amount</span><strong>${{ discount_amount|floatformat:2 }}</strong></div>

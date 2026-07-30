@@ -65,10 +65,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const taxableRatio = subtotal > 0 ? (taxableSubtotal / subtotal) : 0;
         const taxableAfterDiscount = Math.max(0, taxableSubtotal - (discountAmount * taxableRatio));
 
-        const taxMode = taxModeSelect ? taxModeSelect.value : "default";
+        const selectedCustomer = scratchCustomerSelect ? scratchCustomerSelect.options[scratchCustomerSelect.selectedIndex] : null;
+        const customerTaxExempt = selectedCustomer?.getAttribute("data-tax-exempt") === "1";
+        const taxMode = customerTaxExempt ? "none" : (taxModeSelect ? taxModeSelect.value : "default");
         let activeTaxRate = taxRate;
         let taxLabel = `Tax (${taxRatePercent}%)`;
-        if (taxMode === "none") {
+        if (customerTaxExempt) {
+            activeTaxRate = 0;
+            taxLabel = "GCT Exempt";
+        } else if (taxMode === "none") {
             activeTaxRate = 0;
             taxLabel = "Tax Removed";
         } else if (taxMode === "custom") {
@@ -187,6 +192,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addBtn) addBtn.addEventListener("click", addRow);
     if (taxModeSelect) taxModeSelect.addEventListener("change", updateTotals);
     if (taxRateInput) taxRateInput.addEventListener("input", updateTotals);
+    if (scratchCustomerSelect) {
+        scratchCustomerSelect.addEventListener("change", () => {
+            const selected = scratchCustomerSelect.options[scratchCustomerSelect.selectedIndex];
+            const exempt = selected?.getAttribute("data-tax-exempt") === "1";
+            if (taxModeSelect && exempt) taxModeSelect.value = "none";
+            updateTotals();
+        });
+    }
     if (discountTypeSelect) discountTypeSelect.addEventListener("change", updateTotals);
     if (discountValueInput) discountValueInput.addEventListener("input", updateTotals);
     if (lineBody && !lineBody.querySelector(".invoice-line-row")) addRow();

@@ -125,7 +125,25 @@
         if (lowStockEl) lowStockEl.textContent = String(lowStockCount);
         if (depletedEl) depletedEl.textContent = String(depletedCount);
 
-        // F. MOBILE NAV TOGGLE
+        // F. FLASH DISMISS + DESTRUCTIVE ACTION CONFIRMATION
+        document.querySelectorAll('.inventory-flash-dismiss').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const message = btn.closest('.inventory-flash-message');
+                if (message) message.remove();
+            });
+        });
+
+        document.querySelectorAll('.inventory-delete-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                const button = form.querySelector('.action-btn-delete');
+                const itemName = button?.dataset.itemName || 'this item';
+                const sku = button?.dataset.itemSku || 'PENDING';
+                const ok = window.confirm(`Archive ${itemName} (${sku})? This removes it from active inventory views.`);
+                if (!ok) event.preventDefault();
+            });
+        });
+
+        // G. MOBILE NAV TOGGLE
         const navToggle = findNavToggle();
         const nav = document.getElementById('main-nav');
         if (navToggle && nav && document.documentElement.dataset.qsShellBound !== 'true') {

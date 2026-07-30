@@ -1,59 +1,92 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en"
+      data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <title>Invoice #{{ invoice.invoice_no }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_no }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 
 <body class="page-invoice-detail">
-    <div class="receipt-card">
-        <div class="header">
-            <h2 style="margin:0;">Invoice Details</h2>
-            {% if profile.receipt_logo_url %}
-                <img src="{{ profile.receipt_logo_url }}" alt="{{ profile.receipt_brand_name|default:'Brand Logo' }}" style="max-height:60px; margin-top:10px;">
-            {% endif %}
-            <p style="color: #0061ff; font-weight: 800;">{{ profile.receipt_brand_name|default:invoice.supplier.name }}</p>
-            {% if profile.receipt_address %}
-                <p style="color:#747d8c; margin:4px 0;">{{ profile.receipt_address }}</p>
-            {% endif %}
-            {% if profile.receipt_contact_phone or profile.receipt_contact_email %}
-                <p style="color:#747d8c; margin:0;">
-                    {% if profile.receipt_contact_phone %}{{ profile.receipt_contact_phone }}{% endif %}
-                    {% if profile.receipt_contact_phone and profile.receipt_contact_email %} · {% endif %}
-                    {% if profile.receipt_contact_email %}{{ profile.receipt_contact_email }}{% endif %}
-                </p>
-            {% endif %}
-        </div>
-        
-        <div class="row">
-            <span class="label">Invoice Number</span>
-            <span class="val">#{{ invoice.invoice_no }}</span>
-        </div>
-        <div class="row">
-            <span class="label">Amount</span>
-            <span class="val">${{ invoice.amount|floatformat:2 }}</span>
-        </div>
-        <div class="row">
-            <span class="label">Date Issued</span>
-            <span class="val">{{ invoice.date_issued|date:"F d, Y" }}</span>
-        </div>
-        <div class="row">
-            <span class="label">Status</span>
-            <span class="val">
-                <span class="badge {% if invoice.status == 'Paid' %}paid{% else %}pending{% endif %}">
-                    {{ invoice.status|upper }}
-                </span>
-            </span>
-        </div>
+    <main class="invoice-page-wrapper supplier-invoice-shell">
+        <section class="invoice-detail-card supplier-invoice-card">
+            <header class="supplier-invoice-header">
+                <div class="supplier-header-left">
+                    {% if profile.receipt_logo %}
+                        <img src="{{ profile.receipt_logo.url }}" alt="{{ profile.receipt_brand_name|default:'QuickStock' }}" class="supplier-invoice-logo">
+                    {% elif profile.receipt_logo_url %}
+                        <img src="{{ profile.receipt_logo_url }}" alt="{{ profile.receipt_brand_name|default:'QuickStock' }}" class="supplier-invoice-logo">
+                    {% endif %}
+                    <div class="supplier-header-copy">
+                        <p class="supplier-invoice-kicker">Supplier Invoice</p>
+                        <h1>Invoice Details</h1>
+                        <span class="client-name">{{ invoice.supplier.name }}</span>
+                    </div>
+                </div>
+                <div class="supplier-header-right">
+                    <span class="currency-label">{{ currency_code }}</span>
+                    <strong class="total-amount">{{ invoice.amount|floatformat:2 }}</strong>
+                    <span class="due-date-text">
+                        Issued {{ invoice.date_issued|date:"d M Y" }}
+                        {% if invoice.due_date %} / Due {{ invoice.due_date|date:"d M Y" }}{% endif %}
+                    </span>
+                </div>
+            </header>
 
-        <hr style="border:0; border-top:1px solid #eee; margin: 30px 0;">
-        <a href="{% url 'supplier_ledger' invoice.supplier.id %}" style="color: #747d8c; text-decoration: none; font-size: 0.8rem; font-weight: 600;">← Back to Ledger</a>
-        <button onclick="window.print()" style="float:right; cursor:pointer;">Print Invoice</button>
-    </div>
+            <section class="invoice-meta-grid supplier-invoice-facts" aria-label="Invoice facts">
+                <span class="label">Invoice Number</span>
+                <strong class="value">{{ invoice.invoice_no|default:invoice.id }}</strong>
+
+                <span class="label">Amount</span>
+                <strong class="value">{{ currency_code }} {{ invoice.amount|floatformat:2 }}</strong>
+
+                <span class="label">Date Issued</span>
+                <strong class="value">{{ invoice.date_issued|date:"F j, Y" }}</strong>
+
+                <span class="label">Status</span>
+                <strong class="value">
+                        <span class="supplier-invoice-status supplier-invoice-status-{{ invoice.status|lower }}">{{ invoice.status|upper }}</span>
+                </strong>
+
+                <span class="label">Location</span>
+                <strong class="value">{{ invoice.location.name|default:"Unassigned" }}</strong>
+
+                <span class="label">Terms</span>
+                <strong class="value">{{ invoice.get_payment_terms_display|default:"Pending" }}</strong>
+            </section>
+
+            <section class="supplier-invoice-summary" aria-label="Payment summary">
+                <div class="supplier-invoice-summary-row">
+                    <span>Invoice Amount</span>
+                    <strong>${{ invoice.amount|floatformat:2 }}</strong>
+                </div>
+                <div class="supplier-invoice-summary-row">
+                    <span>Paid</span>
+                    <strong>${{ invoice.paid_amount|floatformat:2 }}</strong>
+                </div>
+                <div class="supplier-invoice-summary-row">
+                    <span>Balance Due</span>
+                    <strong>${{ invoice.balance_due|floatformat:2 }}</strong>
+                </div>
+                {% if invoice.status != "Paid" and invoice.days_overdue %}
+                <div class="supplier-invoice-summary-row supplier-invoice-warning-row">
+                    <span>Overdue</span>
+                    <strong>{{ invoice.days_overdue }} day{{ invoice.days_overdue|pluralize }}</strong>
+                </div>
+                {% endif %}
+            </section>
+
+            <footer class="invoice-actions supplier-invoice-actions">
+                <a href="{% url 'supplier_ledger' invoice.supplier.id %}" class="supplier-invoice-back">Back to Ledger</a>
+                <button type="button" onclick="window.print()" class="supplier-invoice-print">Print Invoice</button>
+            </footer>
+        </section>
+    </main>
 </body>
-
 </html>

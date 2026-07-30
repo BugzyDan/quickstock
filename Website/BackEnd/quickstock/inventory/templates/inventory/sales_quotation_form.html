@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Create Quotation | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=20260716-sales-actions-1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     <script src="{% static 'inventory/js/sales_quotation_form.js' %}" defer></script>
@@ -68,10 +68,10 @@
             <div class="sales-summary-box-premium">
                 <div class="settings-form-group-premium">
                     <label>Customer</label>
-                    <select name="customer_id">
+                    <select name="customer_id" id="quoteCustomerSelect">
                         <option value="">Walk-in / Unassigned</option>
                         {% for customer in customers %}
-                            <option value="{{ customer.id }}">{{ customer.name }}{% if customer.phone %} ({{ customer.phone }}){% endif %}</option>
+                            <option value="{{ customer.id }}" data-tax-exempt="{% if customer.is_tax_exempt %}1{% else %}0{% endif %}" {% if selected_customer_id == customer.id %}selected{% endif %}>{{ customer.name }}{% if customer.phone %} ({{ customer.phone }}){% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>

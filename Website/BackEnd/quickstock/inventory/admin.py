@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.db import models
 from .models import (
+    AccountingIntegration,
+    AccountingSyncRecord,
     Item, Sale, UserProfile, Category, Brand, 
     Payment, AuditLog, Location, StockRecord, StockTransfer,
 )
@@ -34,7 +36,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Location)
 class LocationAdmin(OwnerScopedAdmin):
-    list_display = ("name", "country_code", "is_warehouse")
+    list_display = ("name", "country_code", "is_warehouse", "inventory_capacity")
     list_filter = ("country_code", "is_warehouse")
 
 @admin.register(Category)
@@ -86,3 +88,19 @@ class ItemAdmin(OwnerScopedAdmin):
     @admin.display(description='Total Quantity')
     def total_global_quantity(self, obj):
         return obj.total_global_quantity
+
+
+@admin.register(AccountingIntegration)
+class AccountingIntegrationAdmin(OwnerScopedAdmin):
+    list_display = ("provider", "display_name", "owner", "status", "last_synced_at", "updated_at")
+    list_filter = ("provider", "status", "sync_sales", "sync_sales_invoices", "sync_purchase_invoices", "sync_inventory_items")
+    search_fields = ("display_name", "owner__username", "external_tenant_id")
+    readonly_fields = ("created_at", "updated_at", "last_synced_at", "last_error")
+
+
+@admin.register(AccountingSyncRecord)
+class AccountingSyncRecordAdmin(OwnerScopedAdmin):
+    list_display = ("integration", "owner", "status", "operation", "external_id", "attempt_count", "updated_at")
+    list_filter = ("integration__provider", "status", "operation", "created_at", "updated_at")
+    search_fields = ("owner__username", "external_id", "error_message")
+    readonly_fields = ("created_at", "updated_at", "synced_at", "payload", "response_payload", "error_message")

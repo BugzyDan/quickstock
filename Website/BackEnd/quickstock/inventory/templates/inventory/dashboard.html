@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Command Center</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 
@@ -82,17 +82,35 @@
         </form>
     </section>
 
+    {% if open_shift_count %}
+    <section class="dashboard-open-shift-alert" role="status">
+        <div>
+            <span class="dashboard-alert-pill">{{ open_shift_count }} open shift{{ open_shift_count|pluralize }}</span>
+            <strong>Drawer closeout pending</strong>
+            <p>
+                {% with shift=open_shifts.0 %}
+                    {{ shift.cashier.get_full_name|default:shift.cashier.username }} still has an open shift{% if shift.location %} at {{ shift.location.name }}{% endif %}.
+                {% endwith %}
+            </p>
+        </div>
+        <a href="{{ open_shift_alert_url }}" class="dashboard-alert-action">Start Closeout</a>
+    </section>
+    {% endif %}
+
     <div class="kpi-grid">
         <div class="kpi-card">
             <span class="kpi-label">Gross Revenue (JMD)</span>
-            <div class="kpi-value">${{ total_sales|floatformat:2|default:"0.00" }}</div>
+            <div class="dashboard-kpi-title-row">
+                <div class="kpi-value">${{ total_sales_display|default:"0.00" }}</div>
+                <span class="dashboard-period-badge">FY 2026</span>
+            </div>
             <div class="dashboard-kpi-meta">
                 <span class="badge badge-success">Live from Terminal</span>
-                <span class="dashboard-kpi-subtle">Yesterday: ${{ yesterday_revenue|floatformat:2|default:"0.00" }}</span>
+                <span class="dashboard-kpi-subtle">Yesterday: ${{ yesterday_revenue_display|default:"0.00" }}</span>
             </div>
             <div class="dashboard-revenue-context dashboard-revenue-{{ revenue_change_status|default:'flat' }}">
                 <span>{{ revenue_change_label|default:"No prior-day context" }}</span>
-                <span>Today: ${{ today_revenue|floatformat:2|default:"0.00" }}</span>
+                <span>Today: ${{ today_revenue_display|default:"0.00" }}</span>
             </div>
         </div>
 
@@ -121,12 +139,15 @@
             <div class="kpi-value">{{ inventory_percent|default:"0" }}%</div>
             <div class="progress-box">
                 <div class="progress-track">
-                    <div class="progress-fill" style="width: {{ inventory_percent|default:"0" }}%;"></div>
+                    <div class="progress-fill" data-target-width="{{ inventory_percent|default:'0' }}%" style="width: {{ inventory_percent|default:"0" }}%;"></div>
                 </div>
                 <div class="dashboard-capacity-row">
                     <span class="dashboard-capacity-count">{{ total_inventory_display|default:total_inventory }} / {{ inventory_capacity_display|default:inventory_capacity }} Units</span>
-                    <span class="dashboard-capacity-status {% if inventory_percent >= 100 %}capacity-reached{% endif %}">{{ inventory_capacity_status|default:"No capacity data" }}</span>
+                    <span class="dashboard-capacity-status {% if inventory_over_capacity > 0 or inventory_percent >= 100 %}capacity-reached{% endif %}">{{ inventory_capacity_status|default:"No capacity data" }}</span>
                 </div>
+                {% if inventory_capacity_note %}
+                    <p class="dashboard-card-note dashboard-capacity-note">{{ inventory_capacity_note }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -141,7 +162,7 @@
                     {% for row in daily_revenue %}
                         <tr>
                             <td>{{ row.day|date:"M d" }}</td>
-                            <td class="dashboard-table-number">${{ row.total|floatformat:2 }}</td>
+                            <td class="dashboard-table-number">${{ row.total_display }}</td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="2" class="dashboard-empty-row">No sales in period.</td></tr>

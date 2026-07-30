@@ -132,11 +132,13 @@ class CustomerForm(forms.ModelForm):
 
     class Meta:
         model = Customer
-        fields = ['name', 'email', 'phone', 'physical_address', 'business_address', 'notes']
+        fields = ['name', 'email', 'phone', 'trn', 'is_tax_exempt', 'physical_address', 'business_address', 'notes']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Full Name'}),
             'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'email@example.com'}),
             'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': '876-000-0000'}),
+            'trn': forms.TextInput(attrs={'class': 'form-input', 'placeholder': '123-456-789', 'inputmode': 'numeric', 'maxlength': 11}),
+            'is_tax_exempt': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
             'physical_address': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': 'Home, delivery, or physical location address.'}),
             'business_address': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': 'Company, billing, or workplace address.'}),
             'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 5, 'placeholder': 'Billing preferences, delivery instructions, or standing account details.'}),
@@ -145,6 +147,8 @@ class CustomerForm(forms.ModelForm):
         labels = {
             'physical_address': 'Physical Address',
             'business_address': 'Business Address',
+            'trn': 'TRN / Tax ID',
+            'is_tax_exempt': 'Exempt from 15% GCT',
             'notes': 'Account profile notes',
         }
 

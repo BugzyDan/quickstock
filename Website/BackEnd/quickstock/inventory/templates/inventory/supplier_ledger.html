@@ -11,8 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ supplier.name }} Financial Ledger | QuickStock JA</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 
@@ -54,10 +54,15 @@
             <h1 class="vendor-name">{{ supplier.name }} Ledger</h1>
         </div>
         
-        <div class="header-actions">
-            <a href="{% url 'add_invoice' supplier.id %}" class="btn-new">
-                <span class="plus-icon">+</span> RECORD INVOICE
-            </a>
+        <div class="header-actions supplier-ledger-header-actions">
+            <div class="supplier-ledger-action-row">
+                <a href="{% url 'add_invoice' supplier.id %}" class="btn-new">
+                    <span class="plus-icon">+</span> RECORD INVOICE
+                </a>
+                <a href="{% url 'supplier_ledger' supplier.id %}?statement=vendor&format=pdf" class="supplier-statement-link">
+                    Download Vendor Statement
+                </a>
+            </div>
             <a href="{% url 'supplier_list' %}" class="back-link">← BACK TO SUPPLIERS</a>
         </div>
     </div>
@@ -86,6 +91,16 @@
         </div>
     </div>
 
+    <div class="supplier-aging-grid" aria-label="Accounts payable aging">
+        {% for label, bucket in aging_buckets.items %}
+            <div class="supplier-aging-card{% if label == '60+ Days' and bucket.count %} supplier-aging-card-critical{% elif bucket.count %} supplier-aging-card-active{% endif %}">
+                <span>{{ label }}</span>
+                <strong>${{ bucket.total|floatformat:2 }}</strong>
+                <small>{{ bucket.count }} open invoice{{ bucket.count|pluralize }}</small>
+            </div>
+        {% endfor %}
+    </div>
+
     <div class="table-wrapper">
         <table class="invoice-table">
             <thead>
@@ -109,6 +124,13 @@
                             {% if inv.status == 'Paid' %}status-paid{% elif inv.status == 'Void' %}status-void{% else %}status-pending{% endif %}">
                             {{ inv.status }}
                         </span>
+                        <span class="supplier-aging-badge{% if inv.aging_label == '60+ Days' %} supplier-aging-badge-critical{% elif inv.aging_label != 'Current' and inv.aging_label != 'Settled' %} supplier-aging-badge-warning{% endif %}">
+                            {{ inv.aging_label }}
+                        </span>
+                        <div class="supplier-due-meta">
+                            Due {{ inv.due_date|date:"M d, Y" }} · {{ inv.get_payment_terms_display }}
+                            {% if inv.days_overdue > 0 %}· {{ inv.days_overdue }} day{{ inv.days_overdue|pluralize }} overdue{% endif %}
+                        </div>
                         {% if inv.status == 'Void' and inv.void_reason %}
                             <div style="font-size:0.65rem; color:var(--soft-gray); margin-top: 2px;">{{ inv.void_reason }}</div>
                         {% endif %}
@@ -142,67 +164,88 @@
                     </td>
                     <td class="balance-col">${{ inv.cumulative_balance|floatformat:2 }}</td>
                     <td><span style="font-size: 0.75rem; font-weight: 600;">{{ inv.location.name|default:"Main Office" }}</span></td>
-                    <td style="text-align: right;">
-                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                            
-                            {% if inv.status != 'Void' and inv.balance_due > 0 %}
-                                <form method="POST" action="{% url 'mark_invoice_paid' inv.id %}" class="payment-form">
-                                    {% csrf_token %}
-                                    <input type="number" name="payment_amount" step="0.01" min="0.01"
-                                           max="{{ inv.remaining_balance|floatformat:2 }}" 
-                                           value="{{ inv.remaining_balance|floatformat:2 }}" 
-                                           class="payment-input">
-                                    <button type="submit" class="pay-btn compact">APPLY</button>
-                                </form>
-                            {% endif %}
-
-                            {% if can_reverse_payments %}
-                                {% for payment in inv.payment_entries %}
-                                    {% if not payment.reversal %}
-                                        <form method="POST" action="{% url 'reverse_supplier_invoice_payment' inv.id payment.id %}" class="payment-form">
-                                            {% csrf_token %}
-                                            <input type="text" name="reversal_reason" required
-                                                   placeholder="Reversal reason"
-                                                   class="payment-input">
-                                            <button type="submit" class="pay-btn compact" style="background:#111827;">REVERSE #{{ payment.id }}</button>
-                                        </form>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-
-                            {% if inv.status != 'Void' %}
-                                <form method="POST" action="{% url 'void_invoice' inv.id %}" class="payment-form">
-                                    {% csrf_token %}
-                                    <input type="text" name="void_reason" required
-                                           placeholder="Void reason"
-                                           class="payment-input">
-                                    <button type="submit" class="pay-btn compact" style="background:var(--danger-red);">VOID</button>
-                                </form>
-                            {% endif %}
-
-                            {% if can_reverse_payments and inv.status != 'Void' %}
-                                <form method="POST" action="{% url 'supplier_invoice_credit_note' inv.id %}" class="payment-form">
-                                    {% csrf_token %}
-                                    <input type="number" name="credit_amount" step="0.01" min="0.01" max="{{ inv.effective_amount|floatformat:2 }}" placeholder="Credit amount" class="payment-input" required>
-                                    <input type="text" name="credit_reason" placeholder="Credit reason" class="payment-input" required>
-                                    <button type="submit" class="pay-btn compact" style="background:#7c3aed;">CREDIT</button>
-                                </form>
-                            {% endif %}
-
-                            {% if can_reverse_payments and inv.recorded_paid_amount > 0 %}
-                                <form method="POST" action="{% url 'supplier_invoice_refund' inv.id %}" class="payment-form">
-                                    {% csrf_token %}
-                                    <input type="number" name="refund_amount" step="0.01" min="0.01" max="{{ inv.recorded_paid_amount|floatformat:2 }}" placeholder="Refund amount" class="payment-input" required>
-                                    <input type="text" name="refund_reference" placeholder="Refund reference" class="payment-input" required>
-                                    <input type="text" name="refund_reason" placeholder="Refund reason" class="payment-input" required>
-                                    <button type="submit" class="pay-btn compact" style="background:#b45309;">REFUND</button>
-                                </form>
-                            {% endif %}
-                            
-                            <a href="{% url 'invoice_detail' inv.id %}" 
-                               style="font-size: 0.65rem; color: #475569; text-decoration: none; font-weight: 800; background: #f1f5f9; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--pos-border);">
-                               VIEW
+                    <td class="supplier-ledger-action-cell">
+                        <div class="supplier-invoice-actions">
+                            <a href="{% url 'invoice_detail' inv.id %}" class="supplier-invoice-primary-action">
+                               View
                             </a>
+                            <details class="supplier-invoice-manage-panel">
+                                <summary class="supplier-invoice-manage-toggle">Manage Invoice</summary>
+                                <div class="supplier-invoice-action-panel">
+                                    {% if inv.status != 'Void' and inv.balance_due > 0 %}
+                                        <section class="supplier-invoice-action-group">
+                                            <h3>Apply Payment</h3>
+                                            <form method="POST" action="{% url 'mark_invoice_paid' inv.id %}" class="payment-form supplier-ledger-panel-form">
+                                                {% csrf_token %}
+                                                <input type="number" name="payment_amount" step="0.01" min="0.01"
+                                                       max="{{ inv.remaining_balance|floatformat:2 }}"
+                                                       value="{{ inv.remaining_balance|floatformat:2 }}"
+                                                       class="payment-input">
+                                                <button type="submit" class="pay-btn compact">Apply</button>
+                                            </form>
+                                        </section>
+                                    {% endif %}
+
+                                    {% if can_reverse_payments %}
+                                        {% for payment in inv.payment_entries %}
+                                            {% if not payment.reversal %}
+                                                <section class="supplier-invoice-action-group">
+                                                    <h3>Reverse Payment #{{ payment.id }}</h3>
+                                                    <form method="POST" action="{% url 'reverse_supplier_invoice_payment' inv.id payment.id %}" class="payment-form supplier-ledger-panel-form">
+                                                        {% csrf_token %}
+                                                        <input type="text" name="reversal_reason" required
+                                                               placeholder="Reversal reason"
+                                                               class="payment-input">
+                                                        <button type="submit" class="pay-btn compact supplier-action-neutral">Reverse</button>
+                                                    </form>
+                                                </section>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                    {% if inv.status != 'Void' %}
+                                        <section class="supplier-invoice-action-group">
+                                            <h3>Void Invoice</h3>
+                                            <form method="POST" action="{% url 'void_invoice' inv.id %}" class="payment-form supplier-ledger-panel-form">
+                                                {% csrf_token %}
+                                                <input type="text" name="void_reason" required
+                                                       placeholder="Void reason"
+                                                       class="payment-input">
+                                                <button type="submit" class="pay-btn compact supplier-action-danger">Void</button>
+                                            </form>
+                                        </section>
+                                    {% endif %}
+
+                                    {% if can_reverse_payments and inv.status != 'Void' %}
+                                        <section class="supplier-invoice-action-group">
+                                            <h3>Credit Note</h3>
+                                            <form method="POST" action="{% url 'supplier_invoice_credit_note' inv.id %}" class="payment-form supplier-ledger-panel-form supplier-ledger-panel-form-stacked">
+                                                {% csrf_token %}
+                                                <input type="number" name="credit_amount" step="0.01" min="0.01" max="{{ inv.effective_amount|floatformat:2 }}" placeholder="Credit amount" class="payment-input" required>
+                                                <input type="text" name="credit_reason" placeholder="Credit reason" class="payment-input" required>
+                                                <button type="submit" class="pay-btn compact supplier-action-credit">Credit</button>
+                                            </form>
+                                        </section>
+                                    {% endif %}
+
+                                    {% if can_reverse_payments and inv.recorded_paid_amount > 0 %}
+                                        <section class="supplier-invoice-action-group">
+                                            <h3>Supplier Refund</h3>
+                                            <form method="POST" action="{% url 'supplier_invoice_refund' inv.id %}" class="payment-form supplier-ledger-panel-form supplier-ledger-panel-form-stacked">
+                                                {% csrf_token %}
+                                                <input type="number" name="refund_amount" step="0.01" min="0.01" max="{{ inv.recorded_paid_amount|floatformat:2 }}" placeholder="Refund amount" class="payment-input" required>
+                                                <input type="text" name="refund_reference" placeholder="Refund reference" class="payment-input" required>
+                                                <input type="text" name="refund_reason" placeholder="Refund reason" class="payment-input" required>
+                                                <button type="submit" class="pay-btn compact supplier-action-refund">Refund</button>
+                                            </form>
+                                        </section>
+                                    {% endif %}
+
+                                    {% if inv.status == 'Void' or not can_reverse_payments and inv.balance_due <= 0 %}
+                                        <p class="supplier-invoice-action-empty">No active invoice actions available.</p>
+                                    {% endif %}
+                                </div>
+                            </details>
                         </div>
                     </td>
                 </tr>

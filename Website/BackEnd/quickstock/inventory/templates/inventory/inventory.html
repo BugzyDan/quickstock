@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Control | QuickStock JA POS</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/inventory.js' %}" defer></script>
 </head>
@@ -44,7 +44,10 @@
 <div class="main-container">
     {% if messages %}
         {% for message in messages %}
-            <div class="inventory-flash-message">{{ message }}</div>
+            <div class="inventory-flash-message inventory-flash-{{ message.tags|default:'info' }}">
+                <span>{{ message }}</span>
+                <button type="button" class="inventory-flash-dismiss" aria-label="Dismiss message">x</button>
+            </div>
         {% endfor %}
     {% endif %}
 
@@ -84,6 +87,10 @@
                     <a href="{% url 'inventory_overview' %}" class="inventory-chip">Open Inventory Overview</a>
                     <span class="inventory-chip">Sort: {{ sort|default:"name"|title }}</span>
                     <span class="inventory-chip">Direction: {{ dir|default:"asc"|upper }}</span>
+                    {% if active_location %}
+                        <span class="inventory-chip inventory-chip-branch">Branch: {{ active_location.name }}</span>
+                        <a href="{% url 'inventory' %}?sort={{ sort }}&dir={{ dir }}&q={{ q|urlencode }}" class="inventory-chip inventory-chip-clear">Clear branch</a>
+                    {% endif %}
                     {% if q %}
                         <span class="inventory-chip inventory-chip-search">Search: "{{ q }}"</span>
                     {% else %}
@@ -100,6 +107,15 @@
                 <label class="inventory-field inventory-field-search">
                     <span>Search</span>
                     <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Search SKU or Name...">
+                </label>
+                <label class="inventory-field inventory-field-branch">
+                    <span>Branch</span>
+                    <select name="location">
+                        <option value="">All Branches</option>
+                        {% for location in locations %}
+                            <option value="{{ location.id }}" {% if current_location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
+                        {% endfor %}
+                    </select>
                 </label>
                 <label class="inventory-field">
                     <span>Sort by</span>
@@ -145,8 +161,8 @@
                         </td>
                         <td data-label="Qty"
                             class="inventory-qty-cell"
-                            data-quantity="{{ item.quantity }}">
-                            <span class="inventory-qty-value">{{ item.quantity }}</span>
+                            data-quantity="{{ item.row_quantity|default:0 }}">
+                            <span class="inventory-qty-value">{{ item.quantity_display }}</span>
                             <div class="inventory-breakdown-trigger">
                                 <button type="button"
                                         class="breakdown-toggle"
@@ -160,7 +176,7 @@
                                 <strong>Total</strong>
                                 <ul>
                                     {% if item.location_totals %}
-                                        {% for location_name, qty in item.location_totals.items %}
+                                        {% for location_name, qty in item.location_totals_display.items %}
                                             <li><span>{{ location_name }}</span><strong>{{ qty }}</strong></li>
                                         {% endfor %}
                                     {% else %}
@@ -170,22 +186,23 @@
                             </div>
                         </td>
                         <td data-label="Health">
-                            {% if item.quantity > 10 %}<span class="badge in-stock">Stable</span>
-                            {% elif item.quantity > 0 %}<span class="badge low-stock">Low Stock</span>
+                            {% if item.row_quantity > 10 %}<span class="badge in-stock">Stable</span>
+                            {% elif item.row_quantity > 0 %}<span class="badge low-stock">Low Stock</span>
                             {% else %}<span class="badge out-of-stock">Depleted</span>{% endif %}
                         </td>
-                        <td data-label="Price" class="price-tag">${{ item.price|floatformat:2 }}</td>
+                        <td data-label="Price" class="price-tag">${{ item.price_display }}</td>
                         <td data-label="Actions" class="actions-cell">
                             <div class="inventory-actions-group">
                                 <a href="{% url 'inventory_update' item.id %}" class="action-btn-modify">
                                     Modify
                                 </a>
 
-                                <form method="POST" action="{% url 'inventory_delete' item.id %}">
+                                <form method="POST" action="{% url 'inventory_delete' item.id %}" class="inventory-delete-form">
                                     {% csrf_token %}
                                     <button type="submit"
                                             class="action-btn-delete"
-                                            onclick="return confirm('Archive SKU #{{ item.sku }}?');">
+                                            data-item-name="{{ item.name }}"
+                                            data-item-sku="{{ item.sku|default:'PENDING' }}">
                                         Delete
                                     </button>
                                 </form>

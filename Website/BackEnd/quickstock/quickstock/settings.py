@@ -123,6 +123,12 @@ SOCIAL_AUTH_PROVIDERS = {
     },
 }
 
+XERO_CLIENT_ID = _env_str("XERO_CLIENT_ID")
+XERO_CLIENT_SECRET = _env_str("XERO_CLIENT_SECRET")
+XERO_REDIRECT_URI = _env_str("XERO_REDIRECT_URI")
+XERO_WEBHOOK_KEY = _env_str("XERO_WEBHOOK_KEY")
+ACCOUNTING_SYNC_BATCH_SIZE = _env_int("ACCOUNTING_SYNC_BATCH_SIZE", 50)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -211,7 +217,15 @@ else:
     db_engine = "django.db.backends.mysql"
 
 if db_engine == "django.db.backends.sqlite3":
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": os.getenv("DJANGO_DB_NAME", BASE_DIR / "db.sqlite3")}}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.getenv("DJANGO_DB_NAME", BASE_DIR / "db.sqlite3"),
+            "OPTIONS": {
+                "timeout": _env_int("SQLITE_BUSY_TIMEOUT_SECONDS", 30),
+            },
+        }
+    }
 else:
     db_name = get_env_or_raise("DJANGO_DB_NAME")
     db_user = get_env_or_raise("DJANGO_DB_USER")

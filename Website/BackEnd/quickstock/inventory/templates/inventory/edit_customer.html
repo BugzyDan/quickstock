@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Customer | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
@@ -111,6 +111,24 @@
                             </div>
                         </div>
 
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="{{ form.trn.id_for_label }}">TRN / Tax ID</label>
+                                <p class="field-hint">Use the Jamaican 9-digit format for tax invoices, e.g. 123-456-789.</p>
+                                {{ form.trn }}
+                                {{ form.trn.errors }}
+                            </div>
+                            <div class="form-group customer-tax-toggle">
+                                <label for="{{ form.is_tax_exempt.id_for_label }}">GCT Exempt</label>
+                                <p class="field-hint">When enabled, new quotes and invoices for this customer default to zero GCT.</p>
+                                <label class="customer-checkbox-row" for="{{ form.is_tax_exempt.id_for_label }}">
+                                    {{ form.is_tax_exempt }}
+                                    <span>Exempt from 15% GCT</span>
+                                </label>
+                                {{ form.is_tax_exempt.errors }}
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="{{ form.physical_address.id_for_label }}">Physical Address</label>
                             <p class="field-hint">Record the customer's home, delivery, or physical location address.</p>
@@ -132,11 +150,20 @@
                             {{ form.notes.errors }}
                         </div>
 
-                        <div class="form-group">
-                            <label for="{{ form.new_note.id_for_label }}">Add New Account Note</label>
-                            <p class="field-hint">This creates a separate dated note entry and keeps previous notes intact.</p>
+                        <div class="form-group customer-note-composer">
+                            <div class="customer-note-composer-head">
+                                <div>
+                                    <label for="{{ form.new_note.id_for_label }}">Add New Account Note</label>
+                                    <p class="field-hint">This creates a separate dated note entry and keeps previous notes intact.</p>
+                                </div>
+                                <span class="customer-note-composer-badge">Timeline</span>
+                            </div>
                             {{ form.new_note }}
                             {{ form.new_note.errors }}
+                            <div class="customer-note-composer-actions">
+                                <button type="submit" name="post_note" value="1" class="btn-post-note">Post Note to Timeline</button>
+                                <span>Posts this note and preserves the saved account profile above.</span>
+                            </div>
                         </div>
 
                         <div class="customer-edit-actions">

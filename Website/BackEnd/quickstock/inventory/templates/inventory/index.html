@@ -16,7 +16,7 @@
 
     <title>QuickStock JA | Inventory Simplified</title>
     
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=index-page-css-cleanup-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
 
     
 </head>
@@ -87,7 +87,7 @@
                 </p>
                 <div class="index-proof-strip">
                     <span>Built for Jamaica and the wider Caribbean</span>
-                    <span>Offline-ready Windows companion</span>
+                    <span>Transactions save locally during outages, then sync to cloud</span>
                     <span>Role-based access with audit trails</span>
                 </div>
             </div>
@@ -166,6 +166,17 @@
         <div>
             <h3 id="pricing">Simple, Affordable Pricing</h3>
             <p>Choose the lane that matches your current stage, then upgrade when you want deeper analytics, exports, and branch controls.</p>
+            <div class="index-currency-clarity" aria-label="USD billing with JMD planning equivalents">
+                <div class="index-currency-toggle" aria-hidden="true">
+                    <span class="is-active">USD billing</span>
+                    <span>JMD planning</span>
+                </div>
+                <div class="index-currency-rates">
+                    <span>Pro monthly: <strong>US$19</strong> approx. <strong>J$3,040</strong></span>
+                    <span>Pro yearly: <strong>US$190</strong> approx. <strong>J$30,400</strong></span>
+                </div>
+                <small>JMD figures are planning estimates using J$160 = US$1. Your card is billed in USD.</small>
+            </div>
         </div>
     </section>
 
@@ -175,12 +186,14 @@
             <div class="pro-badge is-current-plan">Current Plan</div>
         {% endif %}
         <h4>Starter</h4>
-        <p class="index-plan-caption">14-day free trial</p>
+        <p class="index-plan-caption">14-day free trial of core Starter features</p>
         <div class="price">$0<span>/14 days</span></div>
+        <p class="index-plan-billing-note">Evaluate the basics, then move to Pro to keep premium workflows.</p>
         <ul>
             <li>Basic Inventory Tracking</li>
             <li>Manual Sales Recording</li>
             <li>Single User Access</li>
+            <li>Local transaction capture during internet outages</li>
             <li class="excluded">Unlimited Items & SKU Tracking</li>
             <li class="excluded">Advanced Inventory Analytics</li>
             <li class="excluded">Full CSV/Excel Data Exports</li>
@@ -190,6 +203,9 @@
             <li class="excluded">Automated GCT Reporting</li>
             <li class="excluded">Low-Stock Email Alerts</li>
         </ul>
+        <p class="index-plan-footnote">
+            Starter is a trial, not a permanent free tier. Pro keeps exports, GCT tools, roles, and multi-location workflows active.
+        </p>
         {% if request.user.is_authenticated and profile %}
             {% if profile.is_trial_active %}
                 <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter index-muted-cta">Current Plan (Trial)</a>
@@ -219,9 +235,10 @@
             <li>Staff Role Management</li>
             <li>WiPay Payment Integration</li>
             <li>Multi-Location Support</li>
+            <li>Offline sync engine for outage-safe sales</li>
         </ul>
         <p class="index-plan-footnote">
-            Includes Free Windows offline Version download.
+            Includes Windows offline version download. Sales save locally during outages and sync to the cloud when reconnected.
         </p>
         {% if request.user.is_authenticated %}
             {% if profile.is_pro_active %}
@@ -264,6 +281,10 @@
                 <h4>Inter-Store Transfers</h4>
                 <p class="muted">Move stock between locations with audit trails and accurate COGS.</p>
             </div>
+            <div class="card index-offline-proof-card">
+                <h4>Offline Sync Engine</h4>
+                <p class="muted">Keep selling when the internet drops. QuickStock stores transactions locally, then reconciles them to the cloud once the branch reconnects.</p>
+            </div>
         </div>
     </section>
 
@@ -280,6 +301,44 @@
                 <h4>What you will see</h4>
                 <p class="muted">Barcode scanning, auto-reorder alerts, live margin tracking, and WiPay checkout.</p>
                 <a href="{% url 'about' %}" class="btn-upgrade index-inline-demo-link">Watch the Demo</a>
+            </div>
+        </div>
+        <div class="index-gct-preview" aria-label="GCT Summary Report preview">
+            <div class="index-gct-report">
+                <div class="index-gct-report-head">
+                    <div>
+                        <span class="index-gct-label">Tax Report Preview</span>
+                        <h4>GCT Summary Report</h4>
+                    </div>
+                    <div class="index-gct-meta">
+                        <span>Period: Jun 2026</span>
+                        <span>Location: Kingston HQ</span>
+                    </div>
+                </div>
+                <div class="index-gct-report-grid">
+                    <div class="index-gct-metric index-gct-metric-primary">
+                        <span>Taxable Sales</span>
+                        <strong>J$2,840,500</strong>
+                    </div>
+                    <div class="index-gct-metric">
+                        <span>GCT Collected</span>
+                        <strong>J$426,075</strong>
+                    </div>
+                    <div class="index-gct-metric">
+                        <span>Zero-Rated / Exempt</span>
+                        <strong>J$312,800</strong>
+                    </div>
+                    <div class="index-gct-metric">
+                        <span>Exports</span>
+                        <strong>J$148,200</strong>
+                    </div>
+                </div>
+                <div class="index-gct-table" role="presentation">
+                    <div><span>Standard-rated sales</span><strong>J$2,840,500</strong></div>
+                    <div><span>Calculated GCT at 15%</span><strong>J$426,075</strong></div>
+                    <div><span>Adjustments / voids</span><strong>J$18,400</strong></div>
+                    <div><span>Prepared for filing</span><strong>CSV / Excel</strong></div>
+                </div>
             </div>
         </div>
     </section>
@@ -306,6 +365,8 @@
                 <tr><td>Staff Role Management</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
                 <tr><td>WiPay Integration</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
                 <tr><td>Multi-Location Support</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                <tr><td>Offline Sync Engine</td><td class="compare-yes">Local capture</td><td class="compare-yes">Local capture + cloud sync</td></tr>
+                <tr><td>Automated GCT Summary Report</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
             </tbody>
         </table>
     </div>
@@ -380,7 +441,11 @@
         <p class="section-subtitle">Clear answers before you commit.</p>
         <details>
             <summary>What is included in the 14-day trial?</summary>
-            <p>The trial includes core inventory tracking, basic sales logging, and a limited user seat to evaluate fit.</p>
+            <p>The trial includes core Starter inventory tracking, basic sales logging, and a limited user seat to evaluate fit. Upgrade to Pro after 14 days to keep premium workflows such as exports, GCT reporting, roles, and multi-location tools.</p>
+        </details>
+        <details>
+            <summary>What happens if the internet goes down?</summary>
+            <p>QuickStock saves sales transactions locally during outages and syncs them to the cloud after the branch reconnects.</p>
         </details>
         <details>
             <summary>Does Pro include WiPay checkout?</summary>

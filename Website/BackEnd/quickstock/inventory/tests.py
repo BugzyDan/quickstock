@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
+from urllib.parse import urlencode
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -19,6 +20,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import (
+    AccountingIntegration,
+    AccountingSyncRecord,
     AuditLog,
     Brand,
     CashShift,
@@ -53,9 +56,22 @@ from .models import (
     UserProfile,
     UserVerification,
 )
+from .accounting import (
+    build_xero_sales_invoice_payload,
+    process_pending_accounting_sync,
+    queue_accounting_sync,
+    queue_existing_accounting_data,
+)
 from .signals import create_user_verification, send_welcome_email
 from .sales import SaleWorkflowError, finalize_sale
-from .views import DOCUMENT_META_PREFIX, _compose_document_notes, _daily_reconciliation_context
+from .views import (
+    DOCUMENT_META_PREFIX,
+    _compose_document_notes,
+    _customer_queryset_for_user,
+    _daily_reconciliation_context,
+    _sales_document_email_context,
+    _stock_queryset_for_user,
+)
 
 
 class LoadingStateAssetTests(SimpleTestCase):
@@ -83,6 +99,127 @@ class LoadingStateAssetTests(SimpleTestCase):
         for path in template_paths:
             with self.subTest(template=path.name):
                 self.assertIn("inventory/js/loading_states.js", path.read_text())
+
+
+class AccountingIntegrationTests(TestCase):
+    def _make_owner(self, username="acct-owner"):
+        user = User.objects.create_user(username=username, password="password123")
+        profile = UserProfile.for_user(user)
+        profile.role = "admin"
+        profile.status = "active"
+        profile.plan = "PRO"
+        profile.pro_expires = timezone.now().date() + timedelta(days=30)
+        profile.plan_end = timezone.now() + timedelta(days=30)
+        profile.save()
+        return user
+
+    def _make_item(self, owner, sku="ACCT-001"):
+        brand = Brand.objects.create(owner=owner, name=f"Brand {sku}")
+        category = Category.objects.create(owner=owner, name=f"Category {sku}")
+        return Item.objects.create(
+            owner=owner,
+            brand=brand,
+            category=category,
+            name=f"Accounting Item {sku}",
+            sku=sku,
+            price=Decimal("115.00"),
+            cost_price=Decimal("70.00"),
+            is_taxable=True,
+        )
+
+    def _make_sales_invoice(self, owner, sku="ACCT-001"):
+        location = Location.objects.create(owner=owner, name=f"Accounting Branch {sku}")
+        customer = Customer.objects.create(owner=owner, name="Island Customer", email="customer@example.com")
+        item = self._make_item(owner, sku=sku)
+        invoice = SalesInvoice.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            location=location,
+            status="issued",
+            due_date=timezone.localdate() + timedelta(days=7),
+        )
+        SalesInvoiceItem.objects.create(
+            invoice=invoice,
+            item=item,
+            quantity=2,
+            unit_price=Decimal("115.00"),
+        )
+        invoice.refresh_from_db()
+        return invoice
+
+    def test_xero_sales_invoice_payload_uses_quickstock_financial_facts(self):
+        owner = self._make_owner()
+        invoice = self._make_sales_invoice(owner)
+
+        payload = build_xero_sales_invoice_payload(invoice)
+
+        self.assertEqual(payload["source"], "quickstock.sales_invoice")
+        self.assertEqual(payload["invoice_number"], invoice.invoice_no)
+        self.assertEqual(payload["due_date"], invoice.due_date.isoformat())
+        self.assertEqual(payload["contact"]["name"], "Island Customer")
+        self.assertEqual(payload["total_amount"], "230.00")
+        self.assertEqual(payload["line_items"][0]["item_code"], "ACCT-001")
+
+    def test_queue_accounting_sync_is_provider_and_tenant_scoped(self):
+        owner = self._make_owner("acct-owner-a")
+        other_owner = self._make_owner("acct-owner-b")
+        owner_invoice = self._make_sales_invoice(owner, sku="ACCT-A")
+        other_invoice = self._make_sales_invoice(other_owner, sku="ACCT-B")
+
+        record = queue_accounting_sync(owner_invoice)
+
+        self.assertEqual(record.owner, owner)
+        self.assertEqual(record.integration.owner, owner)
+        self.assertEqual(record.integration.provider, AccountingIntegration.PROVIDER_XERO)
+        self.assertEqual(record.status, AccountingSyncRecord.STATUS_PENDING)
+        self.assertFalse(AccountingSyncRecord.objects.filter(owner=owner, object_id=other_invoice.pk).exists())
+
+    def test_queue_existing_accounting_data_uses_integration_toggles(self):
+        owner = self._make_owner()
+        self._make_sales_invoice(owner)
+        integration = AccountingIntegration.objects.create(
+            owner=owner,
+            provider=AccountingIntegration.PROVIDER_XERO,
+            status=AccountingIntegration.STATUS_CONFIGURED,
+            sync_sales=False,
+            sync_sales_invoices=True,
+            sync_purchase_invoices=False,
+            sync_inventory_items=False,
+        )
+
+        queued = queue_existing_accounting_data(owner)
+
+        self.assertEqual(len(queued), 1)
+        self.assertEqual(AccountingSyncRecord.objects.filter(integration=integration).count(), 1)
+
+    @patch("inventory.accounting.requests.post")
+    def test_process_pending_accounting_sync_posts_to_xero_client(self, mock_post):
+        class _Response:
+            status_code = 200
+
+            def json(self):
+                return {"Invoices": [{"InvoiceID": "xero-invoice-123"}]}
+
+        mock_post.return_value = _Response()
+        owner = self._make_owner()
+        invoice = self._make_sales_invoice(owner)
+        integration = AccountingIntegration.objects.create(
+            owner=owner,
+            provider=AccountingIntegration.PROVIDER_XERO,
+            status=AccountingIntegration.STATUS_ACTIVE,
+            external_tenant_id="tenant-123",
+            settings_payload={"access_token": "token-123"},
+        )
+        record = queue_accounting_sync(invoice)
+
+        result = process_pending_accounting_sync(integration=integration, limit=10)
+
+        record.refresh_from_db()
+        self.assertEqual(result, {"synced": 1, "failed": 0})
+        self.assertEqual(record.status, AccountingSyncRecord.STATUS_SYNCED)
+        self.assertEqual(record.external_id, "xero-invoice-123")
+        self.assertIn("/Invoices", mock_post.call_args.args[0])
 
 
 class WeekOneSecurityTests(TestCase):
@@ -828,6 +965,48 @@ class WeekOneSecurityTests(TestCase):
         self.assertContains(response, "Upload a valid PNG, JPEG, or WebP image.")
         profile = UserProfile.objects.get(user=owner)
         self.assertFalse(bool(profile.receipt_logo))
+
+    def test_settings_uploaded_logo_does_not_fill_external_url_field(self):
+        owner = self._make_user("owner-uploaded-logo-display")
+        profile = UserProfile.objects.get(user=owner)
+        profile.receipt_logo.save(
+            "receipt-logo.png",
+            SimpleUploadedFile("receipt-logo.png", b"fake-image-bytes", content_type="image/png"),
+            save=True,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("settings"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["brand_defaults"]["logo_url"], "")
+        self.assertContains(response, "Remove logo from receipts and invoices")
+
+    def test_admin_can_remove_uploaded_receipt_logo_from_settings(self):
+        owner = self._make_user("owner-remove-logo")
+        profile = UserProfile.objects.get(user=owner)
+        profile.receipt_logo.save(
+            "receipt-logo.png",
+            SimpleUploadedFile("receipt-logo.png", b"fake-image-bytes", content_type="image/png"),
+            save=True,
+        )
+        profile.receipt_logo_url = "https://cdn.example.test/logo.png"
+        profile.save(update_fields=["receipt_logo", "receipt_logo_url"])
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("settings"),
+            {
+                "brand_name": "No Logo Store",
+                "brand_logo_url": profile.receipt_logo_url,
+                "remove_brand_logo": "1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        profile.refresh_from_db()
+        self.assertFalse(bool(profile.receipt_logo))
+        self.assertEqual(profile.receipt_logo_url, "")
 
     def test_staff_creation_cannot_reassign_an_existing_tenant_account(self):
         owner_a = self._make_user("staff-owner-a")
@@ -1639,6 +1818,12 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(summary["outstanding_total"], Decimal("400.00"))
         self.assertContains(response, "From quotations")
         self.assertContains(response, "$400.00")
+        self.assertContains(response, 'data-sales-document-list data-document-label="invoice"')
+        self.assertContains(response, 'data-sales-select-all')
+        self.assertContains(response, 'data-sales-bulk-action="email"')
+        self.assertContains(response, 'class="action-link-premium sales-row-primary-action"')
+        self.assertContains(response, 'data-sales-menu-toggle')
+        self.assertContains(response, "Record Payment")
 
     def test_sales_quotation_list_exposes_summary_metrics(self):
         owner = self._make_user("owner-quotation-summary")
@@ -1678,10 +1863,18 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(summary["draft_count"], 1)
         self.assertEqual(summary["converted_count"], 1)
         self.assertEqual(summary["cancelled_count"], 1)
+        self.assertEqual(summary["expired_count"], 0)
         self.assertEqual(summary["expiring_soon_count"], 1)
         self.assertEqual(summary["quoted_total"], Decimal("240.00"))
         self.assertContains(response, "Expiring in 7 days")
+        self.assertContains(response, "Expired")
         self.assertContains(response, "$240.00")
+        self.assertContains(response, 'data-sales-document-list data-document-label="quotation"')
+        self.assertContains(response, 'data-sales-select-all')
+        self.assertContains(response, 'data-sales-bulk-action="csv"')
+        self.assertContains(response, 'class="action-link-premium sales-row-primary-action"')
+        self.assertContains(response, 'data-sales-menu-toggle')
+        self.assertContains(response, '<option value="expired" ')
         rendered = response.content.decode()
         self.assertNotIn("Expiring in 7 days:</span>", rendered)
         self.assertNotIn("Total:</span>", rendered)
@@ -1794,6 +1987,67 @@ class WeekOneSecurityTests(TestCase):
         self.assertContains(deliveries_response, "Deliveries & Collections")
         self.assertNotContains(reconciliation_response, "$125,000")
         self.assertNotContains(reconciliation_response, "$124,500")
+
+    def test_operations_hub_shows_live_closeout_status_and_wizard_links(self):
+        owner = self._make_user("owner-closeout-status")
+        location = self._make_location(owner, "Main Branch")
+        shift = CashShift.objects.create(
+            owner=owner,
+            cashier=owner,
+            location=location,
+            opening_cash=Decimal("100.00"),
+            is_closed=False,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("operations"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No Activity Yet")
+        self.assertContains(response, "Drawer Balanced")
+        self.assertContains(response, "All Collections Cleared")
+        self.assertContains(response, "1 Open Shift")
+        self.assertContains(response, "closeout=1")
+        self.assertContains(response, "Start Closeout")
+
+    def test_closeout_wizard_links_summary_reconciliation_and_deliveries(self):
+        owner = self._make_user("owner-closeout-wizard")
+        location = self._make_location(owner, "Main Branch")
+        shift = CashShift.objects.create(
+            owner=owner,
+            cashier=owner,
+            location=location,
+            opening_cash=Decimal("100.00"),
+            is_closed=False,
+        )
+        self.client.force_login(owner)
+
+        summary_response = self.client.get(reverse("daily_summary"), {"closeout": "1"})
+        reconciliation_response = self.client.get(reverse("cash_reconciliation"), {"closeout": "1"})
+        deliveries_response = self.client.get(reverse("deliveries_collections"), {"closeout": "1"})
+
+        self.assertEqual(summary_response.status_code, 200)
+        self.assertEqual(reconciliation_response.status_code, 200)
+        self.assertEqual(deliveries_response.status_code, 200)
+        self.assertContains(summary_response, "Next: Reconcile Cash")
+        self.assertContains(reconciliation_response, "Next: Deliveries &amp; Collections")
+        self.assertContains(deliveries_response, "Finish Closeout")
+        self.assertContains(summary_response, 'name="closeout" value="1"')
+        self.assertContains(reconciliation_response, 'name="closeout" value="1"')
+        self.assertContains(deliveries_response, 'name="closeout" value="1"')
+
+        close_response = self.client.post(
+            reverse("cash_reconciliation"),
+            {
+                "action": "close_shift",
+                "shift_id": shift.id,
+                "counted_cash": "100.00",
+                "closeout": "1",
+            },
+        )
+        self.assertEqual(close_response.status_code, 302)
+        self.assertIn(reverse("deliveries_collections"), close_response["Location"])
+        self.assertIn("closeout=1", close_response["Location"])
 
     def test_inventory_delete_archives_item_when_invoice_history_exists(self):
         owner = self._make_user("owner-protected-delete")
@@ -2230,6 +2484,271 @@ class SuperAdminDashboardTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], reverse("super_admin_dashboard"))
 
+    def test_superuser_is_redirected_from_tenant_operations(self):
+        superuser = User.objects.create_superuser(
+            username="platform-owner-ops",
+            password="password123",
+        )
+
+        self.client.force_login(superuser)
+
+        for route_name in ("cash_register", "customer_list", "sales_invoice_list"):
+            response = self.client.get(reverse(route_name))
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response["Location"], reverse("super_admin_dashboard"))
+
+    def test_superuser_customer_and_stock_helpers_stay_in_platform_workspace(self):
+        superuser = User.objects.create_superuser(
+            username="platform-owner-scope",
+            password="password123",
+        )
+        tenant = self._make_company_owner("tenant-scope", plan="PRO", status="active")
+        tenant_location = self._make_location(tenant, "Tenant HQ")
+        platform_location = self._make_location(superuser, "Platform HQ")
+        category = Category.objects.create(name="Scope Category")
+        brand = Brand.objects.create(name="Scope Brand")
+        tenant_item = Item.objects.create(
+            owner=tenant,
+            name="Tenant Item",
+            sku="TENANT-SCOPE",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("10.00"),
+            price=Decimal("25.00"),
+        )
+        platform_item = Item.objects.create(
+            owner=superuser,
+            name="Platform Item",
+            sku="PLATFORM-SCOPE",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("5.00"),
+            price=Decimal("15.00"),
+        )
+        StockRecord.objects.create(item=tenant_item, location=tenant_location, quantity=5)
+        platform_stock = StockRecord.objects.create(
+            item=platform_item,
+            location=platform_location,
+            quantity=2,
+        )
+        Customer.objects.create(owner=tenant, name="Tenant Customer")
+        platform_customer = Customer.objects.create(owner=superuser, name="Platform Customer")
+
+        self.assertEqual(list(_customer_queryset_for_user(superuser)), [platform_customer])
+        self.assertEqual(list(_stock_queryset_for_user(superuser)), [platform_stock])
+
+
+class DashboardCommandCenterTests(TestCase):
+    def _make_user(self, username):
+        user = User.objects.create_user(username=username, password="password123")
+        profile = UserProfile.for_user(user)
+        profile.role = "admin"
+        profile.status = "active"
+        profile.plan = "PRO"
+        profile.pro_expires = timezone.now().date() + timedelta(days=30)
+        profile.plan_end = timezone.now() + timedelta(days=30)
+        profile.save()
+        return user
+
+    def test_dashboard_uses_branch_capacity_and_surfaces_open_shift_alert(self):
+        owner = self._make_user("dashboard-command-owner")
+        location = Location.objects.create(owner=owner, name="Kingston HQ", inventory_capacity=30000)
+        category = Category.objects.create(owner=owner, name="Dashboard Category")
+        brand = Brand.objects.create(owner=owner, name="Dashboard Brand")
+        item = Item.objects.create(
+            owner=owner,
+            name="Bigga Pineapple Soda",
+            sku="DASH-BIGGA",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("75.00"),
+            price=Decimal("150.00"),
+        )
+        StockRecord.objects.create(item=item, location=location, quantity=28000)
+        shift = CashShift.objects.create(
+            cashier=owner,
+            location=location,
+            opening_cash=Decimal("5000.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["inventory_capacity"], 30000)
+        self.assertEqual(response.context["inventory_percent"], 93)
+        self.assertEqual(response.context["raw_inventory_percent"], 93)
+        self.assertEqual(response.context["inventory_over_capacity"], 0)
+        self.assertEqual(response.context["open_shift_count"], 1)
+        self.assertContains(response, "28,000 / 30,000 Units")
+        self.assertContains(response, "2,000 units remaining")
+        self.assertContains(response, "Drawer closeout pending")
+        self.assertContains(response, "Start Closeout")
+        self.assertIn(f"shift={shift.id}", response.context["open_shift_alert_url"])
+
+        closeout_response = self.client.get(response.context["open_shift_alert_url"])
+        self.assertEqual(closeout_response.status_code, 200)
+        self.assertContains(closeout_response, f"Open shift #{shift.id}")
+        self.assertContains(closeout_response, "Finalize Shift Closeout")
+
+        post_response = self.client.post(
+            reverse("cash_reconciliation"),
+            {
+                "action": "close_shift",
+                "shift_id": shift.id,
+                "counted_cash": "5000.00",
+                "notes": "Dashboard alert closeout.",
+            },
+        )
+        self.assertEqual(post_response.status_code, 302)
+        shift.refresh_from_db()
+        self.assertTrue(shift.is_closed)
+
+    def test_locations_page_updates_branch_capacity(self):
+        owner = self._make_user("dashboard-capacity-owner")
+        location = Location.objects.create(owner=owner, name="Montego Bay", inventory_capacity=1000)
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("locations"),
+            {
+                "action": "update_capacity",
+                "location_id": location.pk,
+                "inventory_capacity": "45000",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        location.refresh_from_db()
+        self.assertEqual(location.inventory_capacity, 45000)
+
+    def test_locations_page_formats_valuation_and_links_branch_inventory(self):
+        owner = self._make_user("locations-polish-owner")
+        location = Location.objects.create(
+            owner=owner,
+            name="3 Felix Fox Boulevard, Kingston",
+            inventory_capacity=28200,
+        )
+        category = Category.objects.create(owner=owner, name="Beverages")
+        brand = Brand.objects.create(owner=owner, name="QuickStock")
+        item = Item.objects.create(
+            owner=owner,
+            name="Asset Valuation Case",
+            sku="VAL-CASE",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("500.00"),
+            price=Decimal("423002.00"),
+        )
+        StockRecord.objects.create(item=item, location=location, quantity=10)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("locations"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "$4,230,020.00")
+        self.assertContains(response, f"location={location.pk}")
+        self.assertContains(response, "View Branch Inventory")
+
+
+class InventoryControlPolishTests(TestCase):
+    def _make_user(self, username):
+        user = User.objects.create_user(username=username, password="password123")
+        profile = UserProfile.for_user(user)
+        profile.role = "admin"
+        profile.status = "active"
+        profile.plan = "PRO"
+        profile.pro_expires = timezone.now().date() + timedelta(days=30)
+        profile.plan_end = timezone.now() + timedelta(days=30)
+        profile.save()
+        return user
+
+    def test_inventory_table_formats_price_and_quantities_with_commas(self):
+        owner = self._make_user("inventory-polish-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+        category = Category.objects.create(owner=owner, name="Dry Goods")
+        brand = Brand.objects.create(owner=owner, name="Catherine's Peak")
+        item = Item.objects.create(
+            owner=owner,
+            name="Catherine's Peak Coffee",
+            sku="DRY-COFFEE",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("1000.00"),
+            price=Decimal("2100.00"),
+        )
+        StockRecord.objects.create(item=item, location=location, quantity=10081)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("inventory"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "$2,100.00")
+        self.assertContains(response, "10,081")
+
+    def test_inventory_location_filter_shows_branch_specific_quantity(self):
+        owner = self._make_user("inventory-branch-filter-owner")
+        main_store = Location.objects.create(owner=owner, name="Main Store")
+        warehouse = Location.objects.create(owner=owner, name="Warehouse")
+        category = Category.objects.create(owner=owner, name="Snacks")
+        brand = Brand.objects.create(owner=owner, name="QuickStock")
+        item = Item.objects.create(
+            owner=owner,
+            name="Banana Chips",
+            sku="SNK-BCHIP",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("90.00"),
+            price=Decimal("150.00"),
+        )
+        StockRecord.objects.create(item=item, location=main_store, quantity=5)
+        StockRecord.objects.create(item=item, location=warehouse, quantity=100)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("inventory"), {"location": main_store.pk})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Branch: Main Store")
+        self.assertContains(response, 'name="location"')
+        self.assertContains(response, '<option value="">All Branches</option>')
+        self.assertContains(response, f'<option value="{main_store.pk}" selected>Main Store</option>')
+        self.assertContains(response, f'<option value="{warehouse.pk}" >Warehouse</option>')
+        self.assertContains(response, 'data-quantity="5"')
+        self.assertNotContains(response, 'data-quantity="105"')
+        self.assertNotContains(response, 'data-quantity="100"')
+
+    def test_receive_stock_page_exposes_scanner_and_live_batch_hooks(self):
+        owner = self._make_user("receive-stock-polish-owner")
+        Location.objects.create(owner=owner, name="3 Felix Fox Boulevard, Kingston")
+        Supplier.objects.create(owner=owner, name="Kingston Supplier")
+        category = Category.objects.create(owner=owner, name="Beverages")
+        brand = Brand.objects.create(owner=owner, name="QuickStock")
+        Item.objects.create(
+            owner=owner,
+            name="Bigga Pineapple Soda",
+            sku="BIGGA-PINE",
+            barcode="123456789012",
+            category=category,
+            brand=brand,
+            cost_price=Decimal("85.00"),
+            price=Decimal("150.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("receive_stock"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="stock-barcode-input"')
+        self.assertContains(response, 'id="batch_total"')
+        self.assertContains(response, 'id="receive_live_math"')
+
+        script_path = Path(__file__).resolve().parent / "static" / "inventory" / "js" / "receive_stock.js"
+        script = script_path.read_text()
+        self.assertIn("refocusScanner", script)
+        self.assertIn("stockItemAdded", script)
+        self.assertIn("requestSubmit", script)
+        self.assertIn("toLocaleString", script)
+
 
 class CustomerDetailTests(TestCase):
     def _make_user(self, username):
@@ -2314,6 +2833,83 @@ class CustomerDetailTests(TestCase):
         self.assertContains(response, "Suite 4, Billing Centre")
         self.assertNotContains(response, "Other Co")
 
+    def test_customer_detail_shows_outstanding_ar_and_filters_invoices(self):
+        owner = self._make_user("customer-ar-owner")
+        customer = self._make_customer_record(owner, "AR Customer")
+        location = Location.objects.create(owner=owner, name="Main Branch")
+        open_invoice = SalesInvoice.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            location=location,
+            status="issued",
+            subtotal=Decimal("220.00"),
+            tax_amount=Decimal("33.00"),
+            total_amount=Decimal("253.00"),
+        )
+        paid_invoice = SalesInvoice.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            location=location,
+            status="paid",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("15.00"),
+            total_amount=Decimal("115.00"),
+        )
+        SalesInvoicePayment.objects.create(
+            invoice=paid_invoice,
+            received_by=owner,
+            amount=Decimal("115.00"),
+            payment_method="cash",
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("customer_detail", args=[customer.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["customer_outstanding_balance"], Decimal("253.00"))
+        self.assertEqual(response.context["customer_open_invoice_count"], 1)
+        self.assertEqual(response.context["invoice_filter_counts"], {"all": 2, "open": 1, "paid": 1})
+        self.assertContains(response, "Outstanding AR")
+        self.assertContains(response, "$253.00")
+        self.assertContains(response, "Open / Unpaid")
+        self.assertContains(response, f"?invoice_filter=open")
+        self.assertContains(response, f"{reverse('sales_quotation_create')}?customer_id={customer.pk}")
+        self.assertContains(response, f"{reverse('sales_invoice_create')}?customer_id={customer.pk}")
+
+        open_response = self.client.get(reverse("customer_detail", args=[customer.pk]), {"invoice_filter": "open"})
+        self.assertEqual(open_response.status_code, 200)
+        self.assertEqual(open_response.context["invoice_filter"], "open")
+        self.assertContains(open_response, open_invoice.invoice_no)
+        self.assertNotContains(open_response, paid_invoice.invoice_no)
+
+        paid_response = self.client.get(reverse("customer_detail", args=[customer.pk]), {"invoice_filter": "paid"})
+        self.assertEqual(paid_response.status_code, 200)
+        self.assertContains(paid_response, paid_invoice.invoice_no)
+        self.assertNotContains(paid_response, open_invoice.invoice_no)
+
+    def test_customer_profile_create_links_preselect_customer_on_sales_forms(self):
+        owner = self._make_user("customer-preselect-owner")
+        customer = self._make_customer_record(owner, "Preselected Customer")
+        self.client.force_login(owner)
+
+        quote_response = self.client.get(reverse("sales_quotation_create"), {"customer_id": customer.pk})
+        invoice_response = self.client.get(reverse("sales_invoice_create"), {"customer_id": customer.pk})
+
+        self.assertEqual(quote_response.status_code, 200)
+        self.assertEqual(invoice_response.status_code, 200)
+        self.assertEqual(quote_response.context["selected_customer_id"], customer.pk)
+        self.assertEqual(invoice_response.context["selected_customer_id"], customer.pk)
+        self.assertContains(
+            quote_response,
+            f'<option value="{customer.id}" data-tax-exempt="0" selected>{customer.name}',
+        )
+        self.assertContains(
+            invoice_response,
+            f'<option value="{customer.id}" data-tax-exempt="0" selected>{customer.name}',
+        )
+
     def test_customer_detail_is_tenant_scoped(self):
         owner = self._make_user("tenant-owner-a")
         intruder = self._make_user("tenant-owner-b")
@@ -2354,6 +2950,10 @@ class CustomerEditTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Edit Customer")
         self.assertContains(response, "Initial onboarding note.")
+        self.assertContains(response, "TRN / Tax ID")
+        self.assertContains(response, "Exempt from 15% GCT")
+        self.assertContains(response, "customer-note-composer")
+        self.assertContains(response, "Post Note to Timeline")
 
         post_response = self.client.post(
             reverse("edit_customer", args=[customer.pk]),
@@ -2361,6 +2961,8 @@ class CustomerEditTests(TestCase):
                 "name": "Updated Name",
                 "email": "new@example.com",
                 "phone": "8765551212",
+                "trn": "123456789",
+                "is_tax_exempt": "on",
                 "physical_address": "44 Constant Spring Road",
                 "business_address": "Warehouse 2, Spanish Town",
                 "notes": "Updated billing instructions",
@@ -2374,11 +2976,41 @@ class CustomerEditTests(TestCase):
         self.assertEqual(customer.name, "Updated Name")
         self.assertEqual(customer.email, "new@example.com")
         self.assertEqual(customer.phone, "8765551212")
+        self.assertEqual(customer.trn, "123-456-789")
+        self.assertTrue(customer.is_tax_exempt)
         self.assertEqual(customer.physical_address, "44 Constant Spring Road")
         self.assertEqual(customer.business_address, "Warehouse 2, Spanish Town")
         self.assertEqual(customer.notes, "Updated billing instructions")
         self.assertEqual(customer.note_entries.count(), 2)
         self.assertTrue(customer.note_entries.filter(body="Customer requested Saturday follow-up.").exists())
+
+    def test_customer_note_post_does_not_save_profile_changes(self):
+        owner = self._make_user("edit-note-only-owner")
+        customer = Customer.objects.create(owner=owner, name="Original Name", email="old@example.com")
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("edit_customer", args=[customer.pk]),
+            data={
+                "post_note": "1",
+                "name": "Unsaved Name",
+                "email": "changed@example.com",
+                "new_note": "Independent note entry.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        customer.refresh_from_db()
+        self.assertEqual(customer.name, "Original Name")
+        self.assertEqual(customer.email, "old@example.com")
+        self.assertTrue(customer.note_entries.filter(body="Independent note entry.").exists())
+
+    def test_customer_trn_requires_nine_digits(self):
+        owner = self._make_user("customer-trn-owner")
+        customer = Customer(owner=owner, name="TRN Test", trn="12345")
+
+        with self.assertRaises(ValidationError):
+            customer.full_clean()
 
     def test_customer_list_searches_customer_addresses(self):
         owner = self._make_user("customer-address-search-owner")
@@ -2474,6 +3106,33 @@ class WeekTwoSalesIntegrityTests(TestCase):
         delete_response = self.client.post(reverse("delete_customer", args=[customer.pk]))
         self.assertEqual(delete_response.status_code, 302)
         self.assertIn(reverse("dashboard"), delete_response["Location"])
+
+    def test_cash_register_open_shift_returns_to_register(self):
+        owner = self._make_user("register-shift-owner")
+        location = self._make_location(owner, "Main Store")
+        profile = UserProfile.for_user(owner)
+        profile.default_location = location
+        profile.save(update_fields=["default_location"])
+
+        self.client.force_login(owner)
+        register_response = self.client.get(reverse("cash_register"))
+
+        self.assertEqual(register_response.status_code, 302)
+        self.assertEqual(
+            register_response["Location"],
+            f"{reverse('open_shift')}?{urlencode({'next': reverse('cash_register')})}",
+        )
+
+        open_response = self.client.get(register_response["Location"])
+        self.assertEqual(open_response.status_code, 200)
+        self.assertEqual(open_response.context["next_url"], reverse("cash_register"))
+
+        submit_response = self.client.post(
+            reverse("open_shift"),
+            {"opening_cash": "0.00", "next": reverse("cash_register")},
+        )
+        self.assertEqual(submit_response.status_code, 302)
+        self.assertEqual(submit_response["Location"], reverse("cash_register"))
 
     def test_sales_history_is_scoped_by_sale_owner(self):
         owner = self._make_user("history-scope-owner")
@@ -2578,6 +3237,44 @@ class WeekTwoSalesIntegrityTests(TestCase):
         self.assertEqual(len(search_response.json()["items"]), 7)
         self.assertEqual(len(register_response.context["items"]), 10)
         self.assertTrue(all("Match" in item["name"] for item in search_response.json()["items"]))
+
+    def test_cash_register_exposes_tender_presets_stock_badges_and_hotkey_script(self):
+        owner = self._make_user("pos-ux-polish")
+        location = self._make_location(owner, "Main Branch")
+        owner.profile.default_location = location
+        owner.profile.save(update_fields=["default_location"])
+        self._open_shift(owner, location)
+        item = self._make_item(
+            owner,
+            name="Bigga Grape Soda",
+            sku="POS-BIGGA",
+            price="150.00",
+            quantity=2,
+        )
+        StockRecord.objects.create(item=item, location=location, quantity=2)
+        self.client.force_login(owner)
+
+        register_response = self.client.get(reverse("cash_register"))
+        items_response = self.client.get(reverse("pos_items"))
+
+        self.assertEqual(register_response.status_code, 200)
+        self.assertContains(register_response, 'data-cash-preset="exact"')
+        self.assertContains(register_response, 'data-cash-preset="5000"')
+        self.assertContains(register_response, "Low Stock: 2")
+        self.assertContains(register_response, "pos-stock-badge-low")
+        self.assertContains(register_response, "pos-tender-stock-hotkeys-1")
+        self.assertEqual(items_response.status_code, 200)
+        payload_item = items_response.json()["items"][0]
+        self.assertEqual(payload_item["stock_quantity"], 2)
+        self.assertEqual(payload_item["stock_label"], "Low Stock: 2")
+        self.assertEqual(payload_item["stock_tone"], "low")
+
+        script_path = Path(__file__).resolve().parent / "static" / "inventory" / "js" / "cash_register.js"
+        script = script_path.read_text()
+        self.assertIn("applyCashTenderPreset", script)
+        self.assertIn("renderProductCardHtml", script)
+        self.assertIn("e.key === 'F2'", script)
+        self.assertIn("window.completeCheckout()", script)
 
     def test_legacy_inventory_api_post_requires_csrf(self):
         owner = self._make_user("legacy-inventory-csrf")
@@ -3832,6 +4529,35 @@ class WeekFourReadinessTests(TestCase):
         self.assertIn('"discount_type":"percent"', quotation.notes)
         self.assertIn('"tax_mode":"none"', quotation.notes)
 
+    def test_tax_exempt_customer_forces_zero_tax_on_quotation(self):
+        owner = self._make_user("quote-tax-exempt-owner")
+        customer = Customer.objects.create(owner=owner, name="Tax Exempt Buyer", trn="123456789", is_tax_exempt=True)
+        item = self._make_item(owner, sku="SKU-QUOTE-EXEMPT", price="100.00", quantity=10)
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("sales_quotation_create"),
+            data={
+                "customer_id": str(customer.id),
+                "valid_until": "2026-05-31",
+                "notes": "Exempt customer quote",
+                "tax_mode": "custom",
+                "tax_rate_percent": "15",
+                "discount_type": "flat",
+                "discount_value": "0",
+                "item_id[]": [str(item.id)],
+                "quantity[]": ["2"],
+                "unit_price[]": ["100.00"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        quotation = SalesQuotation.objects.latest("id")
+        self.assertEqual(quotation.customer, customer)
+        self.assertEqual(quotation.tax_amount, Decimal("0.00"))
+        self.assertEqual(quotation.total_amount, Decimal("200.00"))
+        self.assertIn('"customer_tax_exempt":"true"', quotation.notes)
+
     def test_sales_invoice_create_supports_custom_tax_and_flat_discount(self):
         owner = self._make_user("invoice-adjust-owner")
         location = self._make_location(owner, "Main Branch")
@@ -3847,6 +4573,7 @@ class WeekFourReadinessTests(TestCase):
                 "customer_id": str(customer.id),
                 "location_id": str(location.id),
                 "notes": "Manual invoice terms",
+                "due_date": "2026-06-15",
                 "tax_mode": "custom",
                 "tax_rate_percent": "12.5",
                 "discount_type": "flat",
@@ -3862,6 +4589,7 @@ class WeekFourReadinessTests(TestCase):
         item.refresh_from_db()
         stock = StockRecord.objects.get(item=item, location=location)
         self.assertEqual(invoice.subtotal, Decimal("160.00"))
+        self.assertEqual(invoice.due_date.isoformat(), "2026-06-15")
         self.assertEqual(invoice.tax_amount, Decimal("17.50"))
         self.assertEqual(invoice.total_amount, Decimal("157.50"))
         self.assertEqual(item.quantity, 8)
@@ -3869,6 +4597,151 @@ class WeekFourReadinessTests(TestCase):
         self.assertIn("Manual invoice terms", invoice.notes)
         self.assertIn('"discount_type":"flat"', invoice.notes)
         self.assertIn('"tax_rate_percent":"12.50"', invoice.notes)
+
+    def test_tax_exempt_customer_forces_zero_tax_on_direct_invoice(self):
+        owner = self._make_user("invoice-tax-exempt-owner")
+        location = self._make_location(owner, "Main Branch")
+        customer = Customer.objects.create(owner=owner, name="GCT Exempt Client", is_tax_exempt=True)
+        item = self._make_item(owner, sku="SKU-INV-EXEMPT", price="100.00", quantity=10)
+        StockRecord.objects.create(item=item, location=location, quantity=10)
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            f"{reverse('sales_invoice_create')}?source=scratch",
+            data={
+                "source_mode": "scratch",
+                "customer_id": str(customer.id),
+                "location_id": str(location.id),
+                "notes": "Exempt invoice",
+                "tax_mode": "custom",
+                "tax_rate_percent": "15",
+                "discount_type": "flat",
+                "discount_value": "0",
+                "item_id[]": [str(item.id)],
+                "quantity[]": ["2"],
+                "unit_price[]": ["100.00"],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        invoice = SalesInvoice.objects.latest("id")
+        self.assertEqual(invoice.customer, customer)
+        self.assertEqual(invoice.tax_amount, Decimal("0.00"))
+        self.assertEqual(invoice.total_amount, Decimal("200.00"))
+        self.assertIn('"customer_tax_exempt":"true"', invoice.notes)
+
+    def test_sales_quotation_list_auto_flags_expired_drafts(self):
+        owner = self._make_user("quote-expiry-owner")
+        customer = Customer.objects.create(owner=owner, name="Expiry Customer")
+        expired_quote = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            valid_until=timezone.localdate() - timedelta(days=1),
+            total_amount=Decimal("100.00"),
+        )
+        active_quote = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            valid_until=timezone.localdate() + timedelta(days=3),
+            total_amount=Decimal("200.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("sales_quotation_list"))
+
+        self.assertEqual(response.status_code, 200)
+        expired_quote.refresh_from_db()
+        active_quote.refresh_from_db()
+        self.assertEqual(expired_quote.status, "expired")
+        self.assertEqual(active_quote.status, "draft")
+        self.assertEqual(response.context["quotation_summary"]["expired_count"], 1)
+        self.assertEqual(response.context["quotation_summary"]["expiring_soon_count"], 1)
+        self.assertContains(response, "Expired")
+
+        expired_response = self.client.get(reverse("sales_quotation_list"), {"status": "expired"})
+        self.assertEqual(expired_response.status_code, 200)
+        self.assertContains(expired_response, expired_quote.quote_no)
+        self.assertNotContains(expired_response, active_quote.quote_no)
+
+    def test_expired_quotation_cannot_be_converted_to_invoice(self):
+        owner = self._make_user("quote-expiry-convert-owner")
+        location = self._make_location(owner, "Main Branch")
+        item = self._make_item(owner, sku="SKU-QUOTE-EXPIRE", price="100.00", quantity=5)
+        StockRecord.objects.create(item=item, location=location, quantity=5)
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            valid_until=timezone.localdate() - timedelta(days=1),
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("15.00"),
+            total_amount=Decimal("115.00"),
+        )
+        SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=1,
+            unit_price=Decimal("100.00"),
+            line_total=Decimal("100.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            f"{reverse('sales_invoice_create')}?source=quotation",
+            {
+                "source_mode": "quotation",
+                "quotation_id": str(quotation.id),
+                "location_id": str(location.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        quotation.refresh_from_db()
+        self.assertEqual(quotation.status, "expired")
+        self.assertFalse(SalesInvoice.objects.filter(quotation=quotation).exists())
+
+    def test_quotation_valid_until_becomes_invoice_due_date_and_document_date(self):
+        owner = self._make_user("quote-due-date-owner")
+        location = self._make_location(owner, "Main Branch")
+        customer = Customer.objects.create(owner=owner, name="Due Date Customer")
+        item = self._make_item(owner, sku="SKU-QUOTE-DUE", price="100.00", quantity=5)
+        StockRecord.objects.create(item=item, location=location, quantity=5)
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            valid_until=timezone.localdate() + timedelta(days=10),
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("15.00"),
+            total_amount=Decimal("115.00"),
+        )
+        SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=1,
+            unit_price=Decimal("100.00"),
+            line_total=Decimal("100.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            f"{reverse('sales_invoice_create')}?source=quotation",
+            {
+                "source_mode": "quotation",
+                "quotation_id": str(quotation.id),
+                "location_id": str(location.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        invoice = SalesInvoice.objects.get(quotation=quotation)
+        self.assertEqual(invoice.due_date, quotation.valid_until)
+        context = _sales_document_email_context(invoice, "invoice")
+        self.assertEqual(context["expiry_label"], "Due Date")
+        self.assertEqual(context["expiry_date"], quotation.valid_until)
 
     def test_api_health_reports_runtime_checks(self):
         response = self.client.get(reverse("api_health"))
@@ -4019,6 +4892,26 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(invoice.total_paid_amount, Decimal("200.00"))
         self.assertEqual(invoice.balance_due, Decimal("260.00"))
 
+    def test_sales_invoice_payment_requires_reference_for_non_cash_payment(self):
+        owner = self._make_user("invoice-owner-noncash-reference")
+        invoice = self._make_sales_invoice(owner)
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("sales_invoice_payment", args=[invoice.pk]),
+            data={
+                "amount": "200.00",
+                "payment_method": "bank_transfer",
+                "reference": "",
+                "notes": "Missing bank reference",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(SalesInvoicePayment.objects.filter(invoice=invoice).exists())
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.status, "issued")
+
     def test_sales_invoice_payment_stores_overpayment_as_customer_credit(self):
         owner = self._make_user("invoice-owner-credit")
         customer = Customer.objects.create(owner=owner, name="Credit Customer")
@@ -4167,6 +5060,17 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="payment-amount-input"')
         self.assertContains(response, 'value="0.00"')
+        self.assertContains(response, 'id="pay-full-balance-button"')
+        self.assertContains(response, 'id="collected-now-radio"')
+        self.assertContains(response, 'id="leave-in-store-radio"')
+        self.assertContains(response, 'id="payment-method-select"')
+        self.assertContains(response, 'id="payment-reference-input"')
+
+        script_path = Path(__file__).resolve().parent / "static" / "inventory" / "js" / "sales_invoice_payment.js"
+        script = script_path.read_text()
+        self.assertIn("payFullBalanceButton", script)
+        self.assertIn("updatePickupState", script)
+        self.assertIn("updateReferenceRequirement", script)
 
     def test_sales_invoice_account_credit_payment_method_depletes_customer_credit(self):
         owner = self._make_user("invoice-owner-account-credit-method")
@@ -4681,7 +5585,15 @@ class SupplierLedgerIntegrityTests(TestCase):
         profile.save()
         return user
 
-    def _make_invoice(self, owner, *, amount="100.00", suffix="1"):
+    def _make_invoice(
+        self,
+        owner,
+        *,
+        amount="100.00",
+        suffix="1",
+        date_issued=None,
+        payment_terms=SupplierInvoice.TERMS_DUE_ON_RECEIPT,
+    ):
         location = Location.objects.create(owner=owner, name=f"Supplier Branch {suffix}")
         owner.profile.default_location = location
         owner.profile.save(update_fields=["default_location"])
@@ -4693,7 +5605,8 @@ class SupplierLedgerIntegrityTests(TestCase):
             amount=Decimal(amount),
             paid_amount=Decimal("0.00"),
             status="Pending",
-            date_issued=timezone.localdate(),
+            date_issued=date_issued or timezone.localdate(),
+            payment_terms=payment_terms,
         )
         return invoice
 
@@ -4941,6 +5854,71 @@ class SupplierLedgerIntegrityTests(TestCase):
             Decimal("240.00"),
         )
         self.assertEqual(response.context["supplier_payment_ratio"], 20)
+
+    def test_supplier_invoice_net_terms_drive_due_date_and_aging_context(self):
+        owner = self._make_user("supplier-ledger-aging")
+        issue_date = timezone.localdate() - timedelta(days=40)
+        invoice = self._make_invoice(
+            owner,
+            amount="150.00",
+            suffix="aging",
+            date_issued=issue_date,
+            payment_terms=SupplierInvoice.TERMS_NET_30,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("supplier_ledger", args=[invoice.supplier_id]))
+
+        self.assertEqual(response.status_code, 200)
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.due_date, issue_date + timedelta(days=30))
+        self.assertEqual(invoice.aging_bucket, "1-30 Days")
+        self.assertEqual(response.context["aging_buckets"]["1-30 Days"]["count"], 1)
+        self.assertEqual(response.context["aging_buckets"]["1-30 Days"]["total"], Decimal("150.00"))
+        self.assertContains(response, "Net 30")
+        self.assertContains(response, "1-30 Days")
+
+    def test_record_supplier_invoice_accepts_standard_trade_credit_terms(self):
+        owner = self._make_user("supplier-ledger-net-form")
+        supplier = Supplier.objects.create(owner=owner, name="Net Terms Supplier")
+        location = Location.objects.create(owner=owner, name="Net Terms Branch")
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("add_invoice", args=[supplier.pk]),
+            {
+                "invoice_no": "NET-15",
+                "location": str(location.pk),
+                "amount": "2300.00",
+                "date_issued": "2026-07-01",
+                "payment_terms": SupplierInvoice.TERMS_NET_15,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        invoice = SupplierInvoice.objects.get(supplier=supplier)
+        self.assertEqual(invoice.payment_terms, SupplierInvoice.TERMS_NET_15)
+        self.assertEqual(invoice.due_date.isoformat(), "2026-07-16")
+        self.assertEqual(invoice.status, "Pending")
+
+    def test_supplier_ledger_exposes_manage_panel_and_pdf_statement(self):
+        owner = self._make_user("supplier-ledger-statement")
+        invoice = self._make_invoice(owner, amount="250.00", suffix="statement")
+        self.client.force_login(owner)
+
+        ledger_response = self.client.get(reverse("supplier_ledger", args=[invoice.supplier_id]))
+        self.assertEqual(ledger_response.status_code, 200)
+        self.assertContains(ledger_response, "Manage Invoice")
+        self.assertContains(ledger_response, "Download Vendor Statement")
+
+        pdf_response = self.client.get(
+            f"{reverse('supplier_ledger', args=[invoice.supplier_id])}?statement=vendor&format=pdf"
+        )
+
+        self.assertEqual(pdf_response.status_code, 200)
+        self.assertEqual(pdf_response["Content-Type"], "application/pdf")
+        self.assertIn("vendor-statement", pdf_response["Content-Disposition"])
+        self.assertTrue(pdf_response.content.startswith(b"%PDF-1.4"))
 
     def test_payables_pulse_chart_uses_current_net_invoice_figures(self):
         owner = self._make_user("supplier-ledger-chart")
@@ -5286,6 +6264,36 @@ class QS003HistoricalFinancialIntegrityTests(TestCase):
         owner.refresh_from_db()
         owner.profile.refresh_from_db()
         self.assertTrue(owner.profile.is_archived)
+
+    def test_account_delete_discards_drafts_instead_of_archiving(self):
+        owner = self._make_user("qs3-draft-delete-owner")
+        invoice, line, customer, location, item = self._make_sales_invoice(owner, suffix="draft-delete")
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            status="draft",
+        )
+        quotation_line = SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=1,
+            unit_price=Decimal("20.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(reverse("delete_account"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("index"))
+        self.assertFalse(User.objects.filter(pk=owner.pk).exists())
+        self.assertFalse(UserProfile.objects.filter(user_id=owner.pk).exists())
+        self.assertFalse(SalesInvoice.objects.filter(pk=invoice.pk).exists())
+        self.assertFalse(SalesInvoiceItem.objects.filter(pk=line.pk).exists())
+        self.assertFalse(SalesQuotation.objects.filter(pk=quotation.pk).exists())
+        self.assertFalse(SalesQuotationItem.objects.filter(pk=quotation_line.pk).exists())
+        self.assertFalse(Location.objects.filter(pk=location.pk).exists())
 
 
 class SupplierOriginMovementTests(TestCase):
@@ -6371,6 +7379,57 @@ class InventoryOverviewCategoryTests(TestCase):
         self.assertContains(response, "Catalogue by Category")
         self.assertContains(response, "Item / Location stock")
         self.assertContains(response, 'class="inventory-overview-summary"')
+        self.assertContains(response, "inventory_overview.js?v=category-toggle-fix")
+
+        script_path = Path(__file__).resolve().parent / "static" / "inventory" / "js" / "inventory_overview.js"
+        style_path = Path(__file__).resolve().parent / "static" / "inventory" / "css" / "style.css"
+        self.assertIn("classList.toggle(\"is-collapsed\"", script_path.read_text())
+        self.assertIn(".inventory-overview-item-list[hidden]", style_path.read_text())
+
+    @patch("inventory.views._seed_inventory_from_shared_json", return_value=False)
+    def test_overview_normalizes_category_aliases_and_renders_location_badges(self, _seed_inventory):
+        owner = self._make_user("category-normalized-overview-owner")
+        main_store = Location.objects.create(owner=owner, name="Main Store")
+        depot = Location.objects.create(owner=owner, name="3 FELIX FOX BOULEVARD, KINGSTON")
+        snack = Category.objects.create(owner=owner, name="Snack")
+        snacks = Category.objects.create(owner=owner, name="Snacks")
+        brand = Brand.objects.create(owner=owner, name="QuickStock")
+        button = Item.objects.create(
+            owner=owner,
+            name="Police Button",
+            sku="SNK-BUTTON",
+            category=snack,
+            brand=brand,
+            cost_price=Decimal("10.00"),
+            price=Decimal("25.00"),
+        )
+        chips = Item.objects.create(
+            owner=owner,
+            name="Banana Chips",
+            sku="SNK-BCHIP",
+            category=snacks,
+            brand=brand,
+            cost_price=Decimal("80.00"),
+            price=Decimal("150.00"),
+        )
+        StockRecord.objects.create(item=button, location=main_store, quantity=1399)
+        StockRecord.objects.create(item=chips, location=depot, quantity=8000)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("inventory_overview"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_categories"], 1)
+        group = response.context["grouped_inventory"][0]
+        self.assertEqual(group["category"], "Snacks")
+        self.assertTrue(group["has_merged_aliases"])
+        self.assertEqual(group["item_count"], 2)
+        self.assertEqual(group["total_quantity"], 9399)
+        self.assertContains(response, "Merged: Snack, Snacks")
+        self.assertContains(response, "inventory-overview-location-badge")
+        self.assertContains(response, "Main Store: 1,399")
+        self.assertContains(response, "3 Felix Fox Boulevard: 8,000")
+        self.assertContains(response, 'href="#inventory-overview-local-received"')
 
     @patch("inventory.views._seed_inventory_from_shared_json", return_value=False)
     def test_empty_catalogue_uses_full_width_category_empty_state(self, _seed_inventory):
@@ -6618,6 +7677,8 @@ class ReceiptWorkflowTests(TestCase):
         self.assertContains(response, "Download PDF")
         self.assertContains(response, "Email Receipt")
         self.assertContains(response, f"Receipt #{sale.receipt_no}")
+        self.assertContains(response, 'class="receipt-side-column receipt-proof-column"')
+        self.assertContains(response, 'class="receipt-management-grid no-print"')
 
     def test_manager_edit_creates_revision_history(self):
         owner, manager, _cashier, sale = self._make_sale_fixture()

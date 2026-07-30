@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Entry | {{ supplier.name }}</title>
     <script src="{% static 'inventory/js/theme.js' %}"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{%static 'inventory/js/add_invoice.js'%}" defer></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
@@ -96,9 +96,11 @@
 
             <div class="form-group">
                 <label>Payment Terms</label>
-                <select name="status">
-                    <option value="Pending">Pending (Account Payable)</option>
-                    <option value="Paid">Immediate (Paid)</option>
+                <select name="payment_terms">
+                    {% for value, label in payment_term_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                    <option value="paid_now">Immediate (Paid)</option>
                 </select>
             </div>
 

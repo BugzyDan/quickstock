@@ -12,14 +12,19 @@
 
 From `/srv/quickstock/current/Website/BackEnd/quickstock`:
 
+1. `scripts/deploy_verify.sh`
+2. `sudo systemctl restart quickstock`
+3. `sudo systemctl reload nginx`
+
+Manual equivalent:
+
 1. `python manage.py check --deploy`
-2. `python manage.py check_migrations`
+2. `python manage.py makemigrations --check --dry-run`
 3. `python manage.py migrate --plan`
 4. `python manage.py migrate`
-5. `python manage.py check_runtime_health`
-6. `python manage.py collectstatic --noinput`
-7. `sudo systemctl restart quickstock`
-8. `sudo systemctl reload nginx`
+5. `python manage.py check_migrations`
+6. `python manage.py check_runtime_health`
+7. `python manage.py collectstatic --noinput`
 
 ## Smoke Test
 

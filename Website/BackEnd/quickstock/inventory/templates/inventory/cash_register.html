@@ -29,9 +29,9 @@
     <script src="{% static 'inventory/js/page_config.js' %}" defer></script>
     <script src="{% static 'inventory/js/session_guard.js' %}?v=session-guard-fix-2" defer></script>
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
-    <script src="{% static 'inventory/js/cash_register.js' %}?v=cs004-mobile-cashier-speed-1" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=cs004-mobile-cashier-speed-1">
+    <script src="{% static 'inventory/js/cash_register.js' %}?v=compact-receipt-actions-1" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
 </head>  
 
 <body data-theme="{{ request.user.profile.theme|default:'system' }}" class="page-cash-register">
@@ -152,7 +152,9 @@
                  data-name="{{ item.name }}"
                  data-sku="{{ item.sku|default:'' }}" 
                  data-barcode="{{ item.barcode|default:'' }}"
-                 data-price="{{ item.price }}">
+                 data-price="{{ item.price }}"
+                 data-stock="{{ item.pos_stock_quantity|default:0 }}">
+                <span class="pos-stock-badge pos-stock-badge-{{ item.pos_stock_tone|default:'out' }}">{{ item.pos_stock_label|default:"Out of stock" }}</span>
                 <span class="card-name">{{ item.name }}</span>
                 <span class="card-price">${{ item.price|floatformat:2 }}</span>
             </div>
@@ -203,10 +205,13 @@
             </div>
         </div>
 
-        <div id="post-sale-actions" style="display: none; padding: 15px; background: #f0fdf4; border-bottom: 2px solid #dcfce7; text-align: center;">
-            <a id="receipt-link" href="#" target="_blank" style="color: var(--success-green); text-decoration: none; font-weight: 800; font-size: 0.85rem; display: block;">
-                ✅ SALE SUCCESSFUL: VIEW RECEIPT #<span id="last-sale-num"></span>
-            </a>
+        <div id="post-sale-actions" class="pos-post-sale-card" hidden aria-live="polite">
+            <div class="pos-post-sale-head">
+                <span id="post-sale-status" class="pos-post-sale-status">Sale complete</span>
+                <strong id="last-sale-num" class="pos-post-sale-number"></strong>
+            </div>
+            <div id="post-sale-summary" class="pos-post-sale-summary"></div>
+            <div id="post-sale-action-row" class="pos-post-sale-action-row"></div>
         </div>
 
         <div id="offline-status" class="pos-offline-status" hidden>
@@ -308,6 +313,13 @@
                 <label for="amount-paid" style="display:block; font-size:0.72rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px;">
                     Amount Paid
                 </label>
+                <div class="cash-tender-presets" aria-label="Quick cash tender presets">
+                    <button type="button" data-cash-preset="exact">Exact</button>
+                    <button type="button" data-cash-preset="500">+$500</button>
+                    <button type="button" data-cash-preset="1000">+$1,000</button>
+                    <button type="button" data-cash-preset="2000">+$2,000</button>
+                    <button type="button" data-cash-preset="5000">+$5,000</button>
+                </div>
                 <input type="number" id="amount-paid" min="0" step="0.01" value="0.00" style="width:100%; padding:12px 14px; border-radius:10px; border:2px solid #dbe4ee; font-weight:800; font-size:1rem; color:#1e293b; margin-bottom:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; font-weight:800;">
                     <span style="color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Change Due</span>

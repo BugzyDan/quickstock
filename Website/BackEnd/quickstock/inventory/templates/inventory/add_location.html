@@ -9,8 +9,8 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Node | QuickStock JA Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=locations-spacing-advanced-color-20260705">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 
@@ -114,6 +114,12 @@
                         <option value="TT">Trinidad &amp; Tobago</option>
                         <option value="BB">Barbados</option>
                     </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="inventory-capacity">Branch Capacity</label>
+                    <small class="input-help">Maximum units this branch should carry before the dashboard flags over-capacity stock.</small>
+                    <input id="inventory-capacity" type="number" name="inventory_capacity" min="1" step="1" value="1000" required inputmode="numeric">
                 </div>
 
                 <div class="actions">

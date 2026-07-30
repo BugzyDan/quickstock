@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cash Reconciliation | QuickStock JA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script></head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-cash-reconciliation page-operations-reconciliation">
@@ -39,6 +39,11 @@
                 <span>Actual: ${{ actual_reconciliation_total|floatformat:2 }}</span>
                 <span>Variance: ${{ variance|floatformat:2 }}</span>
             </div>
+            {% if is_closeout_wizard %}
+                <div class="ops-wizard-actions">
+                    <a href="{{ next_closeout_url }}" class="ops-wizard-next">Next: Deliveries &amp; Collections -&gt;</a>
+                </div>
+            {% endif %}
         </div>
         <div class="ops-hero-status ops-hero-status-grid">
             <div class="ops-status-chip">
@@ -66,10 +71,42 @@
         </div>
 
         <form method="get" action="{% url 'cash_reconciliation' %}" class="ops-suite-toolbar ops-suite-toolbar-inline recon-toolbar">
+            {% if is_closeout_wizard %}
+                <input type="hidden" name="closeout" value="1">
+            {% endif %}
             <label for="reconDate">Calendar Date</label>
             <input id="reconDate" type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+            {% if selected_shift %}
+                <input type="hidden" name="shift" value="{{ selected_shift.id }}">
+            {% endif %}
             <button type="submit">View Reconciliation</button>
         </form>
+
+        {% if selected_shift %}
+        <section class="recon-shift-closeout">
+            <div>
+                <span class="recon-shift-pill">Open shift #{{ selected_shift.id }}</span>
+                <h3>Finalize Shift Closeout</h3>
+                <p>
+                    {{ selected_shift.cashier.get_full_name|default:selected_shift.cashier.username }}
+                    at {{ selected_shift.location.name|default:selected_shift.location_name }}.
+                </p>
+            </div>
+            <form method="post" class="recon-shift-closeout-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="close_shift">
+                <input type="hidden" name="shift_id" value="{{ selected_shift.id }}">
+                {% if is_closeout_wizard %}
+                    <input type="hidden" name="closeout" value="1">
+                {% endif %}
+                <label for="countedCash">Counted cash</label>
+                <input id="countedCash" type="number" name="counted_cash" min="0" step="0.01" value="{{ selected_shift_expected_cash|floatformat:2 }}" required>
+                <label for="closeoutNotes">Notes</label>
+                <input id="closeoutNotes" type="text" name="notes" placeholder="Optional closeout note">
+                <button type="submit">Finalize Closeout</button>
+            </form>
+        </section>
+        {% endif %}
 
         <form method="post" class="recon-grid">
             {% csrf_token %}

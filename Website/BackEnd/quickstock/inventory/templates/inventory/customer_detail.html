@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Customer Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     
@@ -67,6 +67,8 @@
                 </div>
                 <div class="customer-profile-action-row">
                     <a href="{% url 'edit_customer' customer.id %}" class="customer-profile-action customer-profile-action-primary">Edit Customer</a>
+                    <a href="{% url 'sales_quotation_create' %}?customer_id={{ customer.id }}" class="customer-profile-action customer-profile-action-accent">+ Create Quote</a>
+                    <a href="{% url 'sales_invoice_create' %}?customer_id={{ customer.id }}" class="customer-profile-action customer-profile-action-accent">+ Issue Invoice</a>
                     <a href="{% url 'customer_list' %}" class="customer-profile-action customer-profile-action-secondary">Back to Directory</a>
                 </div>
             </div>
@@ -87,10 +89,20 @@
                 <div class="customer-profile-stat-value">{{ customer_total_invoices }}</div>
                 <div class="customer-profile-stat-meta">Total value: ${{ customer_total_invoice_amount|floatformat:2 }}</div>
             </div>
+            <div class="customer-profile-stat-card customer-profile-stat-card-ar{% if customer_outstanding_balance > 0 %} customer-profile-stat-card-warning{% endif %}">
+                <span class="customer-profile-stat-label">Outstanding AR</span>
+                <div class="customer-profile-stat-value">${{ customer_outstanding_balance|default:0|floatformat:2 }}</div>
+                <div class="customer-profile-stat-meta">{{ customer_open_invoice_count|default:0 }} open / unpaid invoices</div>
+            </div>
             <div class="customer-profile-stat-card">
                 <span class="customer-profile-stat-label">Note Entries</span>
                 <div class="customer-profile-stat-value">{{ note_entries|length }}</div>
                 <div class="customer-profile-stat-meta">Separate dated notes saved to this account timeline.</div>
+            </div>
+            <div class="customer-profile-stat-card">
+                <span class="customer-profile-stat-label">TRN / Tax ID</span>
+                <div class="customer-profile-stat-value customer-profile-stat-value-compact">{{ customer.trn|default:"Not recorded" }}</div>
+                <div class="customer-profile-stat-meta">{% if customer.is_tax_exempt %}GCT exempt account{% else %}Standard tax treatment{% endif %}</div>
             </div>
             <div class="customer-profile-stat-card customer-profile-stat-card-wide">
                 <span class="customer-profile-stat-label">Physical Address</span>
@@ -178,6 +190,22 @@
                     <p>All invoices linked to this customer.</p>
                 </div>
             </div>
+            {% with active_invoice_filter=invoice_filter|default:"all" %}
+                <div class="customer-invoice-filter-pills" aria-label="Invoice status filters">
+                    <a href="?invoice_filter=all"
+                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'all' %} is-active{% endif %}">
+                        All <span>{{ invoice_filter_counts.all|default:customer_total_invoices }}</span>
+                    </a>
+                    <a href="?invoice_filter=open"
+                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'open' %} is-active{% endif %}">
+                        Open / Unpaid <span>{{ invoice_filter_counts.open|default:customer_open_invoice_count|default:0 }}</span>
+                    </a>
+                    <a href="?invoice_filter=paid"
+                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'paid' %} is-active{% endif %}">
+                        Paid <span>{{ invoice_filter_counts.paid|default:0 }}</span>
+                    </a>
+                </div>
+            {% endwith %}
             <div class="table-wrap">
                 <table>
                     <thead>

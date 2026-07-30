@@ -36,8 +36,87 @@
     const amountPaidInput = document.getElementById('amount-paid');
     const changeDueNode = document.getElementById('change-due');
     const cashTenderPanel = document.getElementById('cash-tender-panel');
+    const cashTenderPresetButtons = Array.from(document.querySelectorAll('[data-cash-preset]'));
     const invoiceCustomerPanel = document.getElementById('invoice-customer-panel');
     const invoiceCustomerSelect = document.getElementById('invoice-customer-id');
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function formatMoney(value) {
+        const amount = parseFloat(value || 0);
+        return `$${(Number.isFinite(amount) ? amount : 0).toFixed(2)}`;
+    }
+
+    function setPostSaleCard({ tone = "sale", status, number, summaryHtml = "", actionsHtml = "" }) {
+        const postSale = document.getElementById('post-sale-actions');
+        const statusNode = document.getElementById('post-sale-status');
+        const numberNode = document.getElementById('last-sale-num');
+        const summaryNode = document.getElementById('post-sale-summary');
+        const actionsNode = document.getElementById('post-sale-action-row');
+        if (!postSale || !statusNode || !numberNode || !summaryNode || !actionsNode) return;
+
+        postSale.hidden = false;
+        postSale.style.display = '';
+        postSale.className = `pos-post-sale-card pos-post-sale-card-${tone}`;
+        statusNode.textContent = status;
+        numberNode.textContent = number;
+        summaryNode.innerHTML = summaryHtml;
+        actionsNode.innerHTML = actionsHtml;
+    }
+
+    function renderReceiptActions(data) {
+        const receiptNo = data.receipt_no || data.sale_id;
+        const saleId = data.sale_id;
+        const receiptUrl = `/receipt/${saleId}/`;
+        const printUrl = `/receipt/${saleId}/print/`;
+        const downloadUrl = `/receipt/${saleId}/download/`;
+        setPostSaleCard({
+            tone: "sale",
+            status: "Sale complete",
+            number: `Receipt #${receiptNo}`,
+            summaryHtml: `
+                <span><strong>Paid</strong> ${formatMoney(data.amount_paid)}</span>
+                <span><strong>Change</strong> ${formatMoney(data.change_due)}</span>
+            `,
+            actionsHtml: `
+                <a id="receipt-link" class="pos-post-sale-action pos-post-sale-action-primary" href="${receiptUrl}" target="_blank" rel="noopener">Open Receipt</a>
+                <a class="pos-post-sale-action" href="${printUrl}" target="_blank" rel="noopener">Print</a>
+                <a class="pos-post-sale-action" href="${downloadUrl}" target="_blank" rel="noopener">PDF</a>
+            `
+        });
+    }
+
+    function renderInvoiceActions(data) {
+        const invoiceNo = data.invoice_no || data.invoice_id;
+        const detailUrl = data.detail_url || `/sales/invoices/${data.invoice_id}/`;
+        const customerName = data.customer_name ? escapeHtml(data.customer_name) : "Walk-in / Unassigned";
+        setPostSaleCard({
+            tone: "invoice",
+            status: "Invoice created",
+            number: invoiceNo,
+            summaryHtml: `<span><strong>Customer</strong> ${customerName}</span><span><strong>Status</strong> Issued</span>`,
+            actionsHtml: `<a id="receipt-link" class="pos-post-sale-action pos-post-sale-action-primary" href="${detailUrl}" target="_blank" rel="noopener">Open Invoice</a>`
+        });
+    }
+
+    function renderQueuedSaleActions(payload) {
+        const reference = payload.offline_client_ref || makeOfflineClientRef();
+        setPostSaleCard({
+            tone: "queued",
+            status: "Sync pending",
+            number: reference,
+            summaryHtml: `<span><strong>Saved offline</strong> This transaction will sync when the register reconnects.</span>`,
+            actionsHtml: ""
+        });
+    }
 
     function setMobileSearchOpen(isOpen) {
         if (!mobileSearchPanel || !mobileSearchOverlay) return;
@@ -243,6 +322,39 @@
         }
     }
 
+    function stockBadgeMeta(quantity) {
+        const qty = parseInt(quantity || 0, 10) || 0;
+        if (qty <= 0) return { label: "Out of stock", tone: "out" };
+        if (qty <= 3) return { label: `Low Stock: ${qty.toLocaleString()}`, tone: "low" };
+        return { label: `${qty.toLocaleString()} in stock`, tone: "stocked" };
+    }
+
+    function renderProductCardHtml(item) {
+        const quantity = parseInt(item.stock_quantity ?? item.stock ?? item.quantity ?? 0, 10) || 0;
+        const badge = {
+            label: item.stock_label || stockBadgeMeta(quantity).label,
+            tone: item.stock_tone || stockBadgeMeta(quantity).tone
+        };
+        return `
+            <span class="pos-stock-badge pos-stock-badge-${badge.tone}">${badge.label}</span>
+            <span class="card-name">${item.name}</span>
+            <span class="card-price">$${parseFloat(item.price).toFixed(2)}</span>`;
+    }
+
+    function applyCashTenderPreset(value) {
+        if (!amountPaidInput || !isCashTenderChannel()) return;
+        const total = getCurrentTotal();
+        const preset = String(value || '').toLowerCase();
+        const nextAmount = preset === "exact"
+            ? total
+            : getEnteredAmountPaid() + (parseFloat(preset) || 0);
+        amountPaidInput.value = Math.max(0, nextAmount).toFixed(2);
+        amountPaidInput.dataset.manual = 'true';
+        updateChangeDue(total);
+        amountPaidInput.focus();
+        amountPaidInput.select();
+    }
+
     const isTypingField = (el) =>
         el &&
         (
@@ -310,7 +422,8 @@
                 card.dataset.sku = it.sku || '';
                 card.dataset.barcode = it.barcode || '';
                 card.dataset.price = it.price;
-                card.innerHTML = `<span class="card-name">${it.name}</span><span class="card-price">$${parseFloat(it.price).toFixed(2)}</span>`;
+                card.dataset.stock = it.stock_quantity || 0;
+                card.innerHTML = renderProductCardHtml(it);
                 card.addEventListener('click', () => {
                     window.addToCart(parseInt(card.dataset.id), card.dataset.name, parseFloat(card.dataset.price));
                 });
@@ -368,7 +481,7 @@
     // --- 3. CORE FUNCTIONS (Globalized for HTML access) ---
     window.addToCart = function(id, name, price, quantity = 1) {
         const postSale = document.getElementById('post-sale-actions');
-        if (postSale) postSale.style.display = 'none';
+        if (postSale) postSale.hidden = true;
 
         if (peep) {
             peep.currentTime = 0;
@@ -573,19 +686,11 @@
 
             if (data.success) {
                 if (successBeep) successBeep.play();
-                const postSaleLink = document.getElementById('receipt-link');
                 if (data.type === "invoice") {
-                    document.getElementById('last-sale-num').innerText = data.invoice_no || data.invoice_id;
-                    postSaleLink.href = data.detail_url || `/sales/invoices/${data.invoice_id}/`;
-                    postSaleLink.innerHTML = `✅ INVOICE CREATED: VIEW <span id="last-sale-num">${data.invoice_no || data.invoice_id}</span>`;
+                    renderInvoiceActions(data);
                 } else {
-                    document.getElementById('last-sale-num').innerText = data.receipt_no || data.sale_id;
-                    postSaleLink.href = `/receipt/${data.sale_id}/`;
-                    const paidLabel = parseFloat(data.amount_paid || 0).toFixed(2);
-                    const changeLabel = parseFloat(data.change_due || 0).toFixed(2);
-                    postSaleLink.innerHTML = `✅ SALE SUCCESSFUL: VIEW RECEIPT #<span id="last-sale-num">${data.receipt_no || data.sale_id}</span> | Paid $${paidLabel} | Change $${changeLabel}`;
+                    renderReceiptActions(data);
                 }
-                document.getElementById('post-sale-actions').style.display = 'block';
                 clearCheckoutForm();
             } else {
                 alert(data.error || "Transaction Failed");
@@ -644,13 +749,7 @@
     }
 
     function showQueuedSaleMessage(payload) {
-        const postSale = document.getElementById('post-sale-actions');
-        const postSaleLink = document.getElementById('receipt-link');
-        if (!postSale || !postSaleLink) return;
-        postSale.style.display = 'block';
-        postSaleLink.removeAttribute('target');
-        postSaleLink.href = '#';
-        postSaleLink.innerHTML = `✅ OFFLINE SALE SAVED: SYNC PENDING <span id="last-sale-num">${payload.offline_client_ref}</span>`;
+        renderQueuedSaleActions(payload);
     }
 
     function updatePaymentChannelDisplay(total = null) {
@@ -832,6 +931,8 @@
 
     function bindCards() {
         productCards.forEach(card => {
+            const stockQty = parseInt(card.dataset.stock || 0, 10) || 0;
+            card.classList.toggle('product-card-out-of-stock', stockQty <= 0);
             card.addEventListener('click', () => {
                 window.addToCart(parseInt(card.dataset.id), card.dataset.name, parseFloat(card.dataset.price));
                 setMobileSearchOpen(false);
@@ -851,6 +952,9 @@
             updateChangeDue();
         });
     }
+    cashTenderPresetButtons.forEach(button => {
+        button.addEventListener('click', () => applyCashTenderPreset(button.dataset.cashPreset));
+    });
 
     // Payment channel selection
     document.querySelectorAll('[data-payment-channel]').forEach(btn => {
@@ -872,6 +976,35 @@
         }
     });
     updatePaymentChannelDisplay();
+
+    document.addEventListener('keydown', (e) => {
+        const active = document.activeElement;
+        const typing = isTypingField(active);
+        if (e.key === 'F2' || (e.key === '/' && !typing)) {
+            e.preventDefault();
+            setMobileSearchOpen(true);
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+            return;
+        }
+        if (e.key === 'Enter' && cart.length > 0 && !typing) {
+            e.preventDefault();
+            window.completeCheckout();
+            return;
+        }
+        if (e.key === 'Escape') {
+            if (document.body.classList.contains('cash-search-open')) {
+                setMobileSearchOpen(false);
+                return;
+            }
+            if (cart.length > 0) {
+                e.preventDefault();
+                window.voidOrder();
+            }
+        }
+    });
 
     async function runCardCheckout(total, paymentChannel = "card") {
         if (!config.cardCheckoutUrl) return true;

@@ -32,6 +32,9 @@ class SecuritySessionMiddleware(MiddlewareMixin):
         "/static/",
         "/media/",
         "/api/",
+        "/service-worker.js",
+        "/manifest.webmanifest",
+        "/favicon.ico",
     )
 
     def _fingerprint(self, request):
@@ -69,14 +72,14 @@ class SecuritySessionMiddleware(MiddlewareMixin):
         return redirect("login")
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        user = getattr(request, "user", None)
-        if not user or not user.is_authenticated:
-            return None
-
         path = request.path or "/"
         if path == "/":
             return None
         if any(path.startswith(prefix) for prefix in self.EXEMPT_PATH_PREFIXES):
+            return None
+
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
             return None
 
         if not user.is_active:
@@ -94,6 +97,7 @@ class SecuritySessionMiddleware(MiddlewareMixin):
         stored_fingerprint = request.session.get("qs_session_fingerprint")
         stored_fingerprint_version = request.session.get("qs_session_fingerprint_version")
         last_activity_iso = request.session.get("qs_last_activity_at")
+        last_activity = None
         enforce_fingerprint = bool(getattr(settings, "QUICKSTOCK_ENFORCE_SESSION_FINGERPRINT", False))
 
         if enforce_fingerprint:
@@ -137,14 +141,23 @@ class SecuritySessionMiddleware(MiddlewareMixin):
                         "Automatic logout triggered after inactivity timeout.",
                     )
 
-        request.session["qs_session_fingerprint"] = current_fingerprint
-        request.session["qs_session_fingerprint_version"] = 2
-        request.session["qs_last_activity_at"] = now.isoformat()
-        request.session["qs_session_authenticated_at"] = request.session.get(
-            "qs_session_authenticated_at",
-            now.isoformat(),
-        )
-        request.session.modified = True
+        session_updates = {}
+        if stored_fingerprint != current_fingerprint:
+            session_updates["qs_session_fingerprint"] = current_fingerprint
+        if stored_fingerprint_version != 2:
+            session_updates["qs_session_fingerprint_version"] = 2
+
+        touch_seconds = int(getattr(settings, "QUICKSTOCK_SESSION_TOUCH_SECONDS", 60))
+        should_touch = last_activity is None or (now - last_activity).total_seconds() >= touch_seconds
+        if should_touch:
+            session_updates["qs_last_activity_at"] = now.isoformat()
+        if not request.session.get("qs_session_authenticated_at"):
+            session_updates["qs_session_authenticated_at"] = now.isoformat()
+
+        if session_updates:
+            for key, value in session_updates.items():
+                request.session[key] = value
+            request.session.modified = True
         return None
 
 
@@ -244,15 +257,18 @@ class SubscriptionEnforcementMiddleware(MiddlewareMixin):
         "/admin/",
         "/static/",
         "/media/",
+        "/service-worker.js",
+        "/manifest.webmanifest",
+        "/favicon.ico",
     )
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        user = getattr(request, "user", None)
-        if not user or not user.is_authenticated or user.is_superuser:
-            return None
-
         path = request.path or "/"
         if any(path.startswith(prefix) for prefix in self.EXEMPT_PATH_PREFIXES):
+            return None
+
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated or user.is_superuser:
             return None
 
         # Avoid hard dependency at import time.

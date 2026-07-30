@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Operations</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 
@@ -53,8 +53,8 @@
                     <span>Collection follow-up</span>
                 </div>
                 <div class="ops-hero-actions" aria-label="Primary operations actions">
-                    <a href="{% url 'daily_summary' %}" class="ops-hero-action ops-hero-action-primary">Start Closeout</a>
-                    <a href="{% url 'cash_reconciliation' %}" class="ops-hero-action">Balance Drawer</a>
+                    <a href="{{ start_closeout_url }}" class="ops-hero-action ops-hero-action-primary">Start Closeout</a>
+                    <a href="{{ balance_drawer_url }}" class="ops-hero-action">Balance Drawer</a>
                 </div>
             </div>
             <div class="ops-hero-status ops-hero-status-grid">
@@ -65,8 +65,8 @@
                 </div>
                 <div class="ops-status-chip">
                     <span>Control mode</span>
-                    <strong>Daily audit</strong>
-                    <small>Built for opening-to-close supervision</small>
+                    <strong>{{ shift_status }}</strong>
+                    <small>Closed shifts block new register sales until a new shift opens</small>
                 </div>
             </div>
         </section>
@@ -89,6 +89,7 @@
                     <span class="ops-card-index">01</span>
                     <span class="ops-card-eyebrow">Start here</span>
                 </div>
+                <span class="ops-live-badge ops-live-badge-{{ summary_status_tone }}">{{ summary_status }}</span>
                 <h3>Daily Summary</h3>
                 <p class="desc">A consolidated operational snapshot for the day (high-level KPIs + alerts).</p>
                 <ul class="ops-card-points">
@@ -96,8 +97,8 @@
                     <li>Spot alerts before the closing handoff.</li>
                 </ul>
                 <div class="ops-card-footer">
-                    <span class="ops-card-meta">Leadership review</span>
-                    <a href="{% url 'daily_summary' %}" class="ops-card-action">Open Summary <span aria-hidden="true">-&gt;</span></a>
+                    <span class="ops-card-meta">{{ summary_line_count }} ledger line{{ summary_line_count|pluralize }}</span>
+                    <a href="{{ start_closeout_url }}" class="ops-card-action">Open Summary <span aria-hidden="true">-&gt;</span></a>
                 </div>
             </article>
 
@@ -106,6 +107,7 @@
                     <span class="ops-card-index">02</span>
                     <span class="ops-card-eyebrow">Audit drawer</span>
                 </div>
+                <span class="ops-live-badge ops-live-badge-{{ reconciliation_status_tone }}">{{ reconciliation_status }}</span>
                 <h3>Cash Reconciliation</h3>
                 <p class="desc">Compare expected vs actual cash and track variance resolution workflow.</p>
                 <ul class="ops-card-points">
@@ -114,7 +116,7 @@
                 </ul>
                 <div class="ops-card-footer">
                     <span class="ops-card-meta">Drawer control</span>
-                    <a href="{% url 'cash_reconciliation' %}" class="ops-card-action">Open Reconciliation <span aria-hidden="true">-&gt;</span></a>
+                    <a href="{{ balance_drawer_url }}" class="ops-card-action">Open Reconciliation <span aria-hidden="true">-&gt;</span></a>
                 </div>
             </article>
 
@@ -123,6 +125,7 @@
                     <span class="ops-card-index">03</span>
                     <span class="ops-card-eyebrow">Track handoffs</span>
                 </div>
+                <span class="ops-live-badge ops-live-badge-{{ collection_status_tone }}">{{ collection_status }}</span>
                 <h3>Deliveries & Collections</h3>
                 <p class="desc">Track delivery status and collection progress to reduce outstanding delays.</p>
                 <ul class="ops-card-points">
@@ -131,7 +134,7 @@
                 </ul>
                 <div class="ops-card-footer">
                     <span class="ops-card-meta">Movement follow-up</span>
-                    <a href="{% url 'deliveries_collections' %}" class="ops-card-action">Open Deliveries <span aria-hidden="true">-&gt;</span></a>
+                    <a href="{{ deliveries_closeout_url }}" class="ops-card-action">Open Deliveries <span aria-hidden="true">-&gt;</span></a>
                 </div>
             </article>
         </section>

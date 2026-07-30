@@ -1,56 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
     <title>Receipt #{{ receipt_number }}</title>
 </head>
-<body style="margin:0; padding:24px; background:#f8fafc; font-family:Inter, Arial, sans-serif; color:#0f172a;">
-    <div style="max-width:720px; margin:0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; overflow:hidden;">
-        <div style="padding:24px 28px; background:linear-gradient(135deg, #2563eb, #0891b2); color:#ffffff;">
-            <p style="margin:0 0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">QuickStock JA Receipt</p>
-            <h1 style="margin:0; font-size:28px;">Receipt #{{ receipt_number }}</h1>
-            <p style="margin:10px 0 0; opacity:0.88;">Issued {{ sale_date|date:"M d, Y h:i A" }}</p>
-        </div>
-        <div style="padding:28px;">
-            <p style="margin-top:0;">Hello,</p>
-            <p>Your receipt from {{ brand_name }} is attached as a PDF and summarized below.</p>
-
-            <table style="width:100%; border-collapse:collapse; margin:20px 0;">
-                <thead>
+<body style="margin:0; padding:0; background:#f3f6fa; color:#1f2937; font-family:Arial, Helvetica, sans-serif; -webkit-text-size-adjust:100%;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">Receipt #{{ receipt_number }} from {{ brand_name }} for {{ currency_code }} {{ grand_total_display }}.</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; border-collapse:collapse; background:#f3f6fa;">
+        <tr>
+            <td align="center" style="padding:30px 12px;">
+                <table role="presentation" width="620" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:620px; border-collapse:separate; border-spacing:0; background:#ffffff; border:1px solid #e3e8ef; border-radius:10px; overflow:hidden;">
                     <tr>
-                        <th style="text-align:left; padding:10px 0; border-bottom:1px solid #e2e8f0;">Description</th>
-                        <th style="text-align:right; padding:10px 0; border-bottom:1px solid #e2e8f0;">Qty</th>
-                        <th style="text-align:right; padding:10px 0; border-bottom:1px solid #e2e8f0;">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in receipt_items %}
-                    <tr>
-                        <td style="padding:12px 0; border-bottom:1px solid #f1f5f9;">
-                            <strong>{{ item.item_name }}</strong><br>
-                            <span style="color:#64748b; font-size:13px;">{{ item.line_meta }}</span>
+                        <td align="center" style="padding:28px 34px 18px;">
+                            {% if logo_url %}
+                            <img src="{{ logo_url }}" alt="{{ brand_name }}" width="84" style="display:block; width:84px; max-width:84px; height:auto; margin:0 auto 12px; border:0;">
+                            {% endif %}
+                            <div style="margin:0 0 8px; color:#334155; font-size:20px; font-weight:700; line-height:1.25;">{{ brand_name }}</div>
+                            <div style="margin:0; color:#334155; font-size:32px; font-weight:700; line-height:1.15;">{{ grand_total_display }} <span style="font-size:13px; font-weight:700;">{{ currency_code }}</span></div>
+                            <div style="margin:9px 0 0; color:#64748b; font-size:13px; line-height:1.5;">Paid {{ sale_date|date:"d M Y" }} · Receipt #{{ receipt_number }}</div>
                         </td>
-                        <td style="padding:12px 0; text-align:right; border-bottom:1px solid #f1f5f9;">{{ item.quantity }}</td>
-                        <td style="padding:12px 0; text-align:right; border-bottom:1px solid #f1f5f9;">{{ item.line_total_display }}</td>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <table style="width:100%; max-width:320px; margin-left:auto; border-collapse:collapse;">
-                <tr><td style="padding:6px 0; color:#64748b;">Subtotal</td><td style="padding:6px 0; text-align:right;">{{ subtotal_display }}</td></tr>
-                <tr><td style="padding:6px 0; color:#64748b;">{{ tax_label }}</td><td style="padding:6px 0; text-align:right;">{{ tax_amount_display }}</td></tr>
-                <tr><td style="padding:6px 0; color:#64748b;">Discount</td><td style="padding:6px 0; text-align:right;">-{{ discount_display }}</td></tr>
-                <tr><td style="padding:10px 0; font-weight:700; border-top:1px solid #cbd5e1;">Total</td><td style="padding:10px 0; text-align:right; font-weight:700; border-top:1px solid #cbd5e1;">{{ grand_total_display }}</td></tr>
-            </table>
-
-            {% if sale.notes %}
-            <div style="margin-top:24px; padding:16px; background:#f8fafc; border-radius:12px;">
-                <strong style="display:block; margin-bottom:8px;">Notes</strong>
-                <div style="color:#475569;">{{ sale.notes|linebreaksbr }}</div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
+                    <tr>
+                        <td align="center" style="padding:0 34px 24px;">
+                            <div style="display:block; width:100%; max-width:420px; background:#2f80d8; color:#ffffff; border-radius:2px; padding:12px 0; font-size:13px; font-weight:700; line-height:1.2;">Receipt PDF Attached</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 34px 22px; color:#475569; font-size:14px; line-height:1.65;">
+                            <p style="margin:0 0 14px;">Hi{% if sale.customer_name %} {{ sale.customer_name }}{% endif %},</p>
+                            <p style="margin:0 0 14px;">Here is your receipt from {{ brand_name }} for {{ currency_code }} {{ grand_total_display }}.</p>
+                            <p style="margin:0;">If you have any questions, please let us know.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 34px 24px;">
+                            <table role="table" aria-label="Receipt line items" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; border-collapse:collapse;">
+                                <thead>
+                                    <tr>
+                                        <th align="left" style="padding:10px 0; border-bottom:1px solid #d8dee8; color:#475569; font-size:12px; font-weight:700; line-height:1.4;">Description</th>
+                                        <th align="right" style="padding:10px 0; border-bottom:1px solid #d8dee8; color:#475569; font-size:12px; font-weight:700; line-height:1.4;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in receipt_items %}
+                                    <tr>
+                                        <td valign="top" style="padding:13px 0; border-bottom:1px solid #edf1f5; color:#334155; font-size:13px; line-height:1.5;">
+                                            {{ item.item_name }}{% if item.quantity > 1 %} x {{ item.quantity }}{% endif %}
+                                            <div style="color:#64748b; font-size:12px;">{{ item.line_meta }}</div>
+                                        </td>
+                                        <td align="right" valign="top" style="padding:13px 0; border-bottom:1px solid #edf1f5; color:#334155; font-size:13px; font-weight:700; line-height:1.5; white-space:nowrap;">{{ item.line_total_display }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" align="center" style="padding:18px 0; border-bottom:1px solid #edf1f5; color:#64748b; font-size:13px;">No line items were recorded.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 34px 28px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; border-collapse:collapse;">
+                                <tr><td style="padding:7px 0; color:#64748b; font-size:13px;">Subtotal</td><td align="right" style="padding:7px 0; color:#334155; font-size:13px; font-weight:700; white-space:nowrap;">{{ subtotal_display }}</td></tr>
+                                <tr><td style="padding:7px 0; color:#64748b; font-size:13px;">{{ tax_label }}</td><td align="right" style="padding:7px 0; color:#334155; font-size:13px; font-weight:700; white-space:nowrap;">{{ tax_amount_display }}</td></tr>
+                                <tr><td style="padding:7px 0; color:#64748b; font-size:13px;">Discount</td><td align="right" style="padding:7px 0; color:#334155; font-size:13px; font-weight:700; white-space:nowrap;">-{{ discount_display }}</td></tr>
+                                <tr><td style="padding:12px 0; border-top:1px solid #d8dee8; color:#334155; font-size:15px; font-weight:700;">Amount Paid</td><td align="right" style="padding:12px 0; border-top:1px solid #d8dee8; color:#334155; font-size:18px; font-weight:700; white-space:nowrap;">{{ currency_code }} {{ grand_total_display }}</td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:0 34px 28px; color:#64748b; font-size:13px; line-height:1.6;">
+                            <p style="margin:0 0 14px;">Thanks,<br>{{ thank_brand }}</p>
+                            <p style="margin:0;">{% if brand_phone %}{{ brand_phone }}{% endif %}{% if brand_phone and brand_email %} · {% endif %}{% if brand_email %}{{ brand_email }}{% endif %}</p>
+                        </td>
+                    </tr>
+                </table>
+                <div style="padding:18px 0 0; color:#94a3b8; font-size:12px;">Powered by QuickStock</div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

@@ -23,7 +23,7 @@ Use a deployment layout similar to:
 
 ## Environment
 
-1. Start from [`.env.example`](./.env.example) or the sanitized [`.env.production`](./.env.production) template.
+1. Start from the sanitized [`.env.example`](./.env.example) template.
 2. Store real production secrets in `/etc/quickstock/quickstock.env`, not in the repository.
 3. Set `DJANGO_DEBUG=False`.
 4. Use a non-SQLite production database.
@@ -45,14 +45,30 @@ Use a deployment layout similar to:
 
 ## Django Release Steps
 
-From `/srv/quickstock/current/Website/BackEnd/quickstock`:
+From `/srv/quickstock/current/Website/BackEnd/quickstock`, run the scripted verification:
+
+```bash
+scripts/deploy_verify.sh
+```
+
+The script loads `/etc/quickstock/quickstock.env` by default and runs the same checks below. Override paths if your server layout differs:
+
+```bash
+APP_DIR=/srv/quickstock/current/Website/BackEnd/quickstock \
+PYTHON_BIN=/srv/quickstock/venv/bin/python \
+ENV_FILE=/etc/quickstock/quickstock.env \
+scripts/deploy_verify.sh
+```
+
+Manual sequence:
 
 1. `python manage.py check --deploy`
-2. `python manage.py check_migrations`
+2. `python manage.py makemigrations --check --dry-run`
 3. `python manage.py migrate --plan`
 4. `python manage.py migrate`
-5. `python manage.py check_runtime_health`
-6. `python manage.py collectstatic --noinput`
+5. `python manage.py check_migrations`
+6. `python manage.py check_runtime_health`
+7. `python manage.py collectstatic --noinput`
 
 ## Gunicorn
 

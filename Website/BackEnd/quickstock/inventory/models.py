@@ -1,6 +1,10 @@
 import json
+import re
 import uuid
+from datetime import timedelta
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
@@ -219,6 +223,8 @@ class Customer(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=30, blank=True, null=True)
+    trn = models.CharField(max_length=11, blank=True, default="")
+    is_tax_exempt = models.BooleanField(default=False)
     physical_address = models.TextField(blank=True, default="")
     business_address = models.TextField(blank=True, default="")
     notes = models.TextField(blank=True, default="")
@@ -252,6 +258,15 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
+    def clean(self):
+        errors = {}
+        digits = re.sub(r"\D", "", self.trn or "")
+        if digits and len(digits) != 9:
+            errors["trn"] = "TRN must contain exactly 9 digits."
+        if errors:
+            raise ValidationError(errors)
+        self.trn = f"{digits[:3]}-{digits[3:6]}-{digits[6:]}" if digits else ""
+
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")
         is_new = self.pk is None
@@ -271,6 +286,7 @@ class Customer(models.Model):
             self.credit_balance = Decimal(self.credit_balance or "0.00").quantize(Decimal("0.01"))
             if self.credit_balance < Decimal("0.00"):
                 raise ValidationError({"credit_balance": "Customer credit balance cannot be negative."})
+            self.full_clean()
 
             super().save(*args, **kwargs)
 
@@ -434,6 +450,7 @@ class Location(models.Model):
     name = models.CharField(max_length=100)
     address = models.TextField(blank=True)
     is_warehouse = models.BooleanField(default=False)
+    inventory_capacity = models.PositiveIntegerField(default=1000)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # This MUST always point to the Admin/Owner User
@@ -1796,7 +1813,7 @@ class PurchaseOrder(models.Model):
 class SupplierInvoiceQuerySet(models.QuerySet):
     PROTECTED_FIELDS = {
         "supplier", "supplier_id", "location", "location_id", "invoice_no", "amount", "date_issued",
-        "status", "void_reason", "voided_at", "voided_by", "voided_by_id",
+        "payment_terms", "due_date", "status", "void_reason", "voided_at", "voided_by", "voided_by_id",
     }
 
     def update(self, **kwargs):
@@ -1819,6 +1836,26 @@ class SupplierInvoiceQuerySet(models.QuerySet):
 
 
 class SupplierInvoice(models.Model):
+    TERMS_DUE_ON_RECEIPT = "due_on_receipt"
+    TERMS_NET_7 = "net_7"
+    TERMS_NET_15 = "net_15"
+    TERMS_NET_30 = "net_30"
+    TERMS_NET_60 = "net_60"
+    PAYMENT_TERM_CHOICES = (
+        (TERMS_DUE_ON_RECEIPT, "Pending (Account Payable)"),
+        (TERMS_NET_7, "Net 7"),
+        (TERMS_NET_15, "Net 15"),
+        (TERMS_NET_30, "Net 30"),
+        (TERMS_NET_60, "Net 60"),
+    )
+    PAYMENT_TERM_DAYS = {
+        TERMS_DUE_ON_RECEIPT: 0,
+        TERMS_NET_7: 7,
+        TERMS_NET_15: 15,
+        TERMS_NET_30: 30,
+        TERMS_NET_60: 60,
+    }
+
     supplier = models.ForeignKey(Supplier, related_name="invoices", on_delete=models.PROTECT)
     location = models.ForeignKey(
         Location,
@@ -1840,6 +1877,12 @@ class SupplierInvoice(models.Model):
         default="Pending",
     )
     date_issued = models.DateField()
+    payment_terms = models.CharField(
+        max_length=24,
+        choices=PAYMENT_TERM_CHOICES,
+        default=TERMS_DUE_ON_RECEIPT,
+    )
+    due_date = models.DateField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     void_reason = models.TextField(blank=True, default="")
     voided_at = models.DateTimeField(null=True, blank=True)
@@ -1901,6 +1944,8 @@ class SupplierInvoice(models.Model):
                     "invoice_no",
                     "amount",
                     "date_issued",
+                    "payment_terms",
+                    "due_date",
                     "status",
                     "void_reason",
                     "voided_at",
@@ -1910,6 +1955,9 @@ class SupplierInvoice(models.Model):
                         raise ValidationError(
                             "Supplier invoice financial facts cannot be changed after activity is posted."
                         )
+        if not self.payment_terms:
+            self.payment_terms = self.TERMS_DUE_ON_RECEIPT
+        self.due_date = self.calculate_due_date()
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -1918,6 +1966,11 @@ class SupplierInvoice(models.Model):
             "Posted supplier invoices cannot be deleted; void them with a compensating adjustment.",
             {self},
         )
+
+    def calculate_due_date(self):
+        base_date = self.date_issued or timezone.localdate()
+        term_days = self.PAYMENT_TERM_DAYS.get(self.payment_terms, 0)
+        return base_date + timedelta(days=term_days)
 
     @property
     def total_paid_amount(self):
@@ -1983,6 +2036,25 @@ class SupplierInvoice(models.Model):
     @property
     def supplier_credit_balance(self):
         return max(-self.net_balance, Decimal("0.00")).quantize(Decimal("0.01"))
+
+    @property
+    def days_overdue(self):
+        if self.status in {"Paid", "Void"} or self.balance_due <= Decimal("0.00") or not self.due_date:
+            return 0
+        return max((timezone.localdate() - self.due_date).days, 0)
+
+    @property
+    def aging_bucket(self):
+        if self.status in {"Paid", "Void"} or self.balance_due <= Decimal("0.00"):
+            return "Settled"
+        overdue_days = self.days_overdue
+        if overdue_days <= 0:
+            return "Current"
+        if overdue_days <= 30:
+            return "1-30 Days"
+        if overdue_days <= 60:
+            return "31-60 Days"
+        return "60+ Days"
 
 
 class SupplierFinancialAppendOnlyQuerySet(models.QuerySet):
@@ -2393,6 +2465,7 @@ class SalesQuotation(models.Model):
         ("draft", "Draft"),
         ("converted", "Converted"),
         ("cancelled", "Cancelled"),
+        ("expired", "Expired"),
     )
 
     owner = models.ForeignKey(
@@ -2526,7 +2599,7 @@ class SalesQuotationItem(models.Model):
 class SalesInvoiceQuerySet(models.QuerySet):
     PROTECTED_FIELDS = {
         "owner", "owner_id", "customer", "customer_id", "location", "location_id",
-        "invoice_no", "client_reference", "notes", "subtotal", "tax_amount", "total_amount", "issued_at",
+        "invoice_no", "client_reference", "notes", "subtotal", "tax_amount", "total_amount", "issued_at", "due_date",
     }
 
     def update(self, **kwargs):
@@ -2612,6 +2685,7 @@ class SalesInvoice(models.Model):
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     issued_at = models.DateTimeField(default=timezone.now)
+    due_date = models.DateField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -3748,6 +3822,148 @@ class StockTransfer(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class AccountingIntegration(models.Model):
+    PROVIDER_XERO = "xero"
+    PROVIDER_QUICKBOOKS = "quickbooks"
+    PROVIDER_SAGE = "sage"
+    PROVIDER_GENERIC = "generic"
+    PROVIDER_CHOICES = (
+        (PROVIDER_XERO, "Xero"),
+        (PROVIDER_QUICKBOOKS, "QuickBooks"),
+        (PROVIDER_SAGE, "Sage"),
+        (PROVIDER_GENERIC, "Generic accounting system"),
+    )
+
+    STATUS_DISCONNECTED = "disconnected"
+    STATUS_CONFIGURED = "configured"
+    STATUS_ACTIVE = "active"
+    STATUS_ERROR = "error"
+    STATUS_CHOICES = (
+        (STATUS_DISCONNECTED, "Disconnected"),
+        (STATUS_CONFIGURED, "Configured"),
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_ERROR, "Error"),
+    )
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="accounting_integrations",
+        on_delete=models.CASCADE,
+    )
+    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES, default=PROVIDER_XERO)
+    display_name = models.CharField(max_length=120, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DISCONNECTED)
+    external_tenant_id = models.CharField(max_length=120, blank=True)
+    sync_sales = models.BooleanField(default=True)
+    sync_sales_invoices = models.BooleanField(default=True)
+    sync_purchase_invoices = models.BooleanField(default=False)
+    sync_inventory_items = models.BooleanField(default=False)
+    settings_payload = models.JSONField(default=dict, blank=True)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["provider", "display_name"]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "provider"], name="acct_int_owner_provider_uniq"),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "provider"], name="acct_int_owner_provider_idx"),
+            models.Index(fields=["status"], name="acct_int_status_idx"),
+        ]
+
+    def __str__(self):
+        label = self.display_name or self.get_provider_display()
+        return f"{label} ({self.owner.username})"
+
+    @property
+    def is_ready_for_sync(self):
+        return self.status in {self.STATUS_CONFIGURED, self.STATUS_ACTIVE}
+
+
+class AccountingSyncRecord(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_SYNCED = "synced"
+    STATUS_FAILED = "failed"
+    STATUS_SKIPPED = "skipped"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_IN_PROGRESS, "In progress"),
+        (STATUS_SYNCED, "Synced"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_SKIPPED, "Skipped"),
+    )
+
+    OPERATION_CREATE = "create"
+    OPERATION_UPDATE = "update"
+    OPERATION_VOID = "void"
+    OPERATION_CHOICES = (
+        (OPERATION_CREATE, "Create"),
+        (OPERATION_UPDATE, "Update"),
+        (OPERATION_VOID, "Void"),
+    )
+
+    integration = models.ForeignKey(
+        AccountingIntegration,
+        related_name="sync_records",
+        on_delete=models.CASCADE,
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="accounting_sync_records",
+        on_delete=models.CASCADE,
+    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    operation = models.CharField(max_length=12, choices=OPERATION_CHOICES, default=OPERATION_CREATE)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    external_id = models.CharField(max_length=120, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    response_payload = models.JSONField(default=dict, blank=True)
+    error_message = models.TextField(blank=True)
+    attempt_count = models.PositiveIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["integration", "content_type", "object_id"],
+                name="acct_sync_int_object_uniq",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "status"], name="acct_sync_owner_status_idx"),
+            models.Index(fields=["integration", "status"], name="acct_sync_int_status_idx"),
+            models.Index(fields=["content_type", "object_id"], name="acct_sync_object_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.integration.provider}:{self.content_type.app_label}.{self.content_type.model}:{self.object_id}"
+
+    def mark_synced(self, external_id="", response_payload=None):
+        self.status = self.STATUS_SYNCED
+        if external_id:
+            self.external_id = external_id
+        self.error_message = ""
+        self.response_payload = response_payload or {}
+        self.synced_at = timezone.now()
+        self.save(update_fields=["status", "external_id", "error_message", "response_payload", "synced_at", "updated_at"])
+
+    def mark_failed(self, message, response_payload=None):
+        self.status = self.STATUS_FAILED
+        self.error_message = str(message or "")
+        self.response_payload = response_payload or {}
+        self.save(update_fields=["status", "error_message", "response_payload", "updated_at"])
 
 
 

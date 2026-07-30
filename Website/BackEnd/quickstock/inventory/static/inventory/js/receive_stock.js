@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const itemAverageCost = document.getElementById("receive_item_average_cost");
     if (!barcodeInput || !itemSelect) return;
 
+    const receiveForm = barcodeInput.closest("form");
     const optionList = Array.from(itemSelect.options).filter((opt) => opt.value);
 
     const normalize = (value) => (value || "").trim().toLowerCase();
@@ -53,18 +54,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const match = findMatchingOption(code);
         if (!match) {
             flashSelectionState(false);
+            refocusScanner();
             return false;
         }
 
         itemSelect.value = match.value;
         itemSelect.dispatchEvent(new Event("change", { bubbles: true }));
         flashSelectionState(true);
+        refocusScanner();
         return true;
     }
 
     function formatMoney(amount) {
         const numeric = Number.isFinite(Number(amount)) ? Number(amount) : 0;
-        return `$${numeric.toFixed(2)}`;
+        return numeric.toLocaleString("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function refocusScanner() {
+        window.setTimeout(() => {
+            if (!barcodeInput.isConnected) return;
+            barcodeInput.focus({ preventScroll: true });
+            barcodeInput.select();
+        }, 60);
     }
 
     function syncItemFoundPanel(selected) {
@@ -115,7 +131,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!code) return;
         applyScan(code);
         barcodeInput.value = "";
+        refocusScanner();
     });
+
+    function submitReceiveBatch(event) {
+        if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+        if (!receiveForm) return;
+        event.preventDefault();
+        if (typeof receiveForm.requestSubmit === "function") {
+            receiveForm.requestSubmit();
+            return;
+        }
+        receiveForm.submit();
+    }
 
     // Keyboard-wedge scanner support even when focus is not in the scanner field.
     let scanBuffer = "";
@@ -160,5 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
     locationSelect?.addEventListener("change", syncPreview);
     qtyInput?.addEventListener("input", syncPreview);
     costInput?.addEventListener("input", syncPreview);
+    qtyInput?.addEventListener("keydown", submitReceiveBatch);
+    costInput?.addEventListener("keydown", submitReceiveBatch);
+    document.addEventListener("stockItemAdded", refocusScanner);
+    window.addEventListener("pageshow", refocusScanner);
     syncPreview();
+    refocusScanner();
 });

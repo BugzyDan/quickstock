@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Overview | QuickStock JA POS</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
@@ -147,10 +147,10 @@
 
             <span id="inventory-overview-receiving" class="inventory-overview-section-anchor" aria-hidden="true"></span>
             <div class="inventory-movement-grid">
-                <article class="inventory-movement-card">
+                <article class="inventory-movement-card" id="inventory-overview-local-received">
                     <div class="inventory-movement-title-row">
                         <h4>Locally Received Goods</h4>
-                        <span class="inventory-movement-count">{{ local_received_rows|length }}</span>
+                        <a href="#inventory-overview-local-received" class="inventory-movement-count" aria-label="Jump to Locally Received Goods">{{ local_received_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -171,7 +171,7 @@
                 <article class="inventory-movement-card" id="inventory-overview-imports">
                     <div class="inventory-movement-title-row">
                         <h4>Imported Goods</h4>
-                        <span class="inventory-movement-count">{{ imported_received_rows|length }}</span>
+                        <a href="#inventory-overview-imports" class="inventory-movement-count" aria-label="Jump to Imported Goods">{{ imported_received_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -195,7 +195,7 @@
                             <h4>Transfer In</h4>
                             <p class="inventory-movement-scope">Into {{ transfer_location_name }}</p>
                         </div>
-                        <span class="inventory-movement-count">{{ transfer_in_rows|length }}</span>
+                        <a href="#inventory-overview-transfers" class="inventory-movement-count" aria-label="Jump to Transfer In">{{ transfer_in_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -213,13 +213,13 @@
                     </div>
                 </article>
 
-                <article class="inventory-movement-card">
+                <article class="inventory-movement-card" id="inventory-overview-transfer-out">
                     <div class="inventory-movement-title-row">
                         <div>
                             <h4>Transfer Out</h4>
                             <p class="inventory-movement-scope">From {{ transfer_location_name }}</p>
                         </div>
-                        <span class="inventory-movement-count">{{ transfer_out_rows|length }}</span>
+                        <a href="#inventory-overview-transfer-out" class="inventory-movement-count" aria-label="Jump to Transfer Out">{{ transfer_out_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -240,7 +240,7 @@
                 <article class="inventory-movement-card" id="inventory-overview-collection">
                     <div class="inventory-movement-title-row">
                         <h4>Delivered From Uncollected</h4>
-                        <span class="inventory-movement-count">{{ delivered_from_uncollected_rows|length }}</span>
+                        <a href="#inventory-overview-collection" class="inventory-movement-count" aria-label="Jump to Delivered From Uncollected">{{ delivered_from_uncollected_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -258,10 +258,10 @@
                     </div>
                 </article>
 
-                <article class="inventory-movement-card">
+                <article class="inventory-movement-card" id="inventory-overview-remaining-store">
                     <div class="inventory-movement-title-row">
                         <h4>Remaining In Store</h4>
-                        <span class="inventory-movement-count">{{ remaining_in_store_rows|length }}</span>
+                        <a href="#inventory-overview-remaining-store" class="inventory-movement-count" aria-label="Jump to Remaining In Store">{{ remaining_in_store_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -279,10 +279,10 @@
                     </div>
                 </article>
 
-                <article class="inventory-movement-card">
+                <article class="inventory-movement-card" id="inventory-overview-collected">
                     <div class="inventory-movement-title-row">
                         <h4>Collected</h4>
-                        <span class="inventory-movement-count">{{ collected_rows|length }}</span>
+                        <a href="#inventory-overview-collected" class="inventory-movement-count" aria-label="Jump to Collected">{{ collected_rows|length }}</a>
                     </div>
                     <div class="inventory-movement-table-wrap">
                         <table class="inventory-movement-table">
@@ -337,6 +337,9 @@
                             <div class="inventory-overview-category-name">
                                 <span>Category</span>
                                 <h4>{{ group.category }}</h4>
+                                {% if group.has_merged_aliases %}
+                                    <small class="inventory-overview-category-aliases">Merged: {{ group.category_aliases|join:", " }}</small>
+                                {% endif %}
                             </div>
                             <div class="inventory-overview-category-stats" aria-label="{{ group.category }} stock summary">
                                 <span class="inventory-overview-category-stat">
@@ -344,7 +347,7 @@
                                     <small>item{{ group.item_count|pluralize }}</small>
                                 </span>
                                 <span class="inventory-overview-category-stat inventory-overview-category-units">
-                                    <strong>{{ group.total_quantity }}</strong>
+                                    <strong>{{ group.total_quantity_display }}</strong>
                                     <small>unit{{ group.total_quantity|pluralize }}</small>
                                 </span>
                             </div>
@@ -368,10 +371,18 @@
                                     <div class="inventory-overview-item-copy">
                                         <strong>{{ row.name }}</strong>
                                         <span>{{ row.brand|default:"No brand" }} · {{ row.sku }}</span>
-                                        <small>{{ row.locations }}</small>
+                                        <div class="inventory-overview-location-badges" aria-label="{{ row.name }} stock by location">
+                                            {% for location in row.location_badges %}
+                                                <span class="inventory-overview-location-badge" title="{{ location.name }}: {{ location.quantity_display }}">
+                                                    {{ location.label }}: {{ location.quantity_display }}
+                                                </span>
+                                            {% empty %}
+                                                <span class="inventory-overview-location-badge inventory-overview-location-empty">No locations assigned</span>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                     <div class="inventory-overview-item-qty" aria-label="{{ row.quantity }} units on hand">
-                                        <strong>{{ row.quantity }}</strong>
+                                        <strong>{{ row.quantity_display }}</strong>
                                         <span>units</span>
                                     </div>
                                 </div>
@@ -404,7 +415,7 @@
     </div>
 </footer>
 
-<script src="{% static 'inventory/js/inventory_overview.js' %}"></script>
+<script src="{% static 'inventory/js/inventory_overview.js' %}?v=category-toggle-fix"></script>
 </body>
 
 </html>

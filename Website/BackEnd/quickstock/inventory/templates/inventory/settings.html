@@ -10,7 +10,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>QuickStock JA | System Configuration</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
         <script src="{% static 'inventory/js/settings.js' %}" defer></script>
     <script src="{% static 'inventory/js/theme.js' %}"></script>
@@ -23,7 +23,7 @@
         <header>
             <div class="header-title"><a
                 href="{% url 'index' %}">QUICKSTOCK // SYSTEM</a></div>
-            <div style="font-size: 0.75rem; font-weight: 600; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; margin-top: 0;">V 2.1.0</div>
+            <div style="font-size: 0.75rem; font-weight: 600; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; margin-top: 0;">V2.6.0</div>
         </header>
 
         <main>
@@ -67,13 +67,25 @@
                     </div>
                     <div class="preference-group">
                         <label>Brand Logo URL</label>
-                        <input type="url" name="brand_logo_url" value="{{ brand_defaults.logo }}" placeholder="https://.../logo.png">
-                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Leave blank to clear the URL.</small>
+                        <input type="url" name="brand_logo_url" value="{{ brand_defaults.logo_url }}" placeholder="https://.../logo.png">
+                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Use this for an external hosted logo URL.</small>
                     </div>
+                    {% if brand_defaults.logo %}
+                    <div class="preference-group brand-logo-current">
+                        <label>Current Logo</label>
+                        <div class="brand-logo-current-row">
+                            <img src="{{ brand_defaults.logo }}" alt="Current receipt logo">
+                            <label class="brand-logo-remove-option">
+                                <input type="checkbox" name="remove_brand_logo" value="1">
+                                <span>Remove logo from receipts and invoices</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="preference-group">
                         <label>Upload Logo (PNG/JPG, max 1MB)</label>
                         <input type="file" name="brand_logo_file" accept="image/png,image/jpeg,image/jpg">
-                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Uploading a file will replace the URL.</small>
+                        <small style="display:block;color:var(--text-muted);margin-top:6px;">Uploading a file replaces any URL or current logo.</small>
                     </div>
                     <div class="preference-group">
                         <label>Receipt Contact Email</label>
@@ -336,6 +348,87 @@
                     Staff management is a PRO feature. Upgrade to unlock multi-user access.
                 </div>
                 {% endif %}
+
+                <hr>
+                <h3>Accounting Integrations</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Prepare QuickStock transactions for Xero synchronization and future accounting providers.
+                </p>
+
+                <form method="POST" style="background: #f8fafc; padding: 25px; border-radius: 18px; border: 1px solid var(--border-color); margin-bottom: 25px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_accounting_integration">
+                    <input type="hidden" name="provider" value="xero">
+                    <div style="display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 18px;">
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.8rem; color: #1e293b; margin-bottom: 6px;">Xero</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                {% if xero_configured %}
+                                    OAuth settings detected. QuickStock can queue records for the Xero connector.
+                                {% else %}
+                                    Add XERO_CLIENT_ID, XERO_CLIENT_SECRET, and XERO_REDIRECT_URI to enable live Xero authorization.
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span style="font-size: 0.65rem; font-weight: 800; color: {% if accounting_integration.status == 'active' %}#166534{% elif accounting_integration.status == 'configured' %}#1d4ed8{% elif accounting_integration.status == 'error' %}#b91c1c{% else %}#64748b{% endif %}; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">
+                            {{ accounting_integration.get_status_display }}
+                        </span>
+                    </div>
+
+                    <div class="system-logistics-grid">
+                        <div class="preference-group">
+                            <label>Connection State</label>
+                            <select name="status">
+                                <option value="disconnected" {% if accounting_integration.status == 'disconnected' %}selected{% endif %}>Disconnected</option>
+                                <option value="configured" {% if accounting_integration.status == 'configured' %}selected{% endif %}>Configured</option>
+                                <option value="active" {% if accounting_integration.status == 'active' %}selected{% endif %}>Active</option>
+                            </select>
+                        </div>
+                        <div class="preference-group">
+                            <label>Queue Existing Data</label>
+                            <select name="queue_existing">
+                                <option value="0">Only future changes</option>
+                                <option value="1">Queue existing eligible records</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 10px 0 18px;">
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:800; color:#475569;">
+                            <input type="checkbox" name="sync_sales" value="1" {% if accounting_integration.sync_sales %}checked{% endif %}>
+                            POS sales receipts
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:800; color:#475569;">
+                            <input type="checkbox" name="sync_sales_invoices" value="1" {% if accounting_integration.sync_sales_invoices %}checked{% endif %}>
+                            Sales invoices
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:800; color:#475569;">
+                            <input type="checkbox" name="sync_purchase_invoices" value="1" {% if accounting_integration.sync_purchase_invoices %}checked{% endif %}>
+                            Supplier invoices
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:800; color:#475569;">
+                            <input type="checkbox" name="sync_inventory_items" value="1" {% if accounting_integration.sync_inventory_items %}checked{% endif %}>
+                            Inventory items
+                        </label>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 18px;">
+                        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Pending</div>
+                            <div style="font-family: var(--mono-font); font-weight: 800;">{{ accounting_sync_counts.pending|default:0 }}</div>
+                        </div>
+                        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Synced</div>
+                            <div style="font-family: var(--mono-font); font-weight: 800;">{{ accounting_sync_counts.synced|default:0 }}</div>
+                        </div>
+                        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase;">Failed</div>
+                            <div style="font-family: var(--mono-font); font-weight: 800;">{{ accounting_sync_counts.failed|default:0 }}</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 10px; background: white; border: 1px solid #cbd5e0; width: 100%;">Save Accounting Sync Settings</button>
+                </form>
 
                 <hr>
                 <h3>System Integrity & Logistics</h3>

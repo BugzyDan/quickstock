@@ -7,6 +7,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db import connection
 from django.db.models.deletion import ProtectedError
 # Ensure this line is at the top of your signals.py
 from .models import UserVerification
@@ -14,6 +15,7 @@ from .models import UserVerification
 from django.db.models import Q
 
 from .models import (
+    AccountingIntegration,
     UserProfile,
     Sale,
     Supplier,
@@ -22,7 +24,9 @@ from .models import (
     Item,
     PurchaseOrder,
     SalesInvoice,
+    SalesInvoiceItem,
     SalesQuotation,
+    SalesQuotationItem,
     SalesInvoicePayment,
     SalesInvoiceCreditNote,
     SalesInvoicePaymentReversal,
@@ -32,9 +36,27 @@ from .models import (
     SupplierInvoiceAdjustment,
     SupplierInvoiceRefund,
 )
+from .accounting import AccountingSyncError, queue_accounting_sync
 
 
 logger = logging.getLogger("inventory")
+
+
+def _queue_if_accounting_enabled(instance, owner, provider, enabled_attr):
+    if not owner:
+        return
+    integration = (
+        AccountingIntegration.objects
+        .filter(owner=owner, provider=provider)
+        .filter(status__in=[AccountingIntegration.STATUS_CONFIGURED, AccountingIntegration.STATUS_ACTIVE])
+        .first()
+    )
+    if not integration or not getattr(integration, enabled_attr, False):
+        return
+    try:
+        queue_accounting_sync(instance, provider=provider)
+    except AccountingSyncError:
+        logger.exception("Could not queue accounting sync for %s %s", instance.__class__.__name__, instance.pk)
 
 
 @receiver(post_save, sender=User)
@@ -60,10 +82,26 @@ def purge_user_data(sender, instance, **kwargs):
     if not uid:
         return
 
+    draft_invoice_ids = list(
+        SalesInvoice.objects
+        .filter(owner_id=uid, status="draft", payments__isnull=True, credit_notes__isnull=True)
+        .values_list("id", flat=True)
+    )
+    draft_quotation_ids = list(
+        SalesQuotation.objects.filter(owner_id=uid, status="draft").values_list("id", flat=True)
+    )
+    if draft_invoice_ids:
+        SalesInvoiceItem.objects.filter(invoice_id__in=draft_invoice_ids)._raw_delete(connection.alias)
+        SalesInvoice.objects.filter(id__in=draft_invoice_ids)._raw_delete(connection.alias)
+    if draft_quotation_ids:
+        SalesQuotationItem.objects.filter(quotation_id__in=draft_quotation_ids).delete()
+        SalesQuotation.objects.filter(id__in=draft_quotation_ids).delete()
+    Sale.objects.filter(Q(owner_id=uid) | Q(location__owner_id=uid), receipt_status="draft").delete()
+
     has_financial_history = any(
         queryset.exists()
         for queryset in (
-            SalesInvoice.objects.filter(owner_id=uid),
+            SalesInvoice.objects.filter(owner_id=uid).exclude(status="draft"),
             SalesInvoicePayment.objects.filter(Q(owner_id=uid) | Q(received_by_id=uid)),
             SalesInvoicePaymentReversal.objects.filter(reversed_by_id=uid),
             SalesInvoiceCreditNote.objects.filter(created_by_id=uid),
@@ -74,7 +112,7 @@ def purge_user_data(sender, instance, **kwargs):
             SupplierInvoiceAdjustment.objects.filter(created_by_id=uid),
             SupplierInvoiceRefund.objects.filter(Q(owner_id=uid) | Q(received_by_id=uid)),
             PurchaseOrder.objects.filter(Q(item__owner_id=uid) | Q(supplier__owner_id=uid)),
-            Sale.objects.filter(Q(owner_id=uid) | Q(cashier_id=uid)),
+            Sale.objects.filter(Q(owner_id=uid) | Q(cashier_id=uid)).exclude(receipt_status="draft"),
         )
     )
     if has_financial_history:
@@ -152,3 +190,33 @@ def send_welcome_email(sender, instance, created, **kwargs):
         )
     except Exception:
         logger.exception("Could not send welcome email to user %s", instance.pk)
+
+
+@receiver(post_save, sender=Sale)
+def queue_sale_accounting_sync(sender, instance, created, **kwargs):
+    if kwargs.get("raw") or instance.receipt_status == "draft":
+        return
+    owner = instance.owner or getattr(instance.location, "owner", None)
+    _queue_if_accounting_enabled(instance, owner, AccountingIntegration.PROVIDER_XERO, "sync_sales")
+
+
+@receiver(post_save, sender=SalesInvoice)
+def queue_sales_invoice_accounting_sync(sender, instance, created, **kwargs):
+    if kwargs.get("raw") or instance.status == "draft":
+        return
+    _queue_if_accounting_enabled(instance, instance.owner, AccountingIntegration.PROVIDER_XERO, "sync_sales_invoices")
+
+
+@receiver(post_save, sender=SupplierInvoice)
+def queue_supplier_invoice_accounting_sync(sender, instance, created, **kwargs):
+    if kwargs.get("raw"):
+        return
+    owner = getattr(instance.supplier, "owner", None)
+    _queue_if_accounting_enabled(instance, owner, AccountingIntegration.PROVIDER_XERO, "sync_purchase_invoices")
+
+
+@receiver(post_save, sender=Item)
+def queue_item_accounting_sync(sender, instance, created, **kwargs):
+    if kwargs.get("raw") or instance.is_deleted:
+        return
+    _queue_if_accounting_enabled(instance, instance.owner, AccountingIntegration.PROVIDER_XERO, "sync_inventory_items")

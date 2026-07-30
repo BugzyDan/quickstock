@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Daily Summary</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 
@@ -66,9 +66,15 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 Print PDF Report
             </button>
+            {% if is_closeout_wizard %}
+                <a href="{{ next_closeout_url }}" class="ops-wizard-next">Next: Reconcile Cash -&gt;</a>
+            {% endif %}
         </div>
 
         <form class="summary-date-tools ops-suite-toolbar ops-suite-toolbar-inline" method="get" action="{% url 'daily_summary' %}">
+            {% if is_closeout_wizard %}
+                <input type="hidden" name="closeout" value="1">
+            {% endif %}
             <label for="summaryDate">Calendar Date</label>
             <input id="summaryDate" type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
             <button type="submit">View Daily Summary</button>
@@ -197,12 +203,12 @@
         </div>
 
         <!-- ROW 2: Sales, Expenditures & Consolidated Master Cash Reconciliation -->
-        <div class="summary-grid">
+        <div class="daily-summary-widget-grid">
             
             <!-- LEFT COLUMN: Sales Breakdown & Expenditures Stacking -->
-            <div class="col-4" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="daily-summary-widget-rail daily-summary-widget-rail-left">
                 <!-- Sales Breakdown Card -->
-                <div class="card" style="flex: 1;">
+                <div class="card">
                     <h3>Sales Breakdown</h3>
                     <div class="data-row"><span>Invoices Processed:</span> <strong>{{ invoices_count }}</strong></div>
                     <div class="data-row"><span>Quotations Created:</span> <strong>{{ daily_quotations_count }}</strong></div>
@@ -225,23 +231,39 @@
                 <!-- Expenditures Card -->
                 <div class="card">
                     <h3>Document Pipeline</h3>
-                    <table class="summary-table document-pipeline-table">
-                        <tbody>
-                            <tr><td>Outstanding Invoices</td><td class="text-right">${{ outstanding|floatformat:2 }}</td></tr>
-                            <tr><td>No-Payment Credit</td><td class="text-right">${{ no_payment_credit_sales|floatformat:2 }}</td></tr>
-                            <tr><td>Discounts Logged</td><td class="text-right">${{ discount_total|floatformat:2 }}</td></tr>
-                            <tr><td>Aged Awaiting Collection</td><td class="text-right">{{ aged_awaiting_count }}</td></tr>
-                            <tr class="table-total">
-                                <td style="font-weight: 800;">Pending Transfers</td>
-                                <td class="text-right text-danger" style="font-weight: 800;">{{ pending_transfer_count }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="daily-summary-card-scroll">
+                        <table class="summary-table document-pipeline-table">
+                            <tbody>
+                                <tr><td>Outstanding Invoices</td><td class="text-right">${{ outstanding|floatformat:2 }}</td></tr>
+                                <tr><td>No-Payment Credit</td><td class="text-right">${{ no_payment_credit_sales|floatformat:2 }}</td></tr>
+                                <tr><td>Discounts Logged</td><td class="text-right">${{ discount_total|floatformat:2 }}</td></tr>
+                                <tr><td>Aged Awaiting Collection</td><td class="text-right">{{ aged_awaiting_count }}</td></tr>
+                                <tr class="table-total">
+                                    <td style="font-weight: 800;">Pending Transfers</td>
+                                    <td class="text-right text-danger" style="font-weight: 800;">{{ pending_transfer_count }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Inventory Activity</h3>
+                    <div style="margin-bottom: 15px;">
+                        <strong style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Movement Totals</strong>
+                        <div class="data-row"><span>Delivered From Uncollected:</span> <strong>{{ delivered_total_quantity }} units</strong></div>
+                        <div class="data-row"><span>Collected Same Time:</span> <strong>{{ collected_total_quantity }} units</strong></div>
+                    </div>
+                    <div>
+                        <strong style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Follow-up Queue</strong>
+                        <div class="data-row"><span>Remaining In Store:</span> <strong>{{ awaiting_total_quantity }} units</strong></div>
+                        <div class="data-row"><span>Pending Transfers:</span> <strong>{{ pending_transfer_count }}</strong></div>
+                    </div>
                 </div>
             </div>
 
             <!-- RIGHT COLUMN: Unified Master Cash Reconciliation Panel -->
-            <div class="card col-8" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="card daily-summary-reconciliation-card">
                 
                 <!-- Section Title & Formula Context Header -->
                 <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
@@ -437,23 +459,9 @@
             </div>
         </div>
 
-        <!-- ROW 3: Inventory & Delivery -->
-        <div class="summary-grid">
-            <div class="card col-4">
-                <h3>Inventory Activity</h3>
-                <div style="margin-bottom: 15px;">
-                    <strong style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Movement Totals</strong>
-                    <div class="data-row"><span>Delivered From Uncollected:</span> <strong>{{ delivered_total_quantity }} units</strong></div>
-                    <div class="data-row"><span>Collected Same Time:</span> <strong>{{ collected_total_quantity }} units</strong></div>
-                </div>
-                <div>
-                    <strong style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Follow-up Queue</strong>
-                    <div class="data-row"><span>Remaining In Store:</span> <strong>{{ awaiting_total_quantity }} units</strong></div>
-                    <div class="data-row"><span>Pending Transfers:</span> <strong>{{ pending_transfer_count }}</strong></div>
-                </div>
-            </div>
-
-            <div class="card col-8" style="height: auto !important; overflow: visible !important;">
+        <!-- ROW 3: Delivery -->
+        <div class="summary-grid daily-summary-delivery-grid">
+            <div class="card col-12" style="height: auto !important; overflow: visible !important;">
                 <h3>Delivery & Collection Status</h3>
 
                 <!-- Stable, isolated flex layout to prevent global table/grid spacing collisions -->
