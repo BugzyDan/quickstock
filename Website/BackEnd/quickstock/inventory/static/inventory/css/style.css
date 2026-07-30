@@ -3320,6 +3320,10 @@ body.page-inventory .inventory-pagination-links a {
 }
 
 /* Final shared mobile app-shell contract: keep every nav-backed page in the dashboard header shape. */
+/* =====================================================
+   PAGE: SALES INVOICE CREATE
+   Mobile styles
+===================================================== */
 @media (max-width: 768px) {
     body.page-dashboard,
     body.page-inventory,
@@ -3803,6 +3807,10 @@ body.page-inventory .inventory-pagination-links a {
 }
 
 /* Final compact mobile app header: keep the shell usable on small screens. */
+/* =====================================================
+   PAGE: SALES QUOTATION CREATE
+   Mobile styles
+===================================================== */
 @media (max-width: 768px) {
     body:is(
         .page-dashboard,
@@ -4401,8 +4409,6 @@ body.page-index .logo-ja {
 }
 
 
-
-
 @keyframes pulse-green {
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
@@ -4744,9 +4750,6 @@ main {
         transform: translateY(-1px);
     }
 }
-
-
-
 
 
     /* ========== PAGE: Landing / Home (Hero & Pricing) ========== */
@@ -5285,7 +5288,7 @@ BUTTONS
 
    
 /* =====================================================
-   QUICKSTOCK JA 2026 - Index apge  
+   PAGE: INDEX  
 ===================================================== */
 
         body.page-index .nav-toggle {
@@ -5811,7 +5814,7 @@ body.page-index .logo-link:active img {
   
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - Login Page
+   PAGE: LOGIN
 ===================================================== */
 
 
@@ -6193,11 +6196,8 @@ body.page-signup .auth-container {
 }
 
 
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - COMMAND CENTER CSS
+   PAGE: DASHBOARD COMMAND CENTER
    Theme: Dashboard Midnight / Professional Slate
 ===================================================== */
 
@@ -6834,194 +6834,7 @@ footer {
 }
 
 /* =====================================================
-   QUICKSTOCK JA - MOBILE COMMAND CENTER (Max-768px)
-===================================================== */
-@media (max-width: 768px) {
-    /* 1. Global Spacing */
-    main {
-        padding: 12px; /* Slightly tighter for smaller screens */
-    }
-
-    /* 2. Header & Branding */
-    header {
-        flex-direction: column;
-        height: auto;
-        padding: 15px !important;
-        gap: 12px;
-    }
-
-    .logo-area {
-        width: 100%;
-        justify-content: center;
-    }
-
-    header > div:last-child > div:first-child {
-        display: none !important;
-    }
-
-    /* 3. Navigation Bar */
-    nav {
-        top: 0;
-        z-index: 999;
-        display: flex;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 0 10px;
-        background: var(--white);
-        border-bottom: 2px solid var(--primary-blue);
-        -webkit-overflow-scrolling: touch;
-        gap: 8px;
-    }
-
-    nav a {
-        padding: 12px 10px;
-        font-size: 0.8rem;
-    }
-
-    /* 4. Performance Hub Header */
-    .welcome-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .welcome-header h2 {
-        font-size: 1.3rem;
-        word-break: break-word; /* Prevents long titles from overflowing */
-    }
-
-    .filter-form {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 8px;
-    }
-
-    /* 5. KPI Grid & Truncation - ENSURING WORDS FIT */
-    .kpi-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px;
-    }
-
-    .kpi-card {
-        padding: 18px;
-        width: 100%;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
-
-    .kpi-value {
-        font-size: 1.5rem; /* Scaled down to fit currency symbols */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .mini-table {
-        table-layout: fixed; 
-        width: 100%;
-    }
-
-    .mini-table td:first-child {
-        width: 60%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis; /* Keeps long product names inside */
-    }
-
-   /* 6. System Events Card Transformation - OVERFLOW FIXED */
-    .activity-card {
-        padding: 12px;
-        width: 100% !important;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
-
-    .activity-table, .activity-table tbody, .activity-table tr, .activity-table td {
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box;
-    }
-
-    .activity-table tr {
-        border: 1px solid var(--border-light) !important;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background: var(--bg-canvas);
-    }
-
-    .activity-table td {
-        padding: 4px 0 !important;
-        white-space: normal !important; 
-        overflow-wrap: break-word; /* Forces long SKUs/strings to wrap */
-        word-wrap: break-word;
-        word-break: break-word; /* Absolute fallback for long words */
-        font-size: 0.8rem;
-    }
-
-    /* Label injection */
-    .activity-table td:nth-child(2):before { content: "OPERATOR: "; font-weight: 800; color: var(--text-muted); font-size: 0.65rem; }
-    .activity-table td:nth-child(3):before { content: "ACTION: "; font-weight: 800; color: var(--text-muted); font-size: 0.65rem; }
-
-    /* The Log Message row - specifically handle wrapping */
-    .activity-table td:last-child {
-        border-top: 1px dashed var(--border-light) !important;
-        margin-top: 8px;
-        padding-top: 10px !important;
-        color: var(--text-main);
-        font-family: 'JetBrains Mono', monospace;
-        line-height: 1.4;
-        word-break: break-word; 
-    }
-
-    .activity-table thead, .activity-table td:first-child { 
-        display: none !important; 
-    }
-
-    /* 7. Footer & Maintenance */
-    .admin-footer-bar {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-        padding: 15px;
-    }
-
-    .btn-danger-outline {
-        width: 100%;
-    }
-}
-
-/* 600px Extra Refinement */
-@media (max-width: 600px) {
-    .kpi-value { font-size: 1.4rem; }
-    .welcome-header h2 { font-size: 1.2rem; }
-    
-    #userMenuBtn {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .kpi-card ul { 
-        padding-left: 1.2rem; 
-        font-size: 0.8rem;
-    }
-    
-    .kpi-card ul li {
-        margin-bottom: 8px;
-        word-break: break-word; /* Fixes roadmap text spill */
-    }
-}
-
-
-
-
-
-
-
-/* =====================================================
-   QUICKSTOCK JA 2026 - ADVANCED ANALYTICS (PRO)
+   PAGE: ADVANCED ANALYTICS
    Midnight High-Contrast / Data-Focus
 ===================================================== */
 
@@ -7184,14 +6997,8 @@ table td {
 }
 
 
-
-
-
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - SUPPLIER PAGE STYLES
+   PAGE: SUPPLIER LIST
 ===================================================== */
 
 :root {
@@ -7632,10 +7439,8 @@ main {
 }
 
 
-
-
 /* =====================================================
-    QUICKSTOCK JA 2026 - INVENTORY page
+    PAGE: INVENTORY
     ===================================================== */
 
 
@@ -7939,10 +7744,8 @@ main {
 }
 
 
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - RESPONSIVE MOBILE OVERRIDE
+   MOBILE RESPONSIVE OVERRIDES
    ===================================================== */
 
 @media screen and (max-width: 768px) {
@@ -8104,7 +7907,7 @@ main {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - TERMINAL CORE (WHITE THEME)
+   PAGE: TERMINAL CORE
 ===================================================== */
 
 :root {
@@ -8343,11 +8146,8 @@ footer {
 }
 
 
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - Cash Register
+   PAGE: CASH REGISTER
 ===================================================== */
 
 /* 1. Fluid Container - Removes the 'centered' restricted width */
@@ -8528,7 +8328,7 @@ body.page-cash-register .cash-drawer-logout:focus-visible {
             outline: none;
         }
 /* =====================================================
-   QUICKSTOCK JA 2026 - CASH REGISTER TERMINAL
+   PAGE: CASH REGISTER TERMINAL
 ===================================================== */
 
 .page-cash-register {
@@ -9099,26 +8899,8 @@ body.page-cash-register .btn-pay:focus-visible {
         height: 36px !important;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - MASTER LEDGER ENGINE
+   PAGE: SUPPLIER LEDGER
 ===================================================== */
 
 :root {
@@ -9300,7 +9082,7 @@ body.page-cash-register .btn-pay:focus-visible {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - INVOICE ENTRY ENGINE
+   PAGE: INVOICE ENTRY
 ===================================================== */
 
 .page-add-invoice {
@@ -9513,7 +9295,7 @@ header {
 }
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - NODES LEDGER (ENGINE LOOK)
+   PAGE: NODES LEDGER
 ===================================================== */
 
 :root {
@@ -10057,7 +9839,7 @@ header {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - SETTINGS & PROFILE
+   PAGE: SETTINGS & PROFILE
    Theme: Midnight Dashboard / Professional Slate
 ===================================================== */
 
@@ -10076,7 +9858,7 @@ header {
 }
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - UPGRADE PAGE
+   PAGE: UPGRADE
 ===================================================== */
 body.page-upgrade {
     background: var(--bg-canvas, #f8fafc);
@@ -12701,17 +12483,6 @@ html[data-theme-applied="dark"] body.page-advanced-reports main > div[style*="ju
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 @media (min-width: 901px) {
     body.page-supplier-list .action-cell {
         display: flex;
@@ -13474,10 +13245,8 @@ body.page-support .nav-toggle.is-open span:nth-child(3) {
 }
 
 
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - SETTINGS & PROFILE
+   PAGE: SETTINGS & PROFILE
    Theme: Midnight Dashboard / Professional Slate
 ===================================================== */
 
@@ -13664,7 +13433,7 @@ body.settings-page {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - COMMAND CENTER CSS
+   PAGE: DASHBOARD COMMAND CENTER
    Theme: Dashboard Midnight / Professional Slate
 ===================================================== */
 
@@ -13986,7 +13755,7 @@ footer {
 }
 
 /* =====================================================
-   QUICKSTOCK JA - MOBILE COMMAND CENTER (Max-768px)
+   PAGE: DASHBOARD COMMAND CENTER - Mobile styles
 ===================================================== */
 @media (max-width: 768px) {
     /* 1. Global Spacing */
@@ -14167,13 +13936,8 @@ footer {
 }
 
 
-
-
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - ADVANCED ANALYTICS (PRO)
+   PAGE: ADVANCED ANALYTICS
    Midnight High-Contrast / Data-Focus
 ===================================================== */
 
@@ -14390,11 +14154,8 @@ table td {
 }
 
 
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - SUPPLIER PAGE STYLES
+   PAGE: SUPPLIER LIST
 ===================================================== */
 
 :root {
@@ -14559,7 +14320,7 @@ body {
 
 
 /* =====================================================
-    QUICKSTOCK JA 2026 - INVENTORY page
+    PAGE: INVENTORY
     ===================================================== */
 
 
@@ -14828,10 +14589,8 @@ body {
 }
 
 
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - RESPONSIVE MOBILE OVERRIDE
+   MOBILE RESPONSIVE OVERRIDES
    ===================================================== */
 
 @media screen and (max-width: 768px) {
@@ -14985,7 +14744,7 @@ body {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - TERMINAL CORE (WHITE THEME)
+   PAGE: TERMINAL CORE
 ===================================================== */
 
 :root {
@@ -15230,33 +14989,8 @@ footer {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =====================================================
-   QUICKSTOCK JA 2026 - Cash Register
+   PAGE: CASH REGISTER
 ===================================================== */
 
 /* 1. Fluid Container - Removes the 'centered' restricted width */
@@ -15341,7 +15075,7 @@ footer {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - CASH REGISTER TERMINAL
+   PAGE: CASH REGISTER TERMINAL
 ===================================================== */
 
 .page-cash-register {
@@ -15475,9 +15209,6 @@ footer {
 [data-theme="dark"] .card-name { color: #f1f5f9; }
 [data-theme="dark"] .checkout-sidebar { background: #1e293b; }
 [data-theme="dark"] .billing-summary { background: #1e293b; border-top-color: #334155; }
-
-
-
 
 
 /* =====================================================
@@ -15656,7 +15387,7 @@ footer {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - MASTER LEDGER ENGINE
+   PAGE: SUPPLIER LEDGER
 ===================================================== */
 
 :root {
@@ -15835,7 +15566,7 @@ footer {
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - INVOICE ENTRY ENGINE
+   PAGE: INVOICE ENTRY
 ===================================================== */
 
 .page-add-invoice {
@@ -15989,7 +15720,7 @@ header {
 }
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - NODES LEDGER (ENGINE LOOK)
+   PAGE: NODES LEDGER
 ===================================================== */
 
 :root {
@@ -16164,11 +15895,6 @@ header {
 }
 
 .text-neon { color: #10b981; font-weight: 800; }
-
-
-
-
-
 
 
 /* =====================================================
@@ -16508,7 +16234,7 @@ line-height: 1.3;
 
 
 /* =====================================================
-   QUICKSTOCK JA 2026 - SETTINGS & PROFILE
+   PAGE: SETTINGS & PROFILE
    Theme: Midnight Dashboard / Professional Slate
 ===================================================== */
 
@@ -22137,6 +21863,42 @@ body.page-customer-list .customer-directory-empty-icon {
     font-size: 2.5rem;
 }
 
+body.page-customer-list .customer-directory-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 0 0;
+    border-top: 1px solid rgba(203, 213, 225, 0.75);
+    margin-top: 18px;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+body.page-customer-list .customer-directory-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid rgba(191, 219, 254, 0.95);
+    border-radius: 12px;
+    background: rgba(239, 246, 255, 0.96);
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+body.page-customer-list .customer-directory-page-link:hover,
+body.page-customer-list .customer-directory-page-link:focus-visible {
+    border-color: rgba(59, 130, 246, 0.8);
+    background: #dbeafe;
+}
+
+body.page-customer-list .customer-directory-page-status {
+    color: #334155;
+}
+
 body.page-add-customer .customer-create-shell {
     max-width: 1220px;
 }
@@ -22442,6 +22204,16 @@ body.page-add-customer .customer-create-checklist {
 
     body.page-customer-list .customer-directory-actions-cell {
         white-space: normal;
+    }
+
+    body.page-customer-list .customer-directory-pagination {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    body.page-customer-list .customer-directory-page-link {
+        width: 100%;
     }
 
     body.page-add-customer .customer-create-panel {
@@ -42991,10 +42763,17 @@ html[data-theme-applied="dark"] body.page-inventory .inventory-footer-actions a.
     }
 }
 
+/* =====================================================
+   GLOBAL FOOTER VISIBILITY
+===================================================== */
 body:not(.page-index) footer {
     display: none !important;
 }
 
+/* =====================================================
+   PAGE: CASH REGISTER
+   Desktop/base styles
+===================================================== */
 body.page-cash-register .cash-mobile-actions,
 body.page-cash-register .cash-sidebar-search-entry,
 body.page-cash-register .cash-search-panel-head,
@@ -43002,6 +42781,10 @@ body.page-cash-register .cash-search-overlay {
     display: none;
 }
 
+/* =====================================================
+   GLOBAL SEARCH OVERLAY
+   Desktop/base styles
+===================================================== */
 .sr-only {
     position: absolute !important;
     width: 1px !important;
@@ -43022,6 +42805,7 @@ body.page-cash-register .cash-search-overlay {
     z-index: 5000 !important;
 }
 
+/* GLOBAL SEARCH OVERLAY - Mobile styles */
 @media (max-width: 760px) {
     .global-search-panel {
         inset: 0 !important;
@@ -43041,6 +42825,7 @@ body.page-cash-register .cash-search-overlay {
     }
 }
 
+/* PAGE: CASH REGISTER - Mobile search and drawer styles */
 @media (max-width: 900px) {
     body.page-cash-register .cash-mobile-actions {
         display: inline-flex;
@@ -43203,6 +42988,7 @@ body.page-cash-register .cash-search-overlay {
     }
 }
 
+/* PAGE: CASH REGISTER - Extra-small mobile search styles */
 @media (max-width: 420px) {
     body.page-cash-register .cash-mobile-brand {
         max-width: calc(100% - 176px) !important;
@@ -43218,6 +43004,7 @@ body.page-cash-register .cash-search-overlay {
     }
 }
 
+/* PAGE: CASH REGISTER - Mobile header and nav styles */
 @media (max-width: 900px) {
     body.page-cash-register header.cash-register-command-bar {
         display: grid !important;
@@ -43391,6 +43178,7 @@ body.page-cash-register .cash-search-overlay {
     }
 }
 
+/* PAGE: CASH REGISTER - Extra-small mobile header styles */
 @media (max-width: 430px) {
     body.page-cash-register header.cash-register-command-bar {
         grid-template-columns: minmax(0, 1fr) 48px !important;
@@ -43427,6 +43215,10 @@ body.page-cash-register .cash-search-overlay {
     }
 }
 
+/* =====================================================
+   PAGE: RECEIPT HISTORY
+   Mobile styles
+===================================================== */
 @media (max-width: 768px) {
     body.page-history .container {
         width: 100%;
@@ -43603,5 +43395,983 @@ body.page-cash-register .cash-search-overlay {
         background: #1e293b !important;
         border-color: #334155 !important;
         box-shadow: none !important;
+    }
+}
+
+/* =====================================================
+   APP SHELL OPERATOR MENU
+   Mobile overlay layering
+===================================================== */
+@media (max-width: 900px) {
+    body.qs-operator-menu-open header.app-shell-header,
+    body.qs-operator-menu-open .page-wrapper > header.app-shell-header {
+        position: relative !important;
+        z-index: 7200 !important;
+        overflow: visible !important;
+    }
+
+    body.qs-operator-menu-open .user-dropdown-container,
+    body.qs-operator-menu-open header.app-shell-header .user-dropdown-container,
+    body.qs-operator-menu-open .page-wrapper > header.app-shell-header .user-dropdown-container {
+        position: relative !important;
+        z-index: 7300 !important;
+        overflow: visible !important;
+    }
+
+    body.qs-operator-menu-open #userDropdown,
+    body.qs-operator-menu-open header.app-shell-header #userDropdown,
+    body.qs-operator-menu-open .page-wrapper > header.app-shell-header #userDropdown {
+        z-index: 7400 !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* =====================================================
+   PAGE: CASH RECONCILIATION
+   Desktop styles
+===================================================== */
+:root {
+    --recon-bg: #f4f6f9;
+    --recon-card: #ffffff;
+    --recon-text: #0f172a;
+    --recon-muted: #64748b;
+    --recon-border: #d9e2ec;
+    --recon-soft: #f8fafc;
+    --recon-danger-bg: #fee2e2;
+    --recon-danger-text: #991b1b;
+    --recon-danger-border: #fecaca;
+    --recon-success-bg: #dcfce7;
+    --recon-success-text: #166534;
+    --recon-success-border: #bbf7d0;
+}
+
+body.page-cash-reconciliation {
+    background: var(--recon-bg);
+    color: var(--recon-text);
+    font-family: 'Inter', sans-serif;
+}
+
+body.page-cash-reconciliation .recon-main {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 32px 24px 56px;
+}
+
+body.page-cash-reconciliation .recon-card {
+    background: var(--recon-card);
+    border: 1px solid var(--recon-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
+    padding: 24px;
+    overflow: hidden;
+}
+
+body.page-cash-reconciliation .recon-head {
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+}
+
+body.page-cash-reconciliation .recon-head h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--recon-text);
+}
+
+body.page-cash-reconciliation .recon-head p {
+    margin: 8px 0 0;
+    color: var(--recon-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+
+body.page-cash-reconciliation .recon-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+body.page-cash-reconciliation .recon-table-wrap {
+    min-width: 0;
+    overflow-x: auto;
+    padding-right: 0;
+}
+
+body.page-cash-reconciliation .recon-flash {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+body.page-cash-reconciliation .recon-flash.success {
+    background: var(--recon-success-bg);
+    color: var(--recon-success-text);
+    border: 1px solid var(--recon-success-border);
+}
+
+body.page-cash-reconciliation .recon-flash.error {
+    background: var(--recon-danger-bg);
+    color: var(--recon-danger-text);
+    border: 1px solid var(--recon-danger-border);
+}
+
+body.page-cash-reconciliation .recon-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+body.page-cash-reconciliation .recon-table th:first-child,
+body.page-cash-reconciliation .recon-table td:first-child {
+    width: 38%;
+}
+
+body.page-cash-reconciliation .recon-table thead th {
+    background: var(--recon-soft);
+    color: var(--recon-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+body.page-cash-reconciliation .recon-table thead th:nth-child(2),
+body.page-cash-reconciliation .recon-table thead th:nth-child(3),
+body.page-cash-reconciliation .recon-table tbody td:nth-child(2),
+body.page-cash-reconciliation .recon-table tbody td:nth-child(3),
+body.page-cash-reconciliation .recon-table tfoot td:last-child {
+    text-align: right;
+}
+
+body.page-cash-reconciliation .recon-table tbody td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 0.92rem;
+    color: #334155;
+}
+
+body.page-cash-reconciliation .recon-table tbody td:first-child {
+    font-weight: 700;
+}
+
+body.page-cash-reconciliation .recon-count-input,
+body.page-cash-reconciliation .recon-card-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 800;
+    box-sizing: border-box;
+}
+
+body.page-cash-reconciliation .recon-count-input {
+    max-width: 88px;
+    padding: 7px 8px;
+    text-align: right;
+}
+
+body.page-cash-reconciliation .recon-card-input {
+    margin-top: 8px;
+    padding: 9px 10px;
+    text-align: right;
+}
+
+body.page-cash-reconciliation .recon-table tfoot td {
+    padding: 10px 8px;
+    background: var(--recon-soft);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--recon-text);
+}
+
+body.page-cash-reconciliation .recon-summary {
+    background: var(--recon-soft);
+    border: 1px solid #dbe4ee;
+    border-radius: 12px;
+    padding: 20px 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+body.page-cash-reconciliation .recon-metric {
+    min-width: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-right: 1px solid #dbe4ee;
+    padding-right: 16px;
+}
+
+body.page-cash-reconciliation .recon-metric:last-of-type {
+    margin-bottom: 0;
+    border-right: 0;
+    padding-right: 0;
+}
+
+body.page-cash-reconciliation .recon-label {
+    display: block;
+    color: var(--recon-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+body.page-cash-reconciliation .recon-value {
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--recon-text);
+    line-height: 1.15;
+}
+
+body.page-cash-reconciliation .recon-value.is-variance {
+    font-size: 1rem;
+}
+
+body.page-cash-reconciliation .recon-breakdown {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+body.page-cash-reconciliation .recon-card-label {
+    display: block;
+    margin-top: 10px;
+}
+
+body.page-cash-reconciliation .recon-status {
+    margin-top: 4px;
+    padding-top: 10px;
+    grid-column: 1 / -1;
+    border-top: 1px solid #dbe4ee;
+}
+
+body.page-cash-reconciliation .recon-actions {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+    grid-column: 1 / -1;
+}
+
+body.page-cash-reconciliation .recon-actions button {
+    width: 100%;
+}
+
+body.page-cash-reconciliation .recon-status-badge {
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 900;
+    line-height: 1.45;
+    border: 1px solid transparent;
+}
+
+body.page-cash-reconciliation .recon-status-badge.is-danger {
+    background: var(--recon-danger-bg);
+    color: var(--recon-danger-text);
+    border-color: var(--recon-danger-border);
+}
+
+body.page-cash-reconciliation .recon-status-badge.is-success {
+    background: var(--recon-success-bg);
+    color: var(--recon-success-text);
+    border-color: var(--recon-success-border);
+}
+
+/* PAGE: CASH RECONCILIATION - Mobile styles */
+@media (max-width: 900px) {
+    body.page-cash-reconciliation .recon-summary {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-cash-reconciliation .recon-metric {
+        border-right: 0;
+        border-bottom: 1px solid #dbe4ee;
+        padding-right: 0;
+        padding-bottom: 12px;
+    }
+
+    body.page-cash-reconciliation .recon-metric:last-of-type {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    body.page-cash-reconciliation .recon-main {
+        padding: 20px 16px 40px;
+    }
+
+    body.page-cash-reconciliation .recon-card {
+        padding: 20px 16px;
+    }
+
+    body.page-cash-reconciliation .recon-table thead th,
+    body.page-cash-reconciliation .recon-table tbody td,
+    body.page-cash-reconciliation .recon-table tfoot td {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+}
+
+/* =====================================================
+   PAGE: PRICING
+   Desktop styles
+===================================================== */
+body.page-pricing .pricing-plan-note {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+body.page-pricing .pricing-offline-note {
+    margin: -5px 0 15px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+body.page-pricing .btn-upgrade.is-current-plan {
+    background: #059669;
+}
+
+/* =====================================================
+   PAGE: INDEX
+   Desktop styles
+===================================================== */
+body.page-index .index-operator-name {
+    margin-left: 6px;
+}
+
+body.page-index .index-logout-form {
+    display: inline;
+    margin: 0;
+}
+
+body.page-index .index-logout-button {
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
+body.page-index .index-login-link {
+    margin-right: 15px;
+}
+
+body.page-index .index-start-link {
+    padding: 10px 20px;
+}
+
+body.page-index .pro-badge.is-current-plan {
+    background: #4a5568;
+}
+
+body.page-index .index-price-period {
+    color: #64748b;
+    font-weight: 500;
+}
+
+body.page-index .btn-upgrade.is-current-plan {
+    background: #059669;
+}
+
+body.page-index .index-upgrade-alert-link {
+    color: #007bff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.page-index .index-inline-demo-link {
+    display: inline-block;
+    margin-top: 12px;
+}
+
+/* PAGE: INDEX - Mobile styles */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    body.page-index .header-actions > .index-signed-in-actions,
+    body.page-index .index-signed-in-actions,
+    body.page-index .index-signed-in-actions.user-info,
+    body.page-index .index-signed-in-actions .index-desktop-operator,
+    body.page-index .index-signed-in-actions .index-header-utility-link,
+    body.page-index .index-signed-in-actions .index-header-utility-link-danger,
+    body.page-index .index-signed-in-actions form,
+    body.page-index .index-signed-in-actions a,
+    body.page-index .index-signed-in-actions button {
+        display: none !important;
+    }
+
+    body.page-index .header-actions > .index-signed-in-actions {
+        visibility: hidden !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+/* =====================================================
+   PAGE: SALES INVOICE DETAIL
+   Desktop styles
+===================================================== */
+body.page-sales-invoice-detail footer {
+    border-top: 1px solid var(--qs-border, #cbd5e1);
+}
+
+body.page-sales-invoice-detail .qs-btn-slate {
+    background-color: var(--qs-slate, #334155);
+    border-color: var(--qs-slate, #334155);
+    color: #ffffff;
+}
+
+body.page-sales-invoice-detail .sales-payment-action-primary {
+    background-color: var(--qs-primary, #2563eb);
+    border-color: var(--qs-primary, #2563eb);
+    color: #ffffff;
+}
+
+body.page-sales-invoice-detail .sales-payment-action-settle {
+    background-color: var(--qs-emerald, #10b981);
+    border-color: var(--qs-emerald, #10b981);
+    color: #ffffff;
+}
+
+body.page-sales-invoice-detail .sales-document-white-action {
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+body.page-sales-invoice-detail .sales-col-item {
+    width: 40%;
+}
+
+body.page-sales-invoice-detail .sales-col-sku,
+body.page-sales-invoice-detail .sales-col-unit {
+    width: 15%;
+}
+
+body.page-sales-invoice-detail .sales-col-qty {
+    width: 12%;
+}
+
+body.page-sales-invoice-detail .sales-col-total {
+    width: 18%;
+    text-align: right;
+}
+
+body.page-sales-invoice-detail .sales-line-name {
+    font-weight: 600;
+}
+
+body.page-sales-invoice-detail .sales-line-sku {
+    color: var(--qs-text-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+body.page-sales-invoice-detail .sales-line-total {
+    color: var(--qs-text-main);
+    font-weight: 700;
+    text-align: right;
+}
+
+body.page-sales-invoice-detail .sales-empty-line-items {
+    padding: 32px;
+    color: var(--qs-text-muted);
+    font-weight: 500;
+    text-align: center;
+}
+
+body.page-sales-invoice-detail .sales-muted-summary-value {
+    color: var(--qs-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+body.page-sales-invoice-detail .sales-value-danger {
+    color: #b91c1c;
+}
+
+body.page-sales-invoice-detail .sales-value-primary {
+    color: var(--qs-primary);
+}
+
+body.page-sales-invoice-detail .sales-value-success {
+    color: var(--qs-emerald);
+}
+
+body.page-sales-invoice-detail .sales-value-balance.is-due {
+    color: #ef4444;
+}
+
+body.page-sales-invoice-detail .sales-value-balance.is-clear {
+    color: var(--qs-text-muted);
+}
+
+body.page-sales-invoice-detail .sales-context-alert {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-panel {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-title,
+body.page-sales-invoice-detail .sales-terms-title {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--qs-text-main);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 0.82rem;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-amount {
+    display: block;
+    color: var(--qs-text-main);
+    font-size: 0.9rem;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-method {
+    color: var(--qs-text-muted);
+    font-weight: 500;
+}
+
+body.page-sales-invoice-detail .sales-payment-reference {
+    font-family: monospace;
+}
+
+body.page-sales-invoice-detail .sales-payment-reversal-note {
+    display: block;
+    margin-top: 5px;
+    color: #991b1b;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-meta {
+    color: var(--qs-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+body.page-sales-invoice-detail .sales-payment-history-date {
+    color: var(--qs-text-main);
+    font-weight: 600;
+}
+
+body.page-sales-invoice-detail .sales-terms-panel {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+body.page-sales-invoice-detail .sales-terms-title {
+    margin-bottom: 6px;
+    color: var(--text-main);
+}
+
+/* =====================================================
+   PAGE: SALES INVOICE PAYMENT
+   Desktop styles
+===================================================== */
+body.page-sales-invoice-payment footer {
+    display: none !important;
+}
+
+body.page-sales-invoice-payment .sales-payment-stack {
+    display: flex;
+    flex-direction: column;
+}
+
+body.page-sales-invoice-payment .sales-payment-credit-summary {
+    margin-bottom: 18px;
+}
+
+body.page-sales-invoice-payment .sales-overage-panel {
+    margin-bottom: 18px;
+    border-width: 2px;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+body.page-sales-invoice-payment .sales-overage-title {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 1rem;
+}
+
+body.page-sales-invoice-payment .sales-payment-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--qs-text-muted);
+    font-weight: 600;
+}
+
+body.page-sales-invoice-payment .sales-payment-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+body.page-sales-invoice-payment .sales-record-payment-button {
+    min-width: 168px !important;
+    background: #2563eb !important;
+    border: 1px solid #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18) !important;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-amount {
+    color: #0f172a;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-method {
+    margin-top: 3px;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-meta {
+    color: var(--qs-text-muted);
+    font-size: 0.78rem;
+    text-align: right;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-date {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+body.page-sales-invoice-payment .sales-payment-history-byline {
+    margin-top: 3px;
+}
+
+body.page-sales-invoice-payment .sales-payment-detail-line {
+    margin-top: 6px;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+}
+
+body.page-sales-invoice-payment .sales-payment-detail-line.has-divider {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+body.page-sales-invoice-payment .sales-payment-detail-label {
+    color: #0f172a;
+}
+
+body.page-sales-invoice-payment .sales-reversal-panel {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 0.8rem;
+}
+
+body.page-sales-invoice-payment .sales-reversal-meta {
+    margin-top: 4px;
+}
+
+body.page-sales-invoice-payment .sales-reversal-form {
+    margin-top: 10px;
+}
+
+body.page-sales-invoice-payment .sales-reversal-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+body.page-sales-invoice-payment .sales-reversal-input {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+}
+
+body.page-sales-invoice-payment .sales-reversal-button {
+    min-width: auto;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+}
+
+body.page-sales-invoice-payment .sales-payment-empty {
+    padding: 36px 24px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    color: var(--qs-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* =====================================================
+   PAGE: CASH REGISTER
+   CS-004 mobile cashier speed workflow
+===================================================== */
+body.page-cash-register .cash-search-state {
+    grid-column: 1 / -1;
+    display: none;
+    padding: 18px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1.35;
+    text-align: center;
+}
+
+body.page-cash-register .cart-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+body.page-cash-register .cart-row-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+body.page-cash-register .cart-row-name {
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+body.page-cash-register .cart-row-meta {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+body.page-cash-register .cart-row-total {
+    flex: 0 0 auto;
+    color: #1e293b;
+    font-weight: 900;
+}
+
+body.page-cash-register .cart-qty-stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+body.page-cash-register .cart-qty-btn,
+body.page-cash-register .cart-remove-btn {
+    min-width: 34px;
+    min-height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+body.page-cash-register .cart-remove-btn {
+    padding-inline: 10px;
+    color: #dc2626;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+body.page-cash-register .cart-qty-input {
+    width: 56px;
+    min-height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    color: #0f172a;
+    font-weight: 900;
+    text-align: center;
+}
+
+html.force-dark body.page-cash-register .cart-row,
+html[data-theme-applied="dark"] body.page-cash-register .cart-row {
+    border-color: #334155;
+}
+
+html.force-dark body.page-cash-register .cart-row-name,
+html[data-theme-applied="dark"] body.page-cash-register .cart-row-name,
+html.force-dark body.page-cash-register .cart-row-total,
+html[data-theme-applied="dark"] body.page-cash-register .cart-row-total {
+    color: #f8fafc;
+}
+
+html.force-dark body.page-cash-register .cart-qty-btn,
+html[data-theme-applied="dark"] body.page-cash-register .cart-qty-btn,
+html.force-dark body.page-cash-register .cart-remove-btn,
+html[data-theme-applied="dark"] body.page-cash-register .cart-remove-btn,
+html.force-dark body.page-cash-register .cart-qty-input,
+html[data-theme-applied="dark"] body.page-cash-register .cart-qty-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+/* PAGE: CASH REGISTER - CS-004 mobile cashier speed workflow */
+@media (max-width: 900px) {
+    body.page-cash-register .cash-search-state {
+        display: block;
+    }
+
+    body.page-cash-register:not(.cash-has-search-query) .product-card {
+        display: none !important;
+    }
+
+    body.page-cash-register .item-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    body.page-cash-register .product-card {
+        min-height: 74px !important;
+        padding: 14px 16px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    body.page-cash-register .card-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 0.92rem !important;
+    }
+
+    body.page-cash-register .card-price {
+        flex: 0 0 auto;
+        margin-top: 0 !important;
+        font-size: 1rem !important;
+    }
+
+    body.page-cash-register .cart-items-list {
+        max-height: min(34svh, 310px) !important;
+    }
+
+    body.page-cash-register .cart-row {
+        align-items: flex-start;
+        padding: 12px 10px !important;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        background: #ffffff;
+    }
+
+    body.page-cash-register .cart-row-name {
+        font-size: 0.88rem;
+    }
+
+    body.page-cash-register .cart-row-total {
+        font-size: 0.9rem;
+    }
+
+    body.page-cash-register .cart-qty-stepper {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    body.page-cash-register .cart-qty-btn,
+    body.page-cash-register .cart-remove-btn,
+    body.page-cash-register .cart-qty-input {
+        min-height: 40px;
+        border-radius: 11px;
+    }
+
+    body.page-cash-register .cart-qty-btn {
+        min-width: 42px;
+        font-size: 1rem;
+    }
+
+    body.page-cash-register .cart-remove-btn {
+        margin-left: auto;
+    }
+
+    body.page-cash-register .billing-summary {
+        position: sticky;
+        bottom: 0;
+        z-index: 30;
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -18px 40px rgba(15, 23, 42, 0.14);
     }
 }
