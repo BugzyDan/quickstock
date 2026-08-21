@@ -121,9 +121,23 @@ document.addEventListener("DOMContentLoaded", function () {
         syncFromItem();
     };
 
-    const addRow = () => {
+    const addRow = (initialLine = null) => {
         const fragment = rowTemplate.content.cloneNode(true);
         const row = fragment.querySelector(".quote-line-row");
+        if (row && initialLine) {
+            const itemSelect = row.querySelector(".quote-line-item");
+            const qtyInput = row.querySelector(".quote-line-qty");
+            const priceInput = row.querySelector(".quote-line-price");
+            if (itemSelect && initialLine.item_id) {
+                itemSelect.value = String(initialLine.item_id);
+            }
+            if (qtyInput && initialLine.quantity) {
+                qtyInput.value = String(initialLine.quantity);
+            }
+            if (priceInput && initialLine.unit_price) {
+                priceInput.value = Number(initialLine.unit_price || 0).toFixed(2);
+            }
+        }
         lineBody.appendChild(fragment);
         if (row) bindRow(row);
     };
@@ -141,6 +155,20 @@ document.addEventListener("DOMContentLoaded", function () {
             updateTotals();
         });
     }
-    addRow();
+    let initialLines = [];
+    const initialLinesNode = document.getElementById("quoteInitialLines");
+    if (initialLinesNode) {
+        try {
+            initialLines = JSON.parse(initialLinesNode.textContent || "[]");
+        } catch (error) {
+            initialLines = [];
+        }
+    }
+
+    if (Array.isArray(initialLines) && initialLines.length) {
+        initialLines.forEach((line) => addRow(line));
+    } else {
+        addRow();
+    }
     updateTotals();
 });

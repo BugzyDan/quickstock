@@ -1,4 +1,5 @@
 {% load static theme_tags %}
+
 <!DOCTYPE html>
 <html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
 
@@ -50,7 +51,7 @@
     <div class="inventory-card">
         <section class="inventory-hero">
             <div class="inventory-hero-copy">
-                <p class="inventory-kicker">Movement register</p>
+                <p class="inventory-kicker">Inventory Management</p>
                 <h2 id="inventory-overview-all">Inventory Overview</h2>
                 <p class="inventory-subtitle">Track locally received goods, imported stock, transfers, delayed fulfillment, live stock on hand, and customer collections in one operational view.</p>
             </div>

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Create Sales Invoice | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     <script src="{% static 'inventory/js/sales_invoice_form.js' %}" defer></script>
@@ -64,7 +64,7 @@
                     <div class="settings-form-group">
                         <label>Quotation Reference Document</label>
                         <select name="quotation_id" id="quotationSelect">
-                            <option value="">Select draft quotation...</option>
+                            <option value="">Select quotation...</option>
                             {% for quote in draft_quotations %}
                                 <option value="{{ quote.id }}">
                                     {{ quote.quote_no }} • {% if quote.customer %}{{ quote.customer.name }}{% else %}Walk-in{% endif %} • ${{ quote.total_amount|floatformat:2 }}
@@ -85,9 +85,9 @@
                 <div class="sales-card-premium" style="background-color: #f8fafc;">
                     <div class="summary-row-premium"><span>Source Vector</span><strong>Existing Quotation Record</strong></div>
                     <div class="summary-row-premium"><span>Stock Behavior</span><strong>Commits inventory ledger records</strong></div>
-                    <div class="summary-row-premium"><span>Conversion Status</span><strong>Closes quotation to active AR state</strong></div>
+                    <div class="summary-row-premium"><span>Conversion Status</span><strong>Creates a new invoice copy</strong></div>
                     <p style="margin: 14px 0 0; font-size: 0.78rem; color: var(--qs-text-muted); line-height: 1.45;">
-                        Only draft quotations are indexable inside this view profile. Converted or active entries are omitted from sequence lookups.
+                        Draft and previously converted quotations can be selected. Each submission creates a separate invoice from the quote.
                     </p>
                 </div>
             </div>
@@ -189,21 +189,21 @@
         </section>
 
         <!-- Document Global Workflow Footer Actions -->
-        <div class="sales-card-premium" style="margin-top: 24px; padding: 18px 20px;">
-            <div class="settings-form-group" style="margin-bottom:0; max-width: 320px;">
-                <label>Payment Method For Next Step</label>
-                <select name="payment_method">
+        <div class="sales-invoice-submit-panel">
+            <div class="sales-invoice-next-step-field">
+                <label for="invoice-payment-method">Payment Method For Next Step</label>
+                <select name="payment_method" id="invoice-payment-method">
                     {% for value, label in payment_methods %}
                         <option value="{{ value }}" {% if value == 'cash' %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-        </div>
 
-        <div class="sales-form-actions">
-            <a href="{% url 'sales_invoice_list' %}" class="qs-btn qs-btn-secondary">Cancel</a>
-            <button type="submit" class="qs-btn qs-btn-slate" style="background-color: var(--qs-slate, #334155); color: #ffffff; border-color: var(--qs-slate, #334155);">Create Invoice</button>
-            <button type="submit" class="qs-btn qs-btn-emerald" name="next_step" value="pay" style="background-color: var(--qs-emerald, #10b981); color: #ffffff; border-color: var(--qs-emerald, #10b981);">Create & Proceed To Payment</button>
+            <div class="sales-form-actions sales-invoice-submit-actions">
+                <a href="{% url 'sales_invoice_list' %}" class="qs-btn qs-btn-secondary">Cancel</a>
+                <button type="submit" class="qs-btn qs-btn-slate" style="background-color: var(--qs-slate, #334155); color: #ffffff; border-color: var(--qs-slate, #334155);">Create Invoice</button>
+                <button type="submit" class="qs-btn qs-btn-emerald" name="next_step" value="pay" style="background-color: var(--qs-emerald, #10b981); color: #ffffff; border-color: var(--qs-emerald, #10b981);">Create & Proceed To Payment</button>
+            </div>
         </div>
     </form>
 

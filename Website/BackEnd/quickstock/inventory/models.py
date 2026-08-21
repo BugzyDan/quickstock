@@ -2507,6 +2507,14 @@ class SalesQuotation(models.Model):
 
     def __str__(self):
         return self.quote_no or f"Quote {self.id}"
+
+    @property
+    def converted_invoice(self):
+        return self.converted_invoices.order_by("-created_at", "-id").first()
+
+    @property
+    def converted_invoice_count(self):
+        return self.converted_invoices.count()
     
     def clean(self):
         errors = {}
@@ -2641,9 +2649,9 @@ class SalesInvoice(models.Model):
         null=True,
         blank=True,
     )
-    quotation = models.OneToOneField(
+    quotation = models.ForeignKey(
         SalesQuotation,
-        related_name="converted_invoice",
+        related_name="converted_invoices",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -83,12 +83,12 @@
 
 <!-- SALES -->
 <div
-    class="sales-nav-item{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} is-active{% endif %}"
+    class="sales-nav-item{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_edit' or current == 'sales_quotation_copy' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} is-active{% endif %}"
     data-sales-nav-item
 >
     <button
         type="button"
-        class="sales-nav-trigger{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} active{% endif %}"
+        class="sales-nav-trigger{% if current == 'sales' or current == 'cash_register' or current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_edit' or current == 'sales_quotation_copy' or current == 'sales_quotation_convert_to_invoice' or current == 'sales_invoice_list' or current == 'sales_invoice_create' or current == 'sales_invoice_detail' or current == 'sales_invoice_payment' or current == 'sales_invoice_mark_paid' %} active{% endif %}"
         data-sales-nav-trigger
         aria-expanded="false"
     >
@@ -102,7 +102,7 @@
         </a>
 
         <a href="{% url 'sales_quotation_list' %}"
-           class="{% if current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_convert_to_invoice' %}active{% endif %}">
+           class="{% if current == 'sales_quotation_list' or current == 'sales_quotation_create' or current == 'sales_quotation_detail' or current == 'sales_quotation_edit' or current == 'sales_quotation_copy' or current == 'sales_quotation_convert_to_invoice' %}active{% endif %}">
             Quotations
         </a>
 

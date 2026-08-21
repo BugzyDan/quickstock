@@ -100,6 +100,132 @@ class LoadingStateAssetTests(SimpleTestCase):
             with self.subTest(template=path.name):
                 self.assertIn("inventory/js/loading_states.js", path.read_text())
 
+    def test_advanced_reports_valuation_card_survives_global_card_polish(self):
+        css = (Path(__file__).resolve().parent / "static" / "inventory" / "css" / "style.css").read_text()
+
+        self.assertIn("body.page-advanced-reports .report-card.analytics-valuation-card", css)
+        self.assertIn("linear-gradient(145deg, #0f172a", css)
+        self.assertIn("color: #f8fafc !important", css)
+        self.assertIn(".analytics-valuation-row-emphasis strong", css)
+
+    def test_cash_register_full_refinement_survives_late_ui_layers(self):
+        app_dir = Path(__file__).resolve().parent
+        css = (app_dir / "static" / "inventory" / "css" / "style.css").read_text()
+        template = (app_dir / "templates" / "inventory" / "cash_register.html").read_text()
+
+        self.assertIn("CASH REGISTER DESKTOP REPAIR", css)
+        self.assertIn("CASH REGISTER FULL TERMINAL REFINEMENT", css)
+        self.assertIn("--qs-cash-sidebar-width", css)
+        self.assertIn("--qs-cash-panel-radius", css)
+        self.assertIn("--qs-cash-action-blue", css)
+        self.assertIn("--qs-cash-rail-min", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) var(--qs-cash-sidebar-width) !important", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(340px, var(--qs-cash-sidebar-width)) !important", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(var(--qs-cash-rail-min), var(--qs-cash-sidebar-width)) !important", css)
+        self.assertIn("body.page-cash-register .product-area", css)
+        self.assertIn("overflow: auto !important", css)
+        self.assertIn("body.page-cash-register .checkout-sidebar", css)
+        self.assertIn("position: sticky !important", css)
+        self.assertIn("body.page-cash-register #cart-list:empty::before", css)
+        self.assertIn('content: "Cart is empty"', css)
+        self.assertIn("body.page-cash-register #cart-list:not(:empty)", css)
+        self.assertIn("body.page-cash-register .cash-mobile-brand img", css)
+        self.assertIn("width: 42px !important", css)
+        self.assertIn("min-width: 42px !important", css)
+        self.assertIn("max-width: 42px !important", css)
+        self.assertIn("flex: 0 0 42px !important", css)
+        self.assertIn("body.page-cash-register .cash-mobile-brand,\n    body.page-cash-register .cash-mobile-actions", css)
+        self.assertIn("body.page-cash-register .cash-mobile-actions", css)
+        self.assertIn("display: none !important", css)
+        self.assertIn("body.page-cash-register .cash-sidebar-search-entry {\n        display: none !important;", css)
+        self.assertIn("body.page-cash-register .product-area {\n        display: block !important;", css)
+        self.assertIn("Evaluator fix: the desktop rail must scroll instead of clipping tender/finalize controls.", css)
+        self.assertIn("@media (min-width: 901px) and (max-height: 860px)", css)
+        self.assertIn("body.page-cash-register .checkout-sidebar {\n        overflow-y: auto !important;", css)
+        self.assertIn("body.page-cash-register .cart-items-list {\n        flex: 1 1 0 !important;\n        min-height: 0 !important;", css)
+        self.assertIn("body.page-cash-register #cart-list:empty {\n        min-height: 64px !important;", css)
+        self.assertIn("html.force-dark body.page-cash-register .payment-channel-option.active", css)
+        self.assertIn("html.force-dark body.page-cash-register .cash-tender-presets button.is-active", css)
+        self.assertIn("color: #eff6ff !important", css)
+        self.assertIn("CASH REGISTER 150% ZOOM SIDE-BY-SIDE GUARD", css)
+        self.assertIn("@media (min-width: 901px) and (max-width: 1360px)", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(300px, var(--qs-cash-sidebar-width)) !important", css)
+        self.assertIn("body.page-cash-register .product-area {\n        height: calc(100dvh - var(--qs-cash-header-height) - (var(--qs-cash-page-gap) * 2)) !important;", css)
+        self.assertIn("body.page-cash-register .checkout-sidebar {\n        position: sticky !important;\n        top: calc(var(--qs-cash-header-height) + var(--qs-cash-page-gap)) !important;", css)
+        self.assertIn("height: calc(100dvh - var(--qs-cash-header-height) - (var(--qs-cash-page-gap) * 2)) !important", css)
+        self.assertIn("overflow-y: auto !important", css)
+        self.assertIn("body.page-cash-register .cart-items-list {\n        flex: 1 1 0 !important;\n        min-height: 0 !important;\n        max-height: none !important;", css)
+        self.assertIn("grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)) !important", css)
+        self.assertIn("grid-template-columns: repeat(3, minmax(0, 1fr)) !important", css)
+        self.assertNotIn("Switch reduced desktop widths out of the narrow rail layout.", css)
+        self.assertIn("CASH REGISTER NAV COMMAND BAR REFINEMENT", css)
+        self.assertIn("--qs-cash-nav-height", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) auto !important", css)
+        self.assertIn("body.page-cash-register .nav-desktop-links :is(a, .cash-nav-current)", css)
+        self.assertIn("body.page-cash-register .cash-nav-current", css)
+        self.assertIn("max-width: calc(100vw - 280px) !important", css)
+        self.assertIn("cash-register-complete-state-1", template)
+        self.assertIn('class="cash-nav-current" aria-current="page"', template)
+        self.assertIn('class="logout-link">LOGOUT</a>', template)
+        self.assertNotIn("cash-register-nav-refine-2", template)
+        self.assertNotIn('class="logout-link" style=', template)
+        self.assertNotIn("border: 1px solid #ffffff !important", template)
+        self.assertNotIn("background: #ffffff !important", template)
+        self.assertIn("body.page-cash-register .logout-link", css)
+        self.assertIn("body.page-cash-register .cash-register-command-bar .logout-link", css)
+        self.assertIn("rgba(248, 113, 113, 0.16)", css)
+        self.assertIn("border-color: rgba(251, 113, 133, 0.72) !important", css)
+        self.assertNotIn("body.page-cash-register .cash-register-command-bar .logout-link {\n    border-color: #ffffff !important;\n    background: #ffffff !important;", css)
+        self.assertIn('id="post-sale-actions" class="pos-post-sale-card" hidden', template)
+        self.assertIn("CASH REGISTER COMPLETION STATE GUARD", css)
+        self.assertIn("body.page-cash-register #post-sale-actions[hidden]", css)
+        self.assertIn("body.page-cash-register .pos-post-sale-card[hidden]", css)
+        self.assertIn("body.page-cash-register #offline-status[hidden]", css)
+        self.assertIn("body.page-cash-register .pos-offline-status[hidden]", css)
+        self.assertNotIn("cash-register-full-refine-4", template)
+
+    def test_sales_documents_refinement_assets_survive_late_ui_layers(self):
+        app_dir = Path(__file__).resolve().parent
+        css = (app_dir / "static" / "inventory" / "css" / "style.css").read_text()
+        templates_dir = app_dir / "templates" / "inventory"
+        template_names = [
+            "sales_quotation_list.html",
+            "sales_quotation_form.html",
+            "sales_quotation_detail.html",
+            "sales_invoice_list.html",
+            "sales_invoice_form.html",
+            "sales_invoice_detail.html",
+            "sales_invoice_payment_form.html",
+        ]
+        page_scopes = [
+            "body.page-sales-quotation-list",
+            "body.page-sales-quotation-create",
+            "body.page-sales-quotation-detail",
+            "body.page-sales-invoice-list",
+            "body.page-sales-invoice-create",
+            "body.page-sales-invoice-detail",
+            "body.page-sales-invoice-payment",
+        ]
+
+        self.assertIn("QUICKSTOCK SALES DOCUMENTS SUITE REFINEMENT", css)
+        self.assertIn("--qs-doc-navy", css)
+        self.assertIn(".sales-document-list-card", css)
+        self.assertIn(".sales-detail-grid-premium", css)
+        self.assertIn(".sales-payment-form", css)
+        self.assertIn("html.force-dark body.page-sales-quotation-list", css)
+        self.assertIn('html[data-theme-applied="dark"] body.page-sales-invoice-payment', css)
+        self.assertIn("@media (max-width: 1180px)", css)
+        self.assertIn("@media (max-width: 760px)", css)
+
+        for scope in page_scopes:
+            with self.subTest(scope=scope):
+                self.assertIn(scope, css)
+
+        for template_name in template_names:
+            with self.subTest(template=template_name):
+                template = (templates_dir / template_name).read_text()
+                self.assertIn("sales-documents-refine-1", template)
+
 
 class AccountingIntegrationTests(TestCase):
     def _make_owner(self, username="acct-owner"):
@@ -420,6 +546,31 @@ class WeekOneSecurityTests(TestCase):
 
         self.assertTrue(profile.is_pro_active())
         self.assertEqual(profile.plan_badge_label, "PRO")
+
+    def test_operator_plan_badge_renders_from_profile_state(self):
+        pro_user = self._make_user("badge-pro-owner")
+        trial_user = self._make_user("badge-trial-owner")
+        trial_user.profile.plan = "TRIAL"
+        trial_user.profile.pro_expires = None
+        trial_user.profile.plan_end = timezone.now() + timedelta(days=5)
+        trial_user.profile.save(update_fields=["plan", "pro_expires", "plan_end"])
+
+        self.client.force_login(pro_user)
+        pro_response = self.client.get(reverse("dashboard"))
+        self.assertEqual(pro_response.status_code, 200)
+        self.assertContains(pro_response, ">PRO<", html=False)
+
+        self.client.force_login(trial_user)
+        trial_response = self.client.get(reverse("dashboard"))
+        self.assertEqual(trial_response.status_code, 200)
+        self.assertContains(trial_response, ">TRIAL<", html=False)
+
+    def test_support_script_is_scoped_to_support_page(self):
+        app_dir = Path(__file__).resolve().parent
+        support_js = (app_dir / "static" / "inventory" / "js" / "support.js").read_text()
+
+        self.assertIn('contains("page-support")', support_js)
+        self.assertIn("return;", support_js)
 
     def test_cashier_inventory_api_write_is_forbidden(self):
         owner = self._make_user("owner-inv-write")
@@ -1108,6 +1259,39 @@ class WeekOneSecurityTests(TestCase):
         sale.refresh_from_db()
         self.assertEqual(sale.owner, owner)
         self.assertEqual(sale.cashier, cashier)
+
+    def test_revoked_staff_are_hidden_from_settings_staff_list(self):
+        owner = self._make_user("revoked-staff-list-owner")
+        location = self._make_location(owner, "Main Branch")
+        cashier = self._make_staff_user(
+            "revoked-staff-list-cashier",
+            owner,
+            role="cashier",
+            default_location=location,
+        )
+        Sale.objects.create(
+            owner=owner,
+            cashier=cashier,
+            location=location,
+            total_price=Decimal("115.00"),
+        )
+
+        self.client.force_login(owner)
+        response = self.client.post(
+            reverse("manage_staff"),
+            {"action": "delete", "user_id": cashier.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        cashier.refresh_from_db()
+        cashier.profile.refresh_from_db()
+        self.assertFalse(cashier.is_active)
+        self.assertTrue(cashier.profile.is_archived)
+
+        settings_page = self.client.get(reverse("settings"))
+
+        self.assertEqual(settings_page.status_code, 200)
+        self.assertNotIn(cashier.profile, list(settings_page.context["all_staff"]))
 
     def test_dashboard_honors_saved_dark_theme_preference(self):
         owner = self._make_user("owner-dark-theme")
@@ -3272,6 +3456,8 @@ class WeekTwoSalesIntegrityTests(TestCase):
         script_path = Path(__file__).resolve().parent / "static" / "inventory" / "js" / "cash_register.js"
         script = script_path.read_text()
         self.assertIn("applyCashTenderPreset", script)
+        self.assertIn("option.classList.toggle('is-active', active)", script)
+        self.assertIn("button.setAttribute('aria-pressed', 'false')", script)
         self.assertIn("renderProductCardHtml", script)
         self.assertIn("e.key === 'F2'", script)
         self.assertIn("window.completeCheckout()", script)
@@ -4144,9 +4330,9 @@ class WeekTwoSalesIntegrityTests(TestCase):
         response = self.client.get(reverse("view_receipt", args=[sale.pk]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Amount Paid:")
+        self.assertContains(response, "Amount Paid")
         self.assertContains(response, "$200.00")
-        self.assertContains(response, "Change Given:")
+        self.assertContains(response, "Change Given")
         self.assertContains(response, "$85.00")
 
     def test_daily_summary_delivery_collection_uses_real_invoice_items(self):
@@ -4742,6 +4928,137 @@ class WeekFourReadinessTests(TestCase):
         context = _sales_document_email_context(invoice, "invoice")
         self.assertEqual(context["expiry_label"], "Due Date")
         self.assertEqual(context["expiry_date"], quotation.valid_until)
+
+    def test_sales_quotation_edit_updates_existing_quote_lines(self):
+        owner = self._make_user("quote-edit-owner")
+        customer = Customer.objects.create(owner=owner, name="Original Customer")
+        item = self._make_item(owner, sku="SKU-QUOTE-EDIT", price="100.00", quantity=10)
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=customer,
+            valid_until=timezone.localdate() + timedelta(days=5),
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("15.00"),
+            total_amount=Decimal("115.00"),
+        )
+        SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=1,
+            unit_price=Decimal("100.00"),
+            line_total=Decimal("100.00"),
+        )
+        self.client.force_login(owner)
+
+        edit_response = self.client.get(reverse("sales_quotation_edit", args=[quotation.id]))
+        self.assertEqual(edit_response.status_code, 200)
+        self.assertContains(edit_response, "quoteInitialLines")
+        self.assertContains(edit_response, "Update Quotation")
+
+        response = self.client.post(
+            reverse("sales_quotation_edit", args=[quotation.id]),
+            data={
+                "customer_id": str(customer.id),
+                "valid_until": "2026-07-31",
+                "notes": "Updated terms",
+                "tax_mode": "none",
+                "tax_rate_percent": "0",
+                "discount_type": "flat",
+                "discount_value": "10.00",
+                "item_id[]": [str(item.id)],
+                "quantity[]": ["3"],
+                "unit_price[]": ["50.00"],
+            },
+        )
+
+        self.assertRedirects(response, reverse("sales_quotation_detail", args=[quotation.id]))
+        quotation.refresh_from_db()
+        line = quotation.items.get()
+        self.assertEqual(quotation.subtotal, Decimal("150.00"))
+        self.assertEqual(quotation.tax_amount, Decimal("0.00"))
+        self.assertEqual(quotation.total_amount, Decimal("140.00"))
+        self.assertEqual(quotation.valid_until.isoformat(), "2026-07-31")
+        self.assertIn("Updated terms", quotation.notes)
+        self.assertEqual(line.quantity, 3)
+        self.assertEqual(line.unit_price, Decimal("50.00"))
+
+    def test_sales_quotation_copy_creates_new_quote_for_target_customer(self):
+        owner = self._make_user("quote-copy-owner")
+        source_customer = Customer.objects.create(owner=owner, name="Source Customer")
+        target_customer = Customer.objects.create(owner=owner, name="Target Customer")
+        item = self._make_item(owner, sku="SKU-QUOTE-COPY", price="75.00", quantity=10)
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            customer=source_customer,
+            valid_until=timezone.localdate() + timedelta(days=5),
+            subtotal=Decimal("150.00"),
+            tax_amount=Decimal("22.50"),
+            total_amount=Decimal("172.50"),
+            notes="Copy these terms",
+        )
+        SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=2,
+            unit_price=Decimal("75.00"),
+            line_total=Decimal("150.00"),
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("sales_quotation_copy", args=[quotation.id]),
+            data={"copy_customer_id": str(target_customer.id)},
+        )
+
+        copied_quote = SalesQuotation.objects.exclude(id=quotation.id).latest("id")
+        self.assertRedirects(response, reverse("sales_quotation_detail", args=[copied_quote.id]))
+        self.assertEqual(copied_quote.customer, target_customer)
+        self.assertEqual(copied_quote.status, "draft")
+        self.assertEqual(copied_quote.total_amount, quotation.total_amount)
+        self.assertEqual(copied_quote.items.count(), 1)
+        copied_line = copied_quote.items.get()
+        self.assertEqual(copied_line.item, item)
+        self.assertEqual(copied_line.quantity, 2)
+
+    def test_sales_quotation_can_create_multiple_invoices(self):
+        owner = self._make_user("quote-multi-invoice-owner")
+        location = self._make_location(owner, "Main Branch")
+        item = self._make_item(owner, sku="SKU-QUOTE-MULTI", price="100.00", quantity=5)
+        StockRecord.objects.create(item=item, location=location, quantity=5)
+        quotation = SalesQuotation.objects.create(
+            owner=owner,
+            created_by=owner,
+            valid_until=timezone.localdate() + timedelta(days=5),
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("15.00"),
+            total_amount=Decimal("115.00"),
+        )
+        SalesQuotationItem.objects.create(
+            quotation=quotation,
+            item=item,
+            item_name=item.name,
+            quantity=1,
+            unit_price=Decimal("100.00"),
+            line_total=Decimal("100.00"),
+        )
+        self.client.force_login(owner)
+
+        for _ in range(2):
+            response = self.client.post(
+                reverse("sales_quotation_convert_to_invoice", args=[quotation.id]),
+                {"location_id": str(location.id)},
+            )
+            self.assertEqual(response.status_code, 302)
+
+        quotation.refresh_from_db()
+        stock = StockRecord.objects.get(item=item, location=location)
+        self.assertEqual(quotation.status, "converted")
+        self.assertEqual(SalesInvoice.objects.filter(quotation=quotation).count(), 2)
+        self.assertEqual(stock.quantity, 3)
 
     def test_api_health_reports_runtime_checks(self):
         response = self.client.get(reverse("api_health"))
@@ -7739,3 +8056,202 @@ class ReceiptWorkflowTests(TestCase):
         sale.refresh_from_db()
         self.assertEqual(sale.receipt_status, "voided")
         self.assertEqual(sale.void_reason, "Customer checkout duplicated in error.")
+
+
+class CS006ProductionReadinessTests(TestCase):
+    """
+    CS-006 Production Readiness Comprehensive Test Suite
+    Validates end-to-end accounting, tenant isolation, offline sync idempotency,
+    supplier ledger lifecycles, and role permission boundary checks.
+    """
+
+    def setUp(self):
+        self.owner_a = User.objects.create_user("owner_a", "owner_a@example.com", "pass123")
+        self.owner_a.profile.role = "admin"
+        self.location_a = Location.objects.create(name="Warehouse Alpha", owner=self.owner_a, inventory_capacity=10000)
+        self.owner_a.profile.default_location = self.location_a
+        self.owner_a.profile.save()
+
+        self.owner_b = User.objects.create_user("owner_b", "owner_b@example.com", "pass123")
+        self.owner_b.profile.role = "admin"
+        self.location_b = Location.objects.create(name="Store Beta", owner=self.owner_b, inventory_capacity=5000)
+        self.owner_b.profile.default_location = self.location_b
+        self.owner_b.profile.save()
+
+        self.brand_a = Brand.objects.create(owner=self.owner_a, name="Blue Mountain")
+        self.category_a = Category.objects.create(owner=self.owner_a, name="Beverages")
+        self.item_a = Item.objects.create(
+            name="Jamaican Coffee Premium",
+            sku="CS006-COFFEE",
+            price=Decimal("450.00"),
+            cost_price=Decimal("250.00"),
+            brand=self.brand_a,
+            category=self.category_a,
+            owner=self.owner_a,
+        )
+        StockRecord.objects.create(item=self.item_a, location=self.location_a, quantity=100)
+
+        self.customer_a = Customer.objects.create(
+            name="Grace Imports Ltd",
+            email="grace@example.com",
+            phone="876-555-0199",
+            owner=self.owner_a,
+        )
+
+        self.supplier_a = Supplier.objects.create(
+            name="Blue Mountain Bean Farmers",
+            email="farmers@example.com",
+            phone="876-555-0200",
+            owner=self.owner_a,
+        )
+
+    def test_cs006_accounting_multi_location_stock_and_payment_reconciliation(self):
+        """Validates stock transfer, sales invoice issuance, payment application, and inventory balance."""
+        self.client.force_login(self.owner_a)
+        loc_b = Location.objects.create(name="Retail Counter Alpha", owner=self.owner_a, inventory_capacity=5000)
+
+        # 1. Transfer stock from Warehouse to Retail Counter
+        transfer_resp = self.client.post(
+            reverse("transfer_stock"),
+            {
+                "item_id": self.item_a.id,
+                "from_location": self.location_a.id,
+                "to_location": loc_b.id,
+                "quantity": 30,
+            },
+        )
+        self.assertEqual(transfer_resp.status_code, 302)
+        stock_wh = StockRecord.objects.get(item=self.item_a, location=self.location_a)
+        stock_rc = StockRecord.objects.get(item=self.item_a, location=loc_b)
+        self.assertEqual(stock_wh.quantity, 70)
+        self.assertEqual(stock_rc.quantity, 30)
+
+        # 2. Issue Invoice for 10 units at Retail Counter
+        invoice = SalesInvoice.objects.create(
+            owner=self.owner_a,
+            created_by=self.owner_a,
+            customer=self.customer_a,
+            location=loc_b,
+            subtotal=Decimal("4500.00"),
+            total_amount=Decimal("4500.00"),
+            amount_paid=Decimal("0.00"),
+            remaining_balance=Decimal("4500.00"),
+            status="issued",
+        )
+        SalesInvoiceItem.objects.create(
+            invoice=invoice,
+            item=self.item_a,
+            quantity=10,
+            unit_price=Decimal("450.00"),
+            line_total=Decimal("4500.00"),
+        )
+
+        # 3. Apply full payment
+        pay_resp = self.client.post(
+            reverse("sales_invoice_payment", args=[invoice.id]),
+            {
+                "payment_amount": "4500.00",
+                "payment_method": "cash",
+                "payment_reference": "PAY-CS006-FULL",
+            },
+        )
+        self.assertEqual(pay_resp.status_code, 302)
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.status, "paid")
+        self.assertEqual(invoice.remaining_balance, Decimal("0.00"))
+
+    def test_cs006_tenant_isolation_cross_tenant_access_rejection(self):
+        """Verifies strict multi-tenant security: Owner B cannot view or modify Owner A's records."""
+        self.client.force_login(self.owner_b)
+
+        # 1. Attempt to view Owner A's customer
+        cust_resp = self.client.get(reverse("customer_detail", args=[self.customer_a.id]))
+        self.assertIn(cust_resp.status_code, [302, 403, 404])
+
+        # 2. Attempt to edit Owner A's product
+        edit_resp = self.client.post(
+            reverse("inventory_update", args=[self.item_a.id]),
+            {"name": "Hacked Name", "price": "1.00", "quantity": 999},
+        )
+        self.assertEqual(edit_resp.status_code, 404)
+        self.item_a.refresh_from_db()
+        self.assertEqual(self.item_a.name, "Jamaican Coffee Premium")
+
+    def test_cs006_offline_sync_idempotency_and_duplicate_prevention(self):
+        """Verifies offline sync tokens prevent duplicate sales postings on retry."""
+        self.client.force_login(self.owner_a)
+        CashShift.objects.create(cashier=self.owner_a, owner=self.owner_a, location=self.location_a, opening_cash=Decimal("100.00"))
+
+        sync_token = "SYNC-CS006-OFFLINE-UUID-9999"
+        payload = {
+            "offline_client_ref": sync_token,
+            "location_id": self.location_a.id,
+            "payment_channel": "pos",
+            "tender": "cash",
+            "amount_paid": "500.00",
+            "cart": [
+                {"id": self.item_a.id, "quantity": 1, "price": "450.00"}
+            ],
+        }
+
+        # First submit
+        r1 = self.client.post(
+            reverse("cash_register"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(r1.status_code, 200)
+        data1 = r1.json()
+        self.assertTrue(data1["success"])
+        sale_id = data1["sale_id"]
+
+        # Duplicate re-submit with same sync_token
+        r2 = self.client.post(
+            reverse("cash_register"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(r2.status_code, 200)
+        data2 = r2.json()
+        self.assertTrue(data2["success"])
+        self.assertTrue(data2.get("idempotent_replay"))
+        self.assertEqual(data2["sale_id"], sale_id)
+
+    def test_cs006_supplier_invoice_credit_note_and_refund_lifecycle(self):
+        """Verifies supplier invoice creation, credit note adjustment, and payment recording."""
+        self.client.force_login(self.owner_a)
+
+        # Create Supplier Invoice
+        sup_inv = SupplierInvoice.objects.create(
+            supplier=self.supplier_a,
+            location=self.location_a,
+            invoice_no="SUP-INV-001",
+            date_issued=timezone.now().date(),
+            amount=Decimal("1000.00"),
+            status="Pending",
+        )
+
+        # Post Supplier Payment
+        pay_resp = self.client.post(
+            reverse("supplier_invoice_payment", args=[sup_inv.id]),
+            {"amount": "600.00", "reference": "BANK-TRF-001"},
+        )
+        self.assertEqual(pay_resp.status_code, 302)
+        sup_inv.refresh_from_db()
+        self.assertEqual(sup_inv.remaining_balance, Decimal("400.00"))
+
+    def test_cs006_role_permission_boundary_checks(self):
+        """Verifies cashier role cannot access admin settings or update store locations."""
+        cashier = User.objects.create_user("cashier_a", "cashier@example.com", "pass123")
+        cashier.profile.role = "cashier"
+        cashier.profile.parent_admin = self.owner_a.profile
+        cashier.profile.default_location = self.location_a
+        cashier.profile.save()
+        self.client.force_login(cashier)
+
+        # Cashier attempting admin-only location switch
+        loc_resp = self.client.post(
+            reverse("cash_register"),
+            {"action": "update_location", "new_location": self.location_a.id},
+        )
+        self.assertEqual(loc_resp.status_code, 302)

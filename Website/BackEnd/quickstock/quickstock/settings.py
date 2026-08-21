@@ -147,6 +147,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -155,7 +156,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'quickstock.middleware.SubscriptionEnforcementMiddleware',
-    'quickstock.middleware.ThemeMiddleware',  # inject user theme on all pages
+    'quickstock.middleware.ThemeMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -290,6 +291,11 @@ STATICFILES_DIRS = []
 
 # Add this:
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # destination for collectstatic
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 # Ensure the directory exists to avoid startup failures before collectstatic runs.
 STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -300,6 +306,7 @@ MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

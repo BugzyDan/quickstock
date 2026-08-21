@@ -1,7 +1,7 @@
 {% load static %}
 <header class="app-shell-header">
 
-    <a href="{% url 'index' %}" class="logo-area app-shell-brand">
+    <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="logo-area app-shell-brand">
     <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo-img app-shell-logo" alt="QuickStock JA logo">
     
     <div class="logo-text-group">
@@ -29,7 +29,7 @@
                     <div class="label">Operator</div>
                     <div class="name">{{ request.user.username|upper }}</div>
                 </div>
-                {% if request.user.profile.plan_badge_label %}
+                {% if request.user.profile.plan_badge_label and not hide_plan_badge %}
                 <span style="color: {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#d97706{% else %}#64748b{% endif %}; font-size: 0.55rem; font-weight: 900; background: {% if request.user.profile.plan_badge_state == 'pro' %}rgba(0, 208, 132, 0.15){% elif request.user.profile.plan_badge_state == 'trial' %}rgba(245, 158, 11, 0.15){% else %}rgba(100, 116, 139, 0.1){% endif %}; padding: 2px 6px; border-radius: 4px; border: 1px solid {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#f59e0b{% else %}#cbd5e1{% endif %};">{{ request.user.profile.plan_badge_label }}</span>
                 {% endif %}
                 <div style="width: 26px; height: 26px; background: var(--primary-blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: white;">
@@ -55,7 +55,9 @@
     {% endif %}
 </header>
 
+{% if not hide_starter_banner %}
 {% include 'inventory/partials/starter_plan_banner.html' %}
+{% endif %}
 
 <script src="{% static 'inventory/js/global_app_shell_header.js' %}?v=operator-over-mobile-nav-1" defer></script>
 {% if request.user.is_authenticated %}

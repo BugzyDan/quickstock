@@ -20,11 +20,9 @@
 
     <body class="page-settings">
 
-        <header>
-            <div class="header-title"><a
-                href="{% url 'index' %}">QUICKSTOCK // SYSTEM</a></div>
-            <div style="font-size: 0.75rem; font-weight: 600; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; margin-top: 0;">V2.6.0</div>
-        </header>
+        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+    
 
         <main>
             <section class="settings-card">
@@ -40,7 +38,7 @@
                 <div class="info-row"><strong>Username</strong> {{ request.user.username }}</div>
                 <div class="info-row"><strong>Email</strong> {{ request.user.email|default:"Not Provided" }}</div>
 
-                <a href="{% url 'change_password' %}?from=settings" class="btn btn-secondary" style="display: block; width: 100%;">Update Security Credentials</a>
+                <a href="{% url 'change_password' %}?from=settings" class="btn btn-secondary" style="display: block; width: 100%; ;">Update Security Credentials</a>
 
                 <hr>
 

@@ -14,7 +14,7 @@
   <div class="page-wrapper">
 
     <header>
-      <a href="{% url 'index' %}" class="logo-link">
+      <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="logo-link">
         <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo" alt="QuickStock JA Logo">
         QuickStock JA
       </a>

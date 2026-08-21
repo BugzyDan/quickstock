@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Customer Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=customer-document-click-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     
-    <script src="{% static 'inventory/js/customer_detail.js' %}" defer></script>
+    <script src="{% static 'inventory/js/customer_detail.js' %}?v=customer-document-click-1" defer></script>
 </head>
 
 
@@ -49,7 +49,7 @@
                     <span>/</span>
                     <span>Profile</span>
                 </div>
-                <p class="customer-profile-kicker">Account intelligence</p>
+                <p class="customer-profile-kicker">Account information</p>
                 <h2>{{ customer.name }}</h2>
                 <p class="customer-profile-subtitle">
                     Keep this customer ready for quotations, invoices, follow-ups, and standing account instructions without losing note history.
@@ -146,93 +146,105 @@
             {% endif %}
         </section>
 
-        <section class="panel customer-records-panel">
-            <div class="panel-header">
+        <section class="panel customer-records-panel customer-records-workspace" data-customer-records-panel>
+            <div class="panel-header customer-records-panel-header">
                 <div>
-                    <h3>Quotations</h3>
-                    <p>All quotations linked to this customer.</p>
+                    <h3>Customer Records</h3>
+                    <p>Review quotations and invoices together, or focus the workspace on one record type.</p>
+                </div>
+                <div class="customer-records-toggle" role="group" aria-label="Customer record view">
+                    <button type="button" class="customer-records-toggle-button is-active" data-records-view="both" aria-pressed="true">Both</button>
+                    <button type="button" class="customer-records-toggle-button" data-records-view="quotations" aria-pressed="false">Quotations</button>
+                    <button type="button" class="customer-records-toggle-button" data-records-view="invoices" aria-pressed="false">Invoices</button>
                 </div>
             </div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Quote</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Valid Until</th>
-                            <th>Total</th>
-                            <th>Open</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for quotation in quotations %}
-                            <tr>
-                                <td>{{ quotation.quote_no }}</td>
-                                <td><span class="badge badge-{{ quotation.status }}">{{ quotation.get_status_display }}</span></td>
-                                <td>{{ quotation.created_at|date:"M d, Y" }}</td>
-                                <td>{{ quotation.valid_until|date:"M d, Y"|default:"-" }}</td>
-                                <td>${{ quotation.total_amount|floatformat:2 }}</td>
-                                <td><a class="row-link" href="{% url 'sales_quotation_detail' quotation.id %}">View</a></td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="6" class="customer-profile-empty-row">No quotations found for this customer.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
-        <section class="panel customer-records-panel">
-            <div class="panel-header">
-                <div>
-                    <h3>Invoices</h3>
-                    <p>All invoices linked to this customer.</p>
+            <div class="customer-records-grid" data-records-layout="both">
+                <div class="customer-record-section" data-record-section="quotations">
+                    <div class="customer-record-section-header">
+                        <div>
+                            <h4>Quotations</h4>
+                            <p>All quotations linked to this customer.</p>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Quote</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Valid Until</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quotation in quotations %}
+                                    <tr class="customer-document-click-row" data-document-url="{% url 'sales_quotation_detail' quotation.id %}">
+                                        <td><a class="row-link customer-document-number-link" href="{% url 'sales_quotation_detail' quotation.id %}">{{ quotation.quote_no }}</a></td>
+                                        <td><span class="badge badge-{{ quotation.status }}">{{ quotation.get_status_display }}</span></td>
+                                        <td>{{ quotation.created_at|date:"M d, Y" }}</td>
+                                        <td>{{ quotation.valid_until|date:"M d, Y"|default:"-" }}</td>
+                                        <td>${{ quotation.total_amount|floatformat:2 }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="5" class="customer-profile-empty-row">No quotations found for this customer.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            {% with active_invoice_filter=invoice_filter|default:"all" %}
-                <div class="customer-invoice-filter-pills" aria-label="Invoice status filters">
-                    <a href="?invoice_filter=all"
-                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'all' %} is-active{% endif %}">
-                        All <span>{{ invoice_filter_counts.all|default:customer_total_invoices }}</span>
-                    </a>
-                    <a href="?invoice_filter=open"
-                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'open' %} is-active{% endif %}">
-                        Open / Unpaid <span>{{ invoice_filter_counts.open|default:customer_open_invoice_count|default:0 }}</span>
-                    </a>
-                    <a href="?invoice_filter=paid"
-                       class="customer-invoice-filter-pill{% if active_invoice_filter == 'paid' %} is-active{% endif %}">
-                        Paid <span>{{ invoice_filter_counts.paid|default:0 }}</span>
-                    </a>
+
+                <div class="customer-record-section" data-record-section="invoices">
+                    <div class="customer-record-section-header customer-record-section-header-with-filters">
+                        <div>
+                            <h4>Invoices</h4>
+                            <p>All invoices linked to this customer.</p>
+                        </div>
+                        {% with active_invoice_filter=invoice_filter|default:"all" %}
+                            <div class="customer-invoice-filter-pills" aria-label="Invoice status filters">
+                                <a href="?invoice_filter=all"
+                                   class="customer-invoice-filter-pill{% if active_invoice_filter == 'all' %} is-active{% endif %}">
+                                    All <span>{{ invoice_filter_counts.all|default:customer_total_invoices }}</span>
+                                </a>
+                                <a href="?invoice_filter=open"
+                                   class="customer-invoice-filter-pill{% if active_invoice_filter == 'open' %} is-active{% endif %}">
+                                    Open / Unpaid <span>{{ invoice_filter_counts.open|default:customer_open_invoice_count|default:0 }}</span>
+                                </a>
+                                <a href="?invoice_filter=paid"
+                                   class="customer-invoice-filter-pill{% if active_invoice_filter == 'paid' %} is-active{% endif %}">
+                                    Paid <span>{{ invoice_filter_counts.paid|default:0 }}</span>
+                                </a>
+                            </div>
+                        {% endwith %}
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Status</th>
+                                    <th>Issued</th>
+                                    <th>Location</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                    <tr class="customer-document-click-row" data-document-url="{% url 'sales_invoice_detail' invoice.id %}">
+                                        <td><a class="row-link customer-document-number-link" href="{% url 'sales_invoice_detail' invoice.id %}">{{ invoice.invoice_no }}</a></td>
+                                        <td><span class="badge badge-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
+                                        <td>{{ invoice.issued_at|date:"M d, Y" }}</td>
+                                        <td>{{ invoice.location.name|default:"-" }}</td>
+                                        <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="5" class="customer-profile-empty-row">No invoices found for this customer.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            {% endwith %}
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Invoice</th>
-                            <th>Status</th>
-                            <th>Issued</th>
-                            <th>Location</th>
-                            <th>Total</th>
-                            <th>Open</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for invoice in invoices %}
-                            <tr>
-                                <td>{{ invoice.invoice_no }}</td>
-                                <td><span class="badge badge-{{ invoice.status }}">{{ invoice.get_status_display }}</span></td>
-                                <td>{{ invoice.issued_at|date:"M d, Y" }}</td>
-                                <td>{{ invoice.location.name|default:"-" }}</td>
-                                <td>${{ invoice.total_amount|floatformat:2 }}</td>
-                                <td><a class="row-link" href="{% url 'sales_invoice_detail' invoice.id %}">View</a></td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="6" class="customer-profile-empty-row">No invoices found for this customer.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </section>
     </main>

@@ -29,9 +29,9 @@
     <script src="{% static 'inventory/js/page_config.js' %}" defer></script>
     <script src="{% static 'inventory/js/session_guard.js' %}?v=session-guard-fix-2" defer></script>
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
-    <script src="{% static 'inventory/js/cash_register.js' %}?v=compact-receipt-actions-1" defer></script>
+    <script src="{% static 'inventory/js/cash_register.js' %}?v=cash-register-complete-state-1" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=cash-register-complete-state-1">
 </head>  
 
 <body data-theme="{{ request.user.profile.theme|default:'system' }}" class="page-cash-register">
@@ -50,10 +50,10 @@
 <audio id="scan-peep" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 <audio id="success-beep" src="https://assets.mixkit.co/active_storage/sfx/1110/1110-preview.mp3" preload="auto"></audio>
 
-<header class="cash-register-command-bar mobile-header" style="background: var(--dark-bg); padding: 14px 16px; min-height: 88px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #2d3436; position: sticky; top: 0; z-index: 1200; width: 100%; box-sizing: border-box;">
+<header class="cash-register-command-bar">
     <!-- Mobile Brand Section -->
-    <a href="{% url 'index' %}" class="cash-mobile-brand" style="display: flex; text-decoration: none; color: #fff; align-items: center; gap: 10px; max-width: calc(100% - 60px);">
-        <img src="{% static 'images/QuickStock_Logo.jpg' %}" alt="QuickStock Logo" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; flex-shrink: 0;">
+    <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="cash-mobile-brand">
+        <img src="{% static 'images/QuickStock_Logo.jpg' %}" alt="QuickStock Logo">
         <span class="cash-brand-copy" style="display: flex; flex-direction: column; min-width: 0;">
             <span style="font-weight: 800; font-size: 1.05rem; letter-spacing: 0.4px; color: #fff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">QUICK<span style="color: var(--primary-blue);">STOCK</span></span>
             <span style="display: flex; align-items: center; gap: 6px; font-size: 0.55rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-top: 3px; white-space: nowrap;">
@@ -67,22 +67,23 @@
     </a>
     
     <!-- Desktop Links (Hidden on Mobile) -->
-    <div class="nav-desktop-links" style="display: none; gap: 20px; align-items: center;">
+    <div class="nav-desktop-links" aria-label="Cash register command shortcuts">
+        <span class="cash-nav-current" aria-current="page">⚡ Register</span>
         {% if request.user.profile.role != "cashier" %}
-            <a href="{% url 'dashboard' %}" style="text-decoration: none; color: #94a3b8; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;">📊 DASHBOARD</a>
+            <a href="{% url 'dashboard' %}">📊 DASHBOARD</a>
         {% endif %}
 
         {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
-            <a href="{% url 'inventory' %}" style="text-decoration: none; color: #94a3b8; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;">📦 INVENTORY</a>
+            <a href="{% url 'inventory' %}">📦 INVENTORY</a>
         {% endif %}
 
-        <a href="{% url 'sales_history' %}" style="text-decoration: none; color: white; font-weight: 700; font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 6px; letter-spacing: 0.5px;">📜 HISTORY</a>
+        <a href="{% url 'sales_history' %}">📜 HISTORY</a>
     </div>
 
     <div class="cash-mobile-actions">
         <!-- Mobile Hamburger Toggle Button -->
-        <button type="button" class="nav-toggle mobile-nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-controls="main-nav" aria-expanded="false" style="display: inline-flex; position: relative; width: 42px; height: 40px; border-radius: 10px; background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(255, 255, 255, 0.22); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24); cursor: pointer; align-items: center; justify-content: center; padding: 0; color: #ffffff; flex-shrink: 0;">
-            <span style="display: block; width: 18px; height: 2px; background: #ffffff; border-radius: 2px; position: relative; box-shadow: 0 6px 0 #ffffff, 0 -6px 0 #ffffff;"></span>
+        <button type="button" class="nav-toggle mobile-nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-controls="main-nav" aria-expanded="false">
+            <span></span>
         </button>
     </div>
 
@@ -92,11 +93,11 @@
             <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Station</div>
             <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.85rem;">{{ request.user.username|upper }}</div>
         </div>
-        <a href="{% url 'logout' %}" class="logout-link" style="padding: 7px 12px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-decoration: none; border: 1px solid #ffffff !important; background: #ffffff !important; color: #0f172a !important;">LOGOUT</a>
+        <a href="{% url 'logout' %}" class="logout-link">LOGOUT</a>
     </div>
 </header>
 
-<nav id="main-nav" style="display:none; flex-direction:column; position:fixed; top:110px; left:0; width:100%; background:#121416; padding:14px 20px; border-bottom:2px solid var(--primary-blue); z-index:1199; gap:10px; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
+<nav id="main-nav">
     {% if request.user.profile.role != "cashier" %}
         <a href="{% url 'dashboard' %}" class="cash-drawer-link">Dashboard</a>
     {% endif %}
@@ -107,8 +108,8 @@
     <a href="{% url 'sales_history' %}" class="cash-drawer-link">Sales History</a>
     <a href="{% url 'sales' %}" class="cash-drawer-link">Cash Register</a>
     
-    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;">
-    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+    <hr>
+    <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit" class="cash-drawer-logout">
             Logout
@@ -133,7 +134,16 @@
             <strong>Product Search</strong>
             <button type="button" id="cashMobileSearchClose" class="cash-search-close" aria-label="Close product search">×</button>
         </div>
-        <input type="text" id="barcode-input" placeholder="Scan Barcode or Type Product Name..." autocomplete="off" autofocus>
+        <div class="cash-scanner-strip" aria-label="Barcode scanner">
+            <div class="cash-scanner-meta">
+                <span class="cash-scanner-mark" aria-hidden="true">⌗</span>
+                <span class="cash-scanner-copy">
+                    <label for="barcode-input">Barcode Scanner</label>
+                    <small>Ready for scanner input</small>
+                </span>
+            </div>
+            <input type="text" id="barcode-input" placeholder="Scan Barcode or Type Product Name..." autocomplete="off" autofocus>
+        </div>
         
         <div class="item-grid" id="item-grid">
             {% if location_assignment_required %}
@@ -148,6 +158,9 @@
             {% endif %}
             {% for item in items %}
             <div class="product-card"
+                 role="button"
+                 tabindex="0"
+                 aria-label="Add {{ item.name }} to cart"
                  data-id="{{ item.id }}"
                  data-name="{{ item.name }}"
                  data-sku="{{ item.sku|default:'' }}" 
@@ -338,7 +351,7 @@
     </section>
 </div>  
 
-<script src="{% static 'inventory/js/cash_register_nav.js' %}?v=mobile-cash-nav-2" defer></script>
+<script src="{% static 'inventory/js/cash_register_nav.js' %}?v=pos-tender-stock-hotkeys-1" defer></script>
 <script>
     if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {

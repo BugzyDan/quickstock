@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Create Quotation | QuickStock JA</title>
+    <title>{{ page_title|default:"Create Quotation" }} | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
-    <script src="{% static 'inventory/js/sales_quotation_form.js' %}" defer></script>
+    <script src="{% static 'inventory/js/sales_quotation_form.js' %}?v=quote-edit-copy-1" defer></script>
     
 </head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-sales-quotation-create page-supplier-list">
@@ -50,8 +50,8 @@
     <section class="sales-page-head ops-hero ops-hero-sales sales-document-hero">
         <div class="ops-hero-copy">
             <p class="ops-kicker">Quotation studio</p>
-            <h1 class="sales-page-title">New Sales Quotation</h1>
-            <p class="sales-page-subtitle">Build a clear customer offer from live inventory, pricing and fulfillment context.</p>
+            <h1 class="sales-page-title">{{ page_title|default:"New Sales Quotation" }}</h1>
+            <p class="sales-page-subtitle">{{ page_subtitle|default:"Build a clear customer offer from live inventory, pricing and fulfillment context." }}</p>
             <div class="ops-chip-row" aria-label="Quotation workflow"><span class="ops-chip">Inventory linked</span><span class="ops-chip">Tax ready</span><span class="ops-chip">Invoice convertible</span></div>
         </div>
         <div class="ops-actions sales-document-actions">
@@ -60,7 +60,7 @@
         </div>
     </section>
 
-    <form method="post" class="sales-card-premium">
+    <form method="post" action="{{ form_action_url }}" class="sales-card-premium">
         {% csrf_token %}
 
         <!-- Configuration Metadata Segment -->
@@ -78,18 +78,18 @@
                 
                 <div class="settings-form-group-premium">
                     <label>Valid Until</label>
-                    <input type="date" name="valid_until">
+                    <input type="date" name="valid_until" value="{{ initial_valid_until|default:'' }}">
                 </div>
                 
                 <div class="settings-form-group-premium">
                     <label>Tax Engine</label>
                     <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:12px;">
                         <select name="tax_mode" id="quoteTaxMode">
-                            <option value="default">Default Tax</option>
-                            <option value="none">Remove Tax</option>
-                            <option value="custom">Custom Tax %</option>
+                            <option value="default" {% if initial_tax_mode == 'default' %}selected{% endif %}>Default Tax</option>
+                            <option value="none" {% if initial_tax_mode == 'none' %}selected{% endif %}>Remove Tax</option>
+                            <option value="custom" {% if initial_tax_mode == 'custom' %}selected{% endif %}>Custom Tax %</option>
                         </select>
-                        <input type="number" name="tax_rate_percent" id="quoteTaxRateInput" min="0" step="0.01" value="{{ default_tax_rate_percent|default:15 }}">
+                        <input type="number" name="tax_rate_percent" id="quoteTaxRateInput" min="0" step="0.01" value="{{ initial_tax_rate_percent|default:default_tax_rate_percent|default:15 }}">
                     </div>
                 </div>
                 
@@ -97,16 +97,16 @@
                     <label>Discount Structure</label>
                     <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:12px;">
                         <select name="discount_type" id="quoteDiscountType">
-                            <option value="flat">Flat Amount ($)</option>
-                            <option value="percent">Percent (%)</option>
+                            <option value="flat" {% if initial_discount_type == 'flat' %}selected{% endif %}>Flat Amount ($)</option>
+                            <option value="percent" {% if initial_discount_type == 'percent' %}selected{% endif %}>Percent (%)</option>
                         </select>
-                        <input type="number" name="discount_value" id="quoteDiscountValue" min="0" step="0.01" value="0.00">
+                        <input type="number" name="discount_value" id="quoteDiscountValue" min="0" step="0.01" value="{{ initial_discount_value|default:'0.00' }}">
                     </div>
                 </div>
                 
                 <div class="settings-form-group-premium" style="margin-bottom: 0;">
                     <label>Terms & Conditions / Notes</label>
-                    <textarea name="notes" rows="3" placeholder="Optional: payment terms, delivery timelines, special conditions..."></textarea>
+                    <textarea name="notes" rows="3" placeholder="Optional: payment terms, delivery timelines, special conditions...">{{ initial_notes|default:'' }}</textarea>
                 </div>
             </div>
 
@@ -150,9 +150,11 @@
         <!-- Lower Strategy Actions -->
         <div class="sales-form-actions">
             <a href="{% url 'sales_quotation_list' %}" class="qs-btn qs-btn-secondary">Cancel</a>
-            <button type="submit" class="qs-btn qs-btn-primary" style="background-color: var(--qs-primary, #2563eb); color: #ffffff; border-color: var(--qs-primary, #2563eb);">Save Quotation</button>
+            <button type="submit" class="qs-btn qs-btn-primary" style="background-color: var(--qs-primary, #2563eb); color: #ffffff; border-color: var(--qs-primary, #2563eb);">{{ submit_label|default:"Save Quotation" }}</button>
         </div>
     </form>
+
+    {{ initial_quote_lines|json_script:"quoteInitialLines" }}
 
     <!-- Standard Client Component Template Hook -->
     <template id="quoteLineRowTemplate">

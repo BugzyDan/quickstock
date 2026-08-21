@@ -3959,269 +3959,83 @@ def cashier_dashboard(request):
     """Redirect cashier directly to POS interface."""
     return redirect("cash_register")
 
+
 @login_required
 def super_admin_dashboard(request):
     """
     SaaS oversight dashboard for the platform owner.
-
-    Uses separate grouped queries to avoid a massive multi-table join.
+    Shows every subscribed company and key subscription health metrics.
     """
     if not request.user.is_superuser:
-        messages.error(
-            request,
-            "Only the platform superuser can access this dashboard.",
-        )
+        messages.error(request, "Only the platform superuser can access this dashboard.")
         return redirect("dashboard")
 
-    today = timezone.localdate()
-    expiring_soon_cutoff = today + timedelta(days=7)
-
-    base_companies = _company_admin_queryset()
-
-    company_summary = base_companies.aggregate(
-        total_companies=Count("id"),
-        active_companies=Count(
-            "id",
-            filter=Q(status="active"),
-        ),
-        pending_companies=Count(
-            "id",
-            filter=Q(status="pending"),
-        ),
-        suspended_companies=Count(
-            "id",
-            filter=Q(status="suspended"),
-        ),
-        trial_companies=Count(
-            "id",
-            filter=Q(plan="TRIAL"),
-        ),
-        pro_companies=Count(
-            "id",
-            filter=Q(plan="PRO"),
-        ),
-        free_companies=Count(
-            "id",
-            filter=Q(plan="FREE"),
-        ),
-        expiring_soon_companies=Count(
-            "id",
-            filter=Q(
-                status="active",
-                plan="PRO",
-                pro_expires__isnull=False,
-                pro_expires__gte=today,
-                pro_expires__lte=expiring_soon_cutoff,
-            ),
-        ),
-    )
-
-    company_rows = list(
-        base_companies.select_related("user")
-    )
-
-    profile_ids = [
-        company.id
-        for company in company_rows
-    ]
-
-    owner_ids = [
-        company.user_id
-        for company in company_rows
-    ]
-
-    def count_map(queryset, group_field):
-        return {
-            row[group_field]: row["total"]
-            for row in (
-                queryset
-                .values(group_field)
-                .annotate(total=Count("id"))
-            )
-        }
-
-    staff_counts = count_map(
-        UserProfile.objects.filter(
-            parent_admin_id__in=profile_ids,
-        ),
-        "parent_admin_id",
-    )
-
-    location_counts = count_map(
-        Location.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    item_counts = count_map(
-        Item.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    customer_counts = count_map(
-        Customer.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    supplier_counts = count_map(
-        Supplier.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    sale_counts = count_map(
-        Sale.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    invoice_counts = count_map(
-        SalesInvoice.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    quotation_counts = count_map(
-        SalesQuotation.objects.filter(
-            owner_id__in=owner_ids,
-        ),
-        "owner_id",
-    )
-
-    last_activity_map = {
-        row["user_id"]: row["last_activity"]
-        for row in (
-            AuditLog.objects
-            .filter(user_id__in=owner_ids)
-            .values("user_id")
-            .annotate(
-                last_activity=Max("created_at")
-            )
+    companies = (
+        _company_admin_queryset()
+        .annotate(
+            staff_count=Count("staff_profiles", distinct=True),
+            location_count=Count("user__locations", distinct=True),
+            item_count=Count("user__inventory_items", distinct=True),
+            customer_count=Count("user__customers", distinct=True),
+            supplier_count=Count("user__suppliers", distinct=True),
+            sale_count=Count("user__sales_owned", distinct=True),
+            invoice_count=Count("user__sales_invoices_owned", distinct=True),
+            quotation_count=Count("user__sales_quotations_owned", distinct=True),
+            last_activity=Max("user__audit_logs__created_at"),
         )
-    }
-
-    for company in company_rows:
-        profile_id = company.id
-        owner_id = company.user_id
-
-        company.staff_count = staff_counts.get(
-            profile_id,
-            0,
-        )
-        company.location_count = location_counts.get(
-            owner_id,
-            0,
-        )
-        company.item_count = item_counts.get(
-            owner_id,
-            0,
-        )
-        company.customer_count = customer_counts.get(
-            owner_id,
-            0,
-        )
-        company.supplier_count = supplier_counts.get(
-            owner_id,
-            0,
-        )
-        company.sale_count = sale_counts.get(
-            owner_id,
-            0,
-        )
-        company.invoice_count = invoice_counts.get(
-            owner_id,
-            0,
-        )
-        company.quotation_count = quotation_counts.get(
-            owner_id,
-            0,
-        )
-        company.last_activity = last_activity_map.get(
-            owner_id
-        )
-
-    company_rows.sort(
-        key=lambda company: (
-            company.last_activity is not None,
-            company.last_activity.timestamp()
-            if company.last_activity
-            else 0,
-        ),
-        reverse=True,
+        .order_by("-last_activity", "user__username")
     )
 
-    total_staff = sum(
-        company.staff_count
-        for company in company_rows
-    )
-    total_locations = sum(
-        company.location_count
-        for company in company_rows
-    )
-    total_items = sum(
-        company.item_count
-        for company in company_rows
-    )
-    total_customers = sum(
-        company.customer_count
-        for company in company_rows
-    )
-    total_suppliers = sum(
-        company.supplier_count
-        for company in company_rows
-    )
-    total_sales = sum(
-        company.sale_count
-        for company in company_rows
-    )
-    total_invoices = sum(
-        company.invoice_count
-        for company in company_rows
-    )
-    total_quotations = sum(
-        company.quotation_count
-        for company in company_rows
-    )
+    total_companies = companies.count()
+    active_companies = companies.filter(status="active").count()
+    pending_companies = companies.filter(status="pending").count()
+    suspended_companies = companies.filter(status="suspended").count()
+    trial_companies = companies.filter(plan="TRIAL").count()
+    pro_companies = companies.filter(plan="PRO").count()
+    free_companies = companies.filter(plan="FREE").count()
+    expiring_soon_cutoff = timezone.now().date() + timedelta(days=7)
+    expiring_soon_companies = companies.filter(
+        status="active",
+        plan="PRO",
+        pro_expires__isnull=False,
+        pro_expires__lte=expiring_soon_cutoff,
+        pro_expires__gte=timezone.now().date(),
+    ).count()
 
+    company_rows = list(companies)
+    total_staff = sum(company.staff_count or 0 for company in company_rows)
+    total_locations = sum(company.location_count or 0 for company in company_rows)
+    total_items = sum(company.item_count or 0 for company in company_rows)
+    total_customers = sum(company.customer_count or 0 for company in company_rows)
+    total_suppliers = sum(company.supplier_count or 0 for company in company_rows)
+    total_sales = sum(company.sale_count or 0 for company in company_rows)
+    total_invoices = sum(company.invoice_count or 0 for company in company_rows)
+    total_quotations = sum(company.quotation_count or 0 for company in company_rows)
     attention_companies = [
-        company
-        for company in company_rows
-        if (
-            company.status in {"pending", "suspended"}
-            or (
-                company.status == "active"
-                and company.plan == "PRO"
-                and company.pro_expires
-                and today
-                <= company.pro_expires
-                <= expiring_soon_cutoff
-            )
+        company for company in company_rows
+        if company.status in {"pending", "suspended"}
+        or (
+            company.status == "active"
+            and company.plan == "PRO"
+            and company.pro_expires
+            and timezone.now().date() <= company.pro_expires <= expiring_soon_cutoff
         )
     ][:6]
-
     recent_company_rows = company_rows[:5]
-
-    attention_count = (
-        company_summary["pending_companies"]
-        + company_summary["suspended_companies"]
-        + company_summary["expiring_soon_companies"]
-    )
+    attention_count = pending_companies + suspended_companies + expiring_soon_companies
 
     paginator = Paginator(company_rows, 20)
-    company_page = paginator.get_page(
-        request.GET.get("page")
-    )
+    company_page = paginator.get_page(request.GET.get("page"))
 
     context = {
-        **company_summary,
+        "total_companies": total_companies,
+        "active_companies": active_companies,
+        "pending_companies": pending_companies,
+        "suspended_companies": suspended_companies,
+        "trial_companies": trial_companies,
+        "pro_companies": pro_companies,
+        "free_companies": free_companies,
+        "expiring_soon_companies": expiring_soon_companies,
         "total_staff": total_staff,
         "total_locations": total_locations,
         "total_items": total_items,
@@ -4235,12 +4049,8 @@ def super_admin_dashboard(request):
         "recent_company_rows": recent_company_rows,
         "company_page": company_page,
     }
+    return render(request, "inventory/super_admin_dashboard.html", context)
 
-    return render(
-        request,
-        "inventory/super_admin_dashboard.html",
-        context,
-    )
 
 # ---------------------------
 # Dashboard & Profile
@@ -9631,18 +9441,12 @@ def settings_view(request):
 
   # --- 4. Logic for Live Cash Register Tracking (ENHANCED) ---
     active_shifts = []
-    staff_profiles = UserProfile.objects.none()
     if is_admin:
         # 1. Define a visibility window (e.g., shifts from the last 12 hours)
         # This ensures you see "Finished" shifts even after they end.
         visibility_window = timezone.now() - timedelta(hours=12)
 
-        staff_profiles = (
-            UserProfile.objects
-            .filter(parent_admin=profile, is_archived=False, user__is_active=True)
-            .exclude(status="suspended")
-            .select_related("user", "default_location")
-        )
+        staff_profiles = UserProfile.objects.filter(parent_admin=profile).select_related("user", "default_location")
         tracked_user_ids = list(staff_profiles.values_list("user_id", flat=True))
         tracked_user_ids.append(request.user.id)
 
@@ -9715,7 +9519,7 @@ def settings_view(request):
             "phone": brand_owner.receipt_contact_phone if brand_owner else "",
         },
         "all_locations": all_locations,
-        "all_staff": staff_profiles if is_admin else [],
+        "all_staff": UserProfile.objects.filter(parent_admin=profile) if is_admin else [],
         "staff_management_enabled": profile.is_pro_active(),
         "tax_rate_percent_by_country": {code: float(_get_tax_rate_for_country(code)) * 100 for code in TAX_RATES_BY_COUNTRY},
         "audit_retention_days": cache.get("audit_retention_days", 90),
@@ -13347,12 +13151,3 @@ def sales_invoice_payment_revert(request, invoice_id, payment_id):
 
     messages.success(request, f"Reverted {payment_method} payment of ${payment_amount} on {invoice.invoice_no}.")
     return redirect("sales_invoice_payment", invoice_id=invoice.id)
-
-@login_required
-@require_POST
-def super_admin_update_subscription(request, profile_id):
-    messages.info(
-        request,
-        "Subscription update has not been implemented yet."
-    )
-    return redirect("super_admin_dashboard")

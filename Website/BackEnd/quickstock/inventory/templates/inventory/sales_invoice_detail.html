@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
 </head>
@@ -46,15 +46,7 @@
             </p>
             <div class="ops-chip-row"><span class="ops-chip">{{ invoice.get_status_display }}</span><span class="ops-chip">Balance ${{ balance_due|floatformat:2 }}</span></div>
         </div>
-        <div class="ops-actions sales-document-actions">
-            <a href="{% url 'sales_invoice_list' %}" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Back</a>
-            {% if invoice.quotation_id %}
-                <a href="{% url 'sales_quotation_detail' invoice.quotation_id %}" class="qs-btn qs-btn-slate">View Quote</a>
-            {% endif %}
-            {% if can_email_sales_document and invoice.status != 'void' %}
-                <a href="#sales-document-email" class="qs-btn qs-btn-secondary sales-document-email-action" aria-controls="sales-document-email">Email Invoice</a>
-            {% endif %}
-            
+        <div class="ops-actions sales-document-actions sales-document-action-cluster">
             {% if invoice.status != 'void' and payments_enabled and can_manage_invoice_at_location %}
                 <a href="{% url 'sales_invoice_payment' invoice.id %}" class="qs-btn qs-btn-primary sales-payment-action-primary">
                     {% if invoice.status == 'paid' %}Review Payments{% else %}Open Payment Screen{% endif %}
@@ -64,12 +56,26 @@
                     Payment Page
                 </a>
             {% endif %}
-            <button type="button" class="qs-btn qs-btn-secondary sales-document-visible-action sales-document-white-action" data-loading-ignore onclick="window.print()">
-                Print
-            </button>
-            {% if can_issue_credit_notes and invoice.status != 'void' %}
-                <a href="#credit-note-panel" class="qs-btn qs-btn-secondary sales-document-visible-action sales-document-white-action" data-loading-ignore>Create Credit Note</a>
-            {% endif %}
+            <details class="sales-document-action-menu">
+                <summary class="qs-btn qs-btn-secondary sales-document-menu-toggle" aria-label="Open more invoice actions">
+                    <span>More Actions</span>
+                </summary>
+                <div class="sales-document-menu-panel" aria-label="Invoice actions">
+                    <a href="{% url 'sales_invoice_list' %}" class="sales-document-menu-action">Back to Invoice List</a>
+                    {% if invoice.quotation_id %}
+                        <a href="{% url 'sales_quotation_detail' invoice.quotation_id %}" class="sales-document-menu-action">View Quote</a>
+                    {% endif %}
+                    {% if can_email_sales_document and invoice.status != 'void' %}
+                        <a href="#sales-document-email" class="sales-document-menu-action sales-document-email-action" aria-controls="sales-document-email">Email Invoice</a>
+                    {% endif %}
+                    <button type="button" class="sales-document-menu-action sales-document-menu-button" data-loading-ignore onclick="window.print()">
+                        Print
+                    </button>
+                    {% if can_issue_credit_notes and invoice.status != 'void' %}
+                        <a href="#credit-note-panel" class="sales-document-menu-action" data-loading-ignore>Create Credit Note</a>
+                    {% endif %}
+                </div>
+            </details>
         </div>
     </section>
 

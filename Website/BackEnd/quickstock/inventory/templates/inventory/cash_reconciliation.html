@@ -92,21 +92,48 @@
                     at {{ selected_shift.location.name|default:selected_shift.location_name }}.
                 </p>
             </div>
+
+
+            
             <form method="post" class="recon-shift-closeout-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="close_shift">
-                <input type="hidden" name="shift_id" value="{{ selected_shift.id }}">
-                {% if is_closeout_wizard %}
-                    <input type="hidden" name="closeout" value="1">
-                {% endif %}
-                <label for="countedCash">Counted cash</label>
-                <input id="countedCash" type="number" name="counted_cash" min="0" step="0.01" value="{{ selected_shift_expected_cash|floatformat:2 }}" required>
-                <label for="closeoutNotes">Notes</label>
-                <input id="closeoutNotes" type="text" name="notes" placeholder="Optional closeout note">
-                <button type="submit">Finalize Closeout</button>
-            </form>
-        </section>
-        {% endif %}
+    {% csrf_token %}
+
+    <input type="hidden" name="action" value="close_shift">
+    <input type="hidden" name="shift_id" value="{{ selected_shift.id }}">
+
+    {% if is_closeout_wizard %}
+        <input type="hidden" name="closeout" value="1">
+    {% endif %}
+
+    <div class="recon-closeout-field">
+        <label for="countedCash">Counted cash</label>
+        <input
+            id="countedCash"
+            type="number"
+            name="counted_cash"
+            min="0"
+            step="0.01"
+            value="{{ selected_shift_expected_cash|floatformat:2 }}"
+            required
+        >
+    </div>
+
+    <div class="recon-closeout-field">
+        <label for="closeoutNotes">Notes</label>
+        <input
+            id="closeoutNotes"
+            type="text"
+            name="notes"
+            placeholder="Optional closeout note"
+        >
+    </div>
+
+    <button type="submit" class="recon-closeout-submit">
+        Finalize Closeout
+    </button>
+</form>
+</section>
+{% endif %}
 
         <form method="post" class="recon-grid">
             {% csrf_token %}

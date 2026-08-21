@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sales Invoices | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     <script src="{% static 'inventory/js/sales_documents_list.js' %}?v=20260729-sales-doc-actions-fit-4" defer></script>
@@ -200,7 +200,7 @@
                             <a href="{% url 'sales_invoice_detail' invoice.id %}" class="action-link-premium sales-row-primary-action">Open</a>
                             <div class="sales-row-action-menu">
                                 <button type="button" class="sales-row-menu-toggle" data-sales-menu-toggle aria-haspopup="true" aria-expanded="false" aria-label="More actions for invoice {{ invoice.invoice_no|default:invoice.id }}">More</button>
-                                <div class="sales-row-menu-panel" data-sales-menu-panel>
+                                <div class="sales-row-menu-panel" data-sales-menu-panel hidden>
                             {% if can_email_sales_documents and invoice.status != 'void' %}
                                     <a href="{% url 'sales_invoice_detail' invoice.id %}?email=1#sales-document-email" class="sales-menu-action sales-list-email-action" aria-label="Review email delivery for invoice {{ invoice.invoice_no|default:invoice.id }}">Email PDF</a>
                             {% endif %}

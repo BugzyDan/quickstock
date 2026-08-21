@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ quotation.quote_no|default:"Quotation" }} | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     
@@ -56,17 +56,30 @@
             </p>
             <div class="ops-chip-row"><span class="ops-chip">{{ quotation.get_status_display }}</span>{% if quotation.valid_until %}<span class="ops-chip">Valid to {{ quotation.valid_until|date:"M d, Y" }}</span>{% endif %}</div>
         </div>
-        <div class="ops-actions sales-document-actions">
-            <a href="{% url 'sales_quotation_list' %}" class="qs-btn qs-btn-secondary sales-hero-secondary-link">Back to Quotations</a>
-            {% if quotation.status == 'converted' and quotation.converted_invoice %}
-                <a href="{% url 'sales_invoice_detail' quotation.converted_invoice.id %}" class="qs-btn qs-btn-primary">Back To Invoice</a>
-            {% elif quotation.status == 'draft' %}
-                <a href="#quotation-conversion" class="qs-btn qs-btn-primary">Convert Options</a>
+        <div class="ops-actions sales-document-actions sales-document-action-cluster">
+            {% if quotation.status == 'draft' or quotation.status == 'converted' %}
+                <a href="#quotation-conversion" class="qs-btn qs-btn-primary">Invoice This Quote</a>
             {% endif %}
-            {% if can_email_sales_document and quotation.status != 'cancelled' %}
-                <a href="#sales-document-email" class="qs-btn qs-btn-secondary sales-document-email-action" aria-controls="sales-document-email">Email Quotation</a>
-            {% endif %}
-            <a href="#print-quotation" class="qs-btn qs-btn-secondary sales-document-visible-action" data-loading-ignore onclick="window.print(); return false;" style="background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; border-color:#ffffff !important;">Print Quotation</a>
+            <details class="sales-document-action-menu">
+                <summary class="qs-btn qs-btn-secondary sales-document-menu-toggle" aria-label="Open more quotation actions">
+                    <span>More Actions</span>
+                </summary>
+                <div class="sales-document-menu-panel" aria-label="Quotation actions">
+                    <a href="{% url 'sales_quotation_list' %}" class="sales-document-menu-action">Back to Quotations</a>
+                    <a href="{% url 'sales_quotation_edit' quotation.id %}" class="sales-document-menu-action">Edit Quote</a>
+                    {% if latest_converted_invoice %}
+                        <a href="{% url 'sales_invoice_detail' latest_converted_invoice.id %}" class="sales-document-menu-action">Back To Invoice</a>
+                    {% elif quotation.status == 'converted' %}
+                        <a href="{% url 'sales_invoice_list' %}" class="sales-document-menu-action">Back To Invoice</a>
+                    {% endif %}
+                    {% if can_email_sales_document and quotation.status != 'cancelled' %}
+                        <a href="#sales-document-email" class="sales-document-menu-action sales-document-email-action" aria-controls="sales-document-email">Email Quotation</a>
+                    {% endif %}
+                    <button type="button" class="sales-document-menu-action sales-document-menu-button" data-loading-ignore onclick="window.print()">
+                        Print Quotation
+                    </button>
+                </div>
+            </details>
         </div>
     </section>
 
@@ -110,6 +123,7 @@
                 <span class="qs-chip status-{{ quotation.status }}">{{ quotation.get_status_display }}</span>
             </div>
             <div class="summary-row-premium"><span>Quotation #</span><strong>{{ quotation.quote_no }}</strong></div>
+            <div class="summary-row-premium"><span>Invoices Created</span><strong>{{ converted_invoice_count|default:0 }}</strong></div>
             <div class="summary-row-premium"><span>Valid Until</span><strong>{{ quotation.valid_until|date:"M d, Y"|default:"--" }}</strong></div>
             <div class="summary-row-premium"><span>Subtotal</span><strong>${{ quotation.subtotal|floatformat:2 }}</strong></div>
             <div class="summary-row-premium"><span>Discount</span><strong>${{ discount_amount|floatformat:2 }}</strong></div>
@@ -153,9 +167,26 @@
             </div>
             {% endif %}
 
+            <section class="conversion-engine-container">
+                <form method="post" action="{% url 'sales_quotation_copy' quotation.id %}">
+                    {% csrf_token %}
+                    <label>Copy Quote To Customer</label>
+                    <select name="copy_customer_id">
+                        <option value="">Walk-in / Unassigned</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }}{% if customer.phone %} ({{ customer.phone }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <label style="margin-top:12px;">Or New Customer Name</label>
+                    <input type="text" name="copy_customer_name" placeholder="Type a new customer name">
+                    <button type="submit" class="qs-btn qs-btn-secondary" style="width:100%; margin-top:10px;">Copy Quote</button>
+                </form>
+            </section>
+
             <!-- Dynamic Workflow Operations Engine -->
-            {% if quotation.status == 'draft' %}
+            {% if quotation.status == 'draft' or quotation.status == 'converted' %}
             <div id="quotation-conversion" class="conversion-engine-container">
+                <h3 class="sales-card-title">Convert Options</h3>
                 <form method="post" action="{% url 'sales_quotation_convert_to_invoice' quotation.id %}">
                     {% csrf_token %}
                     <label>Invoice Location</label>
@@ -170,9 +201,14 @@
                             <option value="{{ value }}" {% if value == 'cash' %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
+                    {% if converted_invoice_count %}
+                        <p style="margin: 12px 0 0; color: var(--qs-text-muted); font-size: 0.82rem; line-height: 1.45;">
+                            This quote has already created {{ converted_invoice_count }} invoice{{ converted_invoice_count|pluralize }}. Submitting again will create a new invoice copy.
+                        </p>
+                    {% endif %}
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <button type="submit" class="qs-btn qs-btn-slate" style="width:100%;">Convert To Invoice</button>
-                        <button type="submit" class="qs-btn qs-btn-emerald" name="next_step" value="pay" style="width:100%;">Convert & Proceed To Payment</button>
+                        <button type="submit" class="qs-btn qs-btn-slate" style="width:100%;">Create Invoice From Quote</button>
+                        <button type="submit" class="qs-btn qs-btn-emerald" name="next_step" value="pay" style="width:100%;">Create Invoice & Proceed To Payment</button>
                     </div>
                 </form>
             </div>

@@ -11,7 +11,7 @@
 
 <body class="page-pricing">
     <header class="pricing-header">
-        <a href="{% url 'index' %}" class="pricing-brand" aria-label="QuickStock JA Home">
+        <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="pricing-brand" aria-label="QuickStock JA Home">
             <img src="{% static 'images/QuickStock_Logo.jpg' %}" alt="QuickStock JA Logo" class="pricing-logo">
             <span class="logo-wordmark">
                 <span class="logo-quick">Quick</span><span class="logo-stock">Stock</span><span class="logo-ja">JA</span>

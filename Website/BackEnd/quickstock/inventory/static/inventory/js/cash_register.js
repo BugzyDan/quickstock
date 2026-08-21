@@ -407,6 +407,21 @@
         });
     }
 
+    function makeProductCardInteractive(card) {
+        if (!card) return;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        if (!card.getAttribute('aria-label')) {
+            card.setAttribute('aria-label', `Add ${card.dataset.name || 'item'} to cart`);
+        }
+    }
+
+    function handleProductCardKeydown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.currentTarget.click();
+    }
+
     function renderItems(items, fromCache = false) {
         if (!itemGrid) return;
         itemGrid.innerHTML = "";
@@ -424,9 +439,11 @@
                 card.dataset.price = it.price;
                 card.dataset.stock = it.stock_quantity || 0;
                 card.innerHTML = renderProductCardHtml(it);
+                makeProductCardInteractive(card);
                 card.addEventListener('click', () => {
                     window.addToCart(parseInt(card.dataset.id), card.dataset.name, parseFloat(card.dataset.price));
                 });
+                card.addEventListener('keydown', handleProductCardKeydown);
                 itemGrid.appendChild(card);
             });
         }
@@ -933,10 +950,12 @@
         productCards.forEach(card => {
             const stockQty = parseInt(card.dataset.stock || 0, 10) || 0;
             card.classList.toggle('product-card-out-of-stock', stockQty <= 0);
+            makeProductCardInteractive(card);
             card.addEventListener('click', () => {
                 window.addToCart(parseInt(card.dataset.id), card.dataset.name, parseFloat(card.dataset.price));
                 setMobileSearchOpen(false);
             });
+            card.addEventListener('keydown', handleProductCardKeydown);
         });
     }
     bindCards();
@@ -949,11 +968,23 @@
     if (amountPaidInput) {
         amountPaidInput.addEventListener('input', () => {
             amountPaidInput.dataset.manual = 'true';
+            cashTenderPresetButtons.forEach(button => {
+                button.classList.remove('is-active');
+                button.setAttribute('aria-pressed', 'false');
+            });
             updateChangeDue();
         });
     }
     cashTenderPresetButtons.forEach(button => {
-        button.addEventListener('click', () => applyCashTenderPreset(button.dataset.cashPreset));
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => {
+            cashTenderPresetButtons.forEach(option => {
+                const active = option === button;
+                option.classList.toggle('is-active', active);
+                option.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            applyCashTenderPreset(button.dataset.cashPreset);
+        });
     });
 
     // Payment channel selection

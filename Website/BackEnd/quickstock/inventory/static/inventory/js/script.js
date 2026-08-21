@@ -11,6 +11,7 @@ const sideNav = document.getElementById('sideNav');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 
 let cart = [];
+const hasLegacyPosCartDom = Boolean(productSelect && cartBody && cartTotal);
 
 // ---------- Navigation Functions ----------
 
@@ -47,29 +48,41 @@ function initIndexMobileNav() {
 
     if (navToggle.dataset.bound === 'true') return;
     navToggle.dataset.bound = 'true';
-    let lastToggleAt = 0;
+
+    const setOpen = (isOpen) => {
+        const isMobile = window.innerWidth <= 768;
+        nav.classList.toggle('mobile-active', isOpen);
+        navToggle.classList.toggle('is-open', isOpen);
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        nav.setAttribute('aria-hidden', isMobile && !isOpen ? 'true' : 'false');
+        document.body.classList.toggle('qs-mobile-nav-open', isOpen);
+    };
 
     const toggleNav = (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        const now = Date.now();
-        if (now - lastToggleAt < 250) return;
-        lastToggleAt = now;
-        nav.classList.toggle('mobile-active');
-        navToggle.classList.toggle('is-open');
+        setOpen(!nav.classList.contains('mobile-active'));
     };
 
     navToggle.addEventListener('click', toggleNav);
-    navToggle.addEventListener('pointerup', toggleNav);
 
     document.addEventListener('click', (e) => {
         if (nav.classList.contains('mobile-active') && !nav.contains(e.target) && !navToggle.contains(e.target)) {
-            nav.classList.remove('mobile-active');
-            navToggle.classList.remove('is-open');
+            setOpen(false);
         }
     });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setOpen(false);
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) setOpen(false);
+    });
+
+    setOpen(false);
 }
 
 if (document.readyState === 'loading') {
@@ -123,8 +136,116 @@ if (document.readyState === 'loading') {
     initIndexOperatorDropdown();
 }
 
+function initIndexCurrencyToggle() {
+    if (!document.body.classList.contains('page-index')) return;
+
+    const panel = document.querySelector('[data-currency-panel]');
+    if (!panel || panel.dataset.bound === 'true') return;
+    panel.dataset.bound = 'true';
+
+    const buttons = Array.from(panel.querySelectorAll('[data-currency-option]'));
+    const prices = Array.from(document.querySelectorAll('[data-price]'));
+    const yearlyPrice = document.querySelector('[data-yearly-price]');
+    const monthlyRate = document.querySelector('[data-currency-rate="monthly"]');
+    const yearlyRate = document.querySelector('[data-currency-rate="yearly"]');
+    const note = document.querySelector('[data-currency-note]');
+
+    const setCurrency = (currency) => {
+        const isJmd = currency === 'jmd';
+
+        buttons.forEach((button) => {
+            const isActive = button.dataset.currencyOption === currency;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        prices.forEach((price) => {
+            const amount = price.querySelector('.price-amount');
+            const period = price.querySelector('.price-period');
+            if (!amount || !period) return;
+
+            amount.textContent = isJmd ? price.dataset.jmdLabel : price.dataset.usdLabel;
+            period.textContent = isJmd ? price.dataset.jmdPeriod : price.dataset.usdPeriod;
+        });
+
+        if (yearlyPrice) {
+            const label = isJmd ? yearlyPrice.dataset.jmdLabel : yearlyPrice.dataset.usdLabel;
+            const period = isJmd ? yearlyPrice.dataset.jmdPeriod : yearlyPrice.dataset.usdPeriod;
+            yearlyPrice.textContent = `${label}${period}`;
+        }
+
+        if (monthlyRate) monthlyRate.textContent = isJmd ? 'J$3,040' : 'US$19';
+        if (yearlyRate) yearlyRate.textContent = isJmd ? 'J$30,400' : 'US$190';
+        if (note) {
+            note.textContent = isJmd
+                ? 'JMD figures are planning estimates using J$160 = US$1. Your card is still billed in USD.'
+                : 'JMD figures are available for planning using J$160 = US$1. Your card is billed in USD.';
+        }
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => setCurrency(button.dataset.currencyOption));
+    });
+}
+
+function initIndexDemoPlayer() {
+    if (!document.body.classList.contains('page-index')) return;
+
+    const player = document.querySelector('[data-demo-player]');
+    if (!player || player.dataset.bound === 'true') return;
+    player.dataset.bound = 'true';
+
+    const video = player.querySelector('video');
+    const placeholder = player.querySelector('[data-demo-placeholder]');
+    const source = (player.dataset.videoSrc || '').trim();
+    const poster = (player.dataset.poster || '').trim();
+
+    if (!video || !source) {
+        player.classList.add('is-unavailable');
+        return;
+    }
+
+    video.src = source;
+    if (poster) video.poster = poster;
+    video.hidden = false;
+    if (placeholder) placeholder.hidden = true;
+    player.classList.add('is-ready');
+}
+
+function initIndexFaqAccordion() {
+    if (!document.body.classList.contains('page-index')) return;
+
+    const faq = document.querySelector('.faq');
+    if (!faq || faq.dataset.bound === 'true') return;
+    faq.dataset.bound = 'true';
+
+    const items = Array.from(faq.querySelectorAll('details'));
+    items.forEach((item) => {
+        item.addEventListener('toggle', () => {
+            if (!item.open) return;
+            items.forEach((otherItem) => {
+                if (otherItem !== item) otherItem.open = false;
+            });
+        });
+    });
+}
+
+function initIndexProductionPolish() {
+    initIndexCurrencyToggle();
+    initIndexDemoPlayer();
+    initIndexFaqAccordion();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initIndexProductionPolish);
+} else {
+    initIndexProductionPolish();
+}
+
 // ---------- Cart Functions ----------
 function addToCart(itemId) {
+    if (!hasLegacyPosCartDom) return;
+
     const option = Array.from(productSelect.options).find(opt => opt.value === itemId);
     if (!option) return;
 
@@ -142,6 +263,8 @@ function addToCart(itemId) {
 }
 
 function renderCart() {
+    if (!hasLegacyPosCartDom) return;
+
     cartBody.innerHTML = '';
     if (cart.length === 0) {
         cartBody.innerHTML = `<tr><td colspan="4">Cart is empty. Select an item to start.</td></tr>`;
@@ -189,7 +312,7 @@ function renderCart() {
 }
 
 // ---------- Button Listeners ----------
-if (addButton) {
+if (addButton && hasLegacyPosCartDom) {
     addButton.addEventListener('click', () => {
         const selectedId = productSelect.value;
         if (!selectedId) return;
@@ -197,7 +320,7 @@ if (addButton) {
     });
 }
 
-if (completeButton) {
+if (completeButton && hasLegacyPosCartDom) {
     completeButton.addEventListener('click', () => {
         if (cart.length === 0) return alert('Cart is empty.');
 
@@ -224,7 +347,7 @@ if (completeButton) {
 }
 
 // ---------- Barcode Scanner ----------
-if (barcodeInput) {
+if (barcodeInput && hasLegacyPosCartDom) {
     barcodeInput.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
             e.preventDefault();

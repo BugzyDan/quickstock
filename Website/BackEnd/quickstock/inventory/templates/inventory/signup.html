@@ -18,7 +18,7 @@
 
 <div class="auth-container">
     <div class="auth-brand">
-        <a href="{% url 'index' %}">
+        <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}">
             <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="auth-logo" alt="QuickStock JA Logo">
         </a>
     </div>

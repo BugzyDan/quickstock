@@ -9,11 +9,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice {{ invoice.invoice_no }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=supplier-invoice-polish-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 
-<body class="page-invoice-detail">
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"
+      {% if request.user.profile.theme != 'system' %}data-theme-applied="{{ request.user.profile.theme }}"{% endif %}
+      class="page-invoice-detail page-supplier-invoice-detail">
     <main class="invoice-page-wrapper supplier-invoice-shell">
         <section class="invoice-detail-card supplier-invoice-card">
             <header class="supplier-invoice-header">
@@ -40,25 +42,37 @@
             </header>
 
             <section class="invoice-meta-grid supplier-invoice-facts" aria-label="Invoice facts">
-                <span class="label">Invoice Number</span>
-                <strong class="value">{{ invoice.invoice_no|default:invoice.id }}</strong>
+                <div class="supplier-invoice-fact">
+                    <span class="label">Invoice Number</span>
+                    <strong class="value">{{ invoice.invoice_no|default:invoice.id }}</strong>
+                </div>
 
-                <span class="label">Amount</span>
-                <strong class="value">{{ currency_code }} {{ invoice.amount|floatformat:2 }}</strong>
+                <div class="supplier-invoice-fact">
+                    <span class="label">Amount</span>
+                    <strong class="value">{{ currency_code }} {{ invoice.amount|floatformat:2 }}</strong>
+                </div>
 
-                <span class="label">Date Issued</span>
-                <strong class="value">{{ invoice.date_issued|date:"F j, Y" }}</strong>
+                <div class="supplier-invoice-fact">
+                    <span class="label">Date Issued</span>
+                    <strong class="value">{{ invoice.date_issued|date:"F j, Y" }}</strong>
+                </div>
 
-                <span class="label">Status</span>
-                <strong class="value">
+                <div class="supplier-invoice-fact">
+                    <span class="label">Status</span>
+                    <strong class="value">
                         <span class="supplier-invoice-status supplier-invoice-status-{{ invoice.status|lower }}">{{ invoice.status|upper }}</span>
-                </strong>
+                    </strong>
+                </div>
 
-                <span class="label">Location</span>
-                <strong class="value">{{ invoice.location.name|default:"Unassigned" }}</strong>
+                <div class="supplier-invoice-fact">
+                    <span class="label">Location</span>
+                    <strong class="value">{{ invoice.location.name|default:"Unassigned" }}</strong>
+                </div>
 
-                <span class="label">Terms</span>
-                <strong class="value">{{ invoice.get_payment_terms_display|default:"Pending" }}</strong>
+                <div class="supplier-invoice-fact">
+                    <span class="label">Terms</span>
+                    <strong class="value">{{ invoice.get_payment_terms_display|default:"Pending" }}</strong>
+                </div>
             </section>
 
             <section class="supplier-invoice-summary" aria-label="Payment summary">

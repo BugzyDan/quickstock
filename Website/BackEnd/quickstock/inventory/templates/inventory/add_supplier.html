@@ -34,7 +34,7 @@
 
     <section class="supplier-origin-hero" aria-labelledby="supplier-registration-title">
         <div class="supplier-origin-hero-copy">
-            <p class="supplier-origin-kicker">{% if mode == 'edit' %}Supply network maintenance{% else %}Supply network registration{% endif %}</p>
+            <p class="supplier-origin-kicker">{% if mode == 'edit' %}Supply network maintenance{% else %}Register New Supplier{% endif %}</p>
             <h1 id="supplier-registration-title">{% if mode == 'edit' %}Edit {{ supplier.name }}{% else %}Route every receipt from its source{% endif %}</h1>
             <p>{% if mode == 'edit' %}Update supplier details, origin routing, and purchasing contact information without changing ledger history.{% else %}Supplier origin determines where received stock appears in Inventory Overview. Set it once here, then receive goods normally.{% endif %}</p>
         </div>

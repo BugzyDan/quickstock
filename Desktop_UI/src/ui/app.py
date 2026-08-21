@@ -389,6 +389,7 @@ class InventoryGUI:
         
         # Operations buttons based on permissions
         operations = [
+            ("Open Register Shift", self._open_shift_from_desktop, "cashier"),
             ("Cash Register", self._open_cash_register, "cashier"),
             ("Add Item", self._open_add_item, "admin"),
             ("Receive Stock", self._open_receive_stock, "admin"),

@@ -12,7 +12,7 @@
     <title>{{ supplier.name }} Financial Ledger | QuickStock JA</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=supplier-ledger-compact-actions-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 
@@ -59,11 +59,8 @@
                 <a href="{% url 'add_invoice' supplier.id %}" class="btn-new">
                     <span class="plus-icon">+</span> RECORD INVOICE
                 </a>
-                <a href="{% url 'supplier_ledger' supplier.id %}?statement=vendor&format=pdf" class="supplier-statement-link">
-                    Download Vendor Statement
-                </a>
+                <a href="{% url 'supplier_list' %}" class="back-link">← BACK TO SUPPLIERS</a>
             </div>
-            <a href="{% url 'supplier_list' %}" class="back-link">← BACK TO SUPPLIERS</a>
         </div>
     </div>
 
@@ -101,8 +98,27 @@
         {% endfor %}
     </div>
 
+    <div class="supplier-ledger-utility-row" aria-label="Ledger exports">
+        <div>
+            <span>Ledger records</span>
+            <strong>Invoices, payments, credits, and refunds</strong>
+        </div>
+        <a href="{% url 'supplier_ledger' supplier.id %}?statement=vendor&format=pdf" class="supplier-statement-link">
+            Download Vendor Statement
+        </a>
+    </div>
+
     <div class="table-wrapper">
         <table class="invoice-table">
+            <colgroup>
+                <col class="supplier-ledger-col-date">
+                <col class="supplier-ledger-col-details">
+                <col class="supplier-ledger-col-debit">
+                <col class="supplier-ledger-col-credit">
+                <col class="supplier-ledger-col-balance">
+                <col class="supplier-ledger-col-location">
+                <col class="supplier-ledger-col-action">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Date</th>

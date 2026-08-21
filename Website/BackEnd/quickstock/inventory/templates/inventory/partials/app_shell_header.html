@@ -1,7 +1,7 @@
 {% load static %}
 <header class="app-shell-header">
     <div class="app-shell-header-primary">
-        <a href="{% url 'index' %}" class="logo-link logo-area app-shell-brand">
+        <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="logo-link logo-area app-shell-brand">
             <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo logo-img app-shell-logo" alt="QuickStock JA Logo">
 
             <div class="logo-text-group">

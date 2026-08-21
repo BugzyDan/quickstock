@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt #{{ receipt_number }} | QuickStock JA</title>
     <script src="{% static 'inventory/js/theme.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=professional-polish-2">
     {% if auto_print %}
     <script>
         window.addEventListener("load", function () {
@@ -137,7 +137,7 @@
                     <div><span>Discount</span><strong>-{{ discount_display }}</strong></div>
                     {% endif %}
                     <div class="receipt-doc-grand-total"><span>Total</span><strong>{{ currency_code }} {{ grand_total_display }}</strong></div>
-                    <div><span>Paid</span><strong>{{ amount_paid_display }}</strong></div>
+                    <div><span>Amount Paid</span><strong>{{ amount_paid_display }}</strong></div>
                     <div><span>Change Given</span><strong>{{ change_due_display }}</strong></div>
                     {% if sale.payment_reference %}
                     <div><span>Reference</span><strong>{{ sale.payment_reference }}</strong></div>

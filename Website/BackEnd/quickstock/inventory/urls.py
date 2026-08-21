@@ -27,6 +27,7 @@ urlpatterns = [
     path('locations/', views.locations_page, name='locations'),
     path('network/add/', views.add_location, name='add_location'),
     path('network/<int:location_id>/delete/', views.delete_location, name='delete_location'),
+    
 
 
     # ---------------------------
@@ -122,6 +123,7 @@ urlpatterns = [
     path('invoice/<int:invoice_id>/void/', views.void_invoice, name='void_invoice'),
     path('invoice/<int:invoice_id>/credit-note/', views.supplier_invoice_credit_note, name='supplier_invoice_credit_note'),
     path('invoice/<int:invoice_id>/refund/', views.supplier_invoice_refund, name='supplier_invoice_refund'),
+    path("super-admin/company/<int:profile_id>/subscription/",views.super_admin_update_subscription, name="super_admin_update_subscription",),
     
 
     # ---------------------------
@@ -134,6 +136,8 @@ urlpatterns = [
     path('sales/quotations/', views.sales_quotation_list, name='sales_quotation_list'),
     path('sales/quotations/new/', views.sales_quotation_create, name='sales_quotation_create'),
     path('sales/quotations/<int:quote_id>/', views.sales_quotation_detail, name='sales_quotation_detail'),
+    path('sales/quotations/<int:quote_id>/edit/', views.sales_quotation_edit, name='sales_quotation_edit'),
+    path('sales/quotations/<int:quote_id>/copy/', views.sales_quotation_copy, name='sales_quotation_copy'),
     path('sales/quotations/<int:quote_id>/email/', views.sales_quotation_email, name='sales_quotation_email'),
     path('sales/quotations/<int:quote_id>/convert/', views.sales_quotation_convert_to_invoice, name='sales_quotation_convert_to_invoice'),
     path('sales/invoices/', views.sales_invoice_list, name='sales_invoice_list'),
@@ -164,6 +168,7 @@ urlpatterns = [
     path('shift/reconcile/<int:shift_id>/', views.cash_shift_reconcile, name='cash_shift_reconcile'),
     path('shift/movement/<int:shift_id>/', views.cash_shift_movement, name='cash_shift_movement'),
     path('open-shift/', views.open_shift, name='open_shift'),
+    
 
     # ---------------------------
     # Reports & Exports
@@ -177,6 +182,7 @@ urlpatterns = [
     path('export-audit-logs/', views.export_audit_csv, name='export_audit_csv'),
     path('audit-logs/cleanup/', views.audit_cleanup_now, name='audit_cleanup_now'),
     path('settings/clear-all-logs/', views.clear_all_logs, name='clear_all_logs'),
+    
 
     # ---------------------------
     # Subscription & Payments
@@ -190,6 +196,8 @@ urlpatterns = [
     path('upgrade/checkout-session/', views.create_wipay_checkout_session, name='create_wipay_checkout_session'),
     path('upgrade/wipay-response/', views.wipay_response, name='wipay_response'),
     path('pricing/', views.pricing_view, name='pricing'),
+    path("super-admin/company/<int:profile_id>/subscription/", views.super_admin_update_subscription, name="super_admin_update_subscription",),
+    
 
     # ---------------------------
     # Premium Features

@@ -16,7 +16,7 @@
 
     <title>QuickStock JA | Inventory Simplified</title>
     
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=system-font-refine-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=landing-pricing-integrations-1">
 
     
 </head>
@@ -25,7 +25,7 @@
 <div class="page-wrapper">
     
 <header>
-    <a href="{% url 'index' %}" class="logo-link">
+    <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="logo-link">
     <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo" alt="QuickStock JA Logo">
     
     <div class="logo-text-group">
@@ -38,7 +38,7 @@
 
     </a>
     <div class="header-actions">
-        <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-controls="main-nav" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
         <div class="user-info{% if request.user.is_authenticated %} index-signed-in-actions{% endif %}">
@@ -166,28 +166,34 @@
         <div>
             <h3 id="pricing">Simple, Affordable Pricing</h3>
             <p>Choose the lane that matches your current stage, then upgrade when you want deeper analytics, exports, and branch controls.</p>
-            <div class="index-currency-clarity" aria-label="USD billing with JMD planning equivalents">
-                <div class="index-currency-toggle" aria-hidden="true">
-                    <span class="is-active">USD billing</span>
-                    <span>JMD planning</span>
+            <div class="index-currency-clarity" aria-label="Pricing currency view" data-currency-panel>
+                <div class="index-currency-toggle" role="group" aria-label="Choose pricing currency view">
+                    <button type="button" class="is-active" data-currency-option="usd" aria-pressed="true">USD billing</button>
+                    <button type="button" data-currency-option="jmd" aria-pressed="false">JMD planning</button>
                 </div>
                 <div class="index-currency-rates">
-                    <span>Pro monthly: <strong>US$19</strong> approx. <strong>J$3,040</strong></span>
-                    <span>Pro yearly: <strong>US$190</strong> approx. <strong>J$30,400</strong></span>
+                    <span>Monthly view: <strong data-currency-rate="monthly">US$19</strong></span>
+                    <span>Yearly view: <strong data-currency-rate="yearly">US$190</strong></span>
                 </div>
-                <small>JMD figures are planning estimates using J$160 = US$1. Your card is billed in USD.</small>
+                <small data-currency-note>JMD figures are available for planning using J$160 = US$1. Your card is billed in USD.</small>
             </div>
         </div>
     </section>
 
     <div class="pricing-grid">
-    <div class="pricing-card">
+    <div class="pricing-card" data-plan-card="starter">
         {% if profile.is_trial_active and profile.plan == "TRIAL" %}
             <div class="pro-badge is-current-plan">Current Plan</div>
         {% endif %}
         <h4>Starter</h4>
         <p class="index-plan-caption">14-day free trial of core Starter features</p>
-        <div class="price">$0<span>/14 days</span></div>
+        <div class="price" data-price
+             data-usd-label="US$0"
+             data-usd-period="/14 days"
+             data-jmd-label="J$0"
+             data-jmd-period="/14 days">
+            <span class="price-amount">US$0</span><span class="price-period">/14 days</span>
+        </div>
         <p class="index-plan-billing-note">Evaluate the basics, then move to Pro to keep premium workflows.</p>
         <ul>
             <li>Basic Inventory Tracking</li>
@@ -208,9 +214,9 @@
         </p>
         {% if request.user.is_authenticated and profile %}
             {% if profile.is_trial_active %}
-                <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter index-muted-cta">Current Plan (Trial)</a>
+                <a href="{% url 'upgrade' %}?context=subscription&plan=starter" class="btn-upgrade btn-starter index-muted-cta">Current Plan (Trial)</a>
             {% elif profile.is_pro_active %}
-                <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter">Starter Features Included</a>
+                <a href="{% url 'upgrade' %}?context=subscription&included=starter" class="btn-upgrade btn-starter">Starter Features Included</a>
             {% else %}
                 <a href="{% url 'upgrade' %}" class="btn-upgrade btn-starter">Trial Ended</a>
             {% endif %}
@@ -219,13 +225,23 @@
         {% endif %}
     </div>
 
-    <div class="pricing-card pro">
+    <div class="pricing-card pro" data-plan-card="pro">
         <div class="pro-badge">Best Value</div>
         <h4>Professional</h4>
         <p class="index-plan-caption">For growing retail shops</p>
-        <div class="price">$19<span>/mo</span></div>
+        <div class="price" data-price
+             data-usd-label="US$19"
+             data-usd-period="/mo"
+             data-jmd-label="J$3,040"
+             data-jmd-period="/mo">
+            <span class="price-amount">US$19</span><span class="price-period">/mo</span>
+        </div>
         <p class="index-plan-billing-note">
-            or $190<span class="index-price-period"> / year</span>
+            or <strong data-yearly-price
+                       data-usd-label="US$190"
+                       data-usd-period="/year"
+                       data-jmd-label="J$30,400"
+                       data-jmd-period="/year">US$190/year</strong>
         </p>
         <ul>
             <li>Everything in Starter</li>
@@ -242,7 +258,7 @@
         </p>
         {% if request.user.is_authenticated %}
             {% if profile.is_pro_active %}
-                <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="btn-upgrade is-current-plan">Current Plan (Pro)</a>
+                <a href="{% url 'upgrade' %}?context=subscription&plan=pro" class="btn-upgrade is-current-plan">Current Plan (Pro)</a>
             {% else %}
                 <a href="{% url 'upgrade' %}?plan=pro&billing=monthly" class="btn-upgrade">Upgrade to Pro</a>
             {% endif %}
@@ -292,17 +308,54 @@
         <h3 class="section-title">Product Demo</h3>
         <p class="section-subtitle">A quick walkthrough of inventory, POS checkout, and GCT reporting.</p>
         <div class="demo-wrap">
-            <a href="{% url 'about' %}" class="demo-frame demo-frame-link" aria-label="Watch the QuickStock demo">
-                <div class="demo-screen">
-                    <div class="play-btn" aria-hidden="true"></div>
+            <div class="demo-frame" data-demo-player data-video-src="" data-poster="">
+                <div class="demo-screen" role="region" aria-label="QuickStock product demo video player">
+                    <video class="demo-video" controls preload="metadata" hidden></video>
+                    <div class="demo-unavailable" data-demo-placeholder>
+                        <button type="button" class="play-btn" aria-label="Demo video unavailable" aria-disabled="true" disabled></button>
+                        <p>Demo video coming soon</p>
+                        <span>Configure <code>data-video-src</code> when the product walkthrough is ready.</span>
+                    </div>
                 </div>
-            </a>
+            </div>
             <div class="card">
                 <h4>What you will see</h4>
                 <p class="muted">Barcode scanning, auto-reorder alerts, live margin tracking, and WiPay checkout.</p>
-                <a href="{% url 'about' %}" class="btn-upgrade index-inline-demo-link">Watch the Demo</a>
+                <a href="{% url 'about' %}" class="btn-upgrade index-inline-demo-link">View Product Tour</a>
             </div>
         </div>
+    </section>
+
+    <section class="section">
+        <h3 class="section-title">Starter vs Professional</h3>
+        <p class="section-subtitle">Quick scan comparison to choose the right plan.</p>
+
+        <div class="table-wrapper">
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Starter</th>
+                        <th>Professional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Inventory Tracking</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Manual Sales Recording</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Unlimited Items & SKU</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Advanced Analytics</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>CSV/Excel Export</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Staff Role Management</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>WiPay Integration</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Multi-Location Support</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                    <tr><td>Offline Sync Engine</td><td class="compare-yes">Local capture</td><td class="compare-yes">Local capture + cloud sync</td></tr>
+                    <tr><td>Automated GCT Summary Report</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section index-gct-section">
         <div class="index-gct-preview" aria-label="GCT Summary Report preview">
             <div class="index-gct-report">
                 <div class="index-gct-report-head">
@@ -342,35 +395,6 @@
             </div>
         </div>
     </section>
-<section class="section">
-    <h3 class="section-title">Starter vs Professional</h3>
-    <p class="section-subtitle">Quick scan comparison to choose the right plan.</p>
-
-    <!-- Responsive wrapper -->
-    <div class="table-wrapper">
-        <table class="compare-table">
-            <thead>
-                <tr>
-                    <th>Feature</th>
-                    <th>Starter</th>
-                    <th>Professional</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>Inventory Tracking</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Manual Sales Recording</td><td class="compare-yes">Yes</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Unlimited Items & SKU</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Advanced Analytics</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>CSV/Excel Export</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Staff Role Management</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>WiPay Integration</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Multi-Location Support</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-                <tr><td>Offline Sync Engine</td><td class="compare-yes">Local capture</td><td class="compare-yes">Local capture + cloud sync</td></tr>
-                <tr><td>Automated GCT Summary Report</td><td class="compare-no">No</td><td class="compare-yes">Yes</td></tr>
-            </tbody>
-        </table>
-    </div>
-</section>
 
 
     <section class="section">

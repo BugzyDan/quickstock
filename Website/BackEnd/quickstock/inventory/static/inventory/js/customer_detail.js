@@ -1,4 +1,59 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const isCustomerDetailPage = document.body.classList.contains('page-customer-detail');
+
+    if (isCustomerDetailPage) {
+        const recordsPanel = document.querySelector('[data-customer-records-panel]');
+        const recordsLayout = recordsPanel ? recordsPanel.querySelector('[data-records-layout]') : null;
+        const recordButtons = recordsPanel ? recordsPanel.querySelectorAll('[data-records-view]') : [];
+        const recordSections = recordsPanel ? recordsPanel.querySelectorAll('[data-record-section]') : [];
+
+        const setRecordsView = function (view) {
+            const nextView = view || 'both';
+
+            if (recordsLayout) {
+                recordsLayout.dataset.recordsLayout = nextView;
+            }
+
+            recordButtons.forEach(function (button) {
+                const isActive = button.dataset.recordsView === nextView;
+
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            recordSections.forEach(function (section) {
+                const shouldHide = nextView !== 'both' && section.dataset.recordSection !== nextView;
+
+                section.toggleAttribute('hidden', shouldHide);
+            });
+        };
+
+        recordButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                setRecordsView(button.dataset.recordsView);
+            });
+        });
+
+        if (recordButtons.length && recordSections.length) {
+            setRecordsView('both');
+        }
+
+        document.querySelectorAll('[data-document-url]').forEach(function (row) {
+            row.addEventListener('click', function (event) {
+                const interactiveTarget = event.target.closest('a, button, input, select, textarea, summary, details');
+
+                if (interactiveTarget) {
+                    return;
+                }
+
+                const documentUrl = row.dataset.documentUrl;
+
+                if (documentUrl) {
+                    window.location.href = documentUrl;
+                }
+            });
+        });
+    }
 
     // User Dropdown Toggle
     const menuBtn = document.getElementById('userMenuBtn');
