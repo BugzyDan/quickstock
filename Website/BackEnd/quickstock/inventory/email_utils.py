@@ -16,6 +16,15 @@ def email_delivery_status():
     default_from = str(getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
     sender_ready = bool(default_from and "@localhost" not in default_from.lower())
 
+    if provider == "resend" and backend != RESEND_BACKEND:
+        return {
+            "ok": False,
+            "provider": provider,
+            "backend": backend,
+            "sender_set": sender_ready,
+            "detail": "Resend is selected but its HTTPS email backend is not active.",
+        }
+
     if backend == RESEND_BACKEND:
         key_ready = bool(getattr(settings, "RESEND_API_KEY", ""))
         ok = key_ready and sender_ready

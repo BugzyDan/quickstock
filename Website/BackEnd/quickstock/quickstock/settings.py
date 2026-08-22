@@ -321,17 +321,25 @@ else:
 
 # Render can run more than one Gunicorn worker. Use PostgreSQL-backed cache
 # state there so OTPs and throttles do not disappear between worker processes.
+render_database_cache = bool(os.getenv("RENDER") and DATABASE_URL)
 default_cache_backend = (
     "django.core.cache.backends.db.DatabaseCache"
-    if os.getenv("RENDER") and DATABASE_URL
+    if render_database_cache
     else "django.core.cache.backends.locmem.LocMemCache"
 )
 CACHES = {
     "default": {
-        "BACKEND": _env_str("DJANGO_CACHE_BACKEND", default_cache_backend),
-        "LOCATION": _env_str(
-            "DJANGO_CACHE_LOCATION",
-            "quickstock_cache" if os.getenv("RENDER") and DATABASE_URL else "quickstock-local",
+        # Render needs one shared OTP/cache store across every Gunicorn worker.
+        # Ignore stale per-process cache variables left on an existing service.
+        "BACKEND": (
+            default_cache_backend
+            if render_database_cache
+            else _env_str("DJANGO_CACHE_BACKEND", default_cache_backend)
+        ),
+        "LOCATION": (
+            "quickstock_cache"
+            if render_database_cache
+            else _env_str("DJANGO_CACHE_LOCATION", "quickstock-local")
         ),
         "TIMEOUT": _env_int("DJANGO_CACHE_TIMEOUT", 300),
         "OPTIONS": {
@@ -468,13 +476,18 @@ ANYMAIL = {
     "REQUESTS_TIMEOUT": _env_int("DJANGO_EMAIL_TIMEOUT", 5),
 }
 
-EMAIL_BACKEND = _env_str("DJANGO_EMAIL_BACKEND")
-if not EMAIL_BACKEND:
-    if EMAIL_PROVIDER == "resend" and RESEND_API_KEY:
+configured_email_backend = _env_str("DJANGO_EMAIL_BACKEND")
+if EMAIL_PROVIDER == "resend":
+    # Existing Render services may still contain SMTP variables from the local
+    # clone. Render free blocks SMTP, so the selected HTTPS provider wins.
+    if RESEND_API_KEY:
         EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
-    elif EMAIL_PROVIDER == "resend":
+    else:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    elif os.getenv("DJANGO_EMAIL_HOST") or os.getenv("DJANGO_EMAIL_HOST_USER"):
+elif configured_email_backend:
+    EMAIL_BACKEND = configured_email_backend
+else:
+    if os.getenv("DJANGO_EMAIL_HOST") or os.getenv("DJANGO_EMAIL_HOST_USER"):
         EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     elif DEBUG:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

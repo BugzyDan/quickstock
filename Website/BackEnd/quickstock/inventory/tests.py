@@ -1028,6 +1028,22 @@ class WeekOneSecurityTests(TestCase):
     @override_settings(
         DEBUG=False,
         EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+        EMAIL_HOST="smtp.gmail.com",
+        EMAIL_HOST_USER="owner@example.com",
+        EMAIL_HOST_PASSWORD="stale-app-password",
+        DEFAULT_FROM_EMAIL="owner@example.com",
+    )
+    def test_resend_configuration_rejects_stale_render_smtp_backend(self):
+        status = email_delivery_status()
+
+        self.assertFalse(status["ok"])
+        self.assertEqual(status["provider"], "resend")
+        self.assertIn("HTTPS email backend is not active", status["detail"])
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
         EMAIL_BACKEND=CONSOLE_BACKEND,
         RESEND_API_KEY="",
         DEFAULT_FROM_EMAIL="QuickStock JA <noreply@quickstockja.com>",
