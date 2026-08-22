@@ -382,13 +382,23 @@ EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = _env_bool("DJANGO_EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = _env_bool("DJANGO_EMAIL_USE_SSL", False)
 
-if not DEBUG:
-    if not EMAIL_HOST:
-        raise RuntimeError("DJANGO_EMAIL_HOST must be set in production!")
-    if not EMAIL_HOST_USER:
-        raise RuntimeError("DJANGO_EMAIL_HOST_USER must be set in production!")
-    if not EMAIL_HOST_PASSWORD:
-        raise RuntimeError("DJANGO_EMAIL_HOST_PASSWORD must be set in production!")
+if not DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    missing_email_vars = [
+        name
+        for name, value in {
+            "DJANGO_EMAIL_HOST": EMAIL_HOST,
+            "DJANGO_EMAIL_HOST_USER": EMAIL_HOST_USER,
+            "DJANGO_EMAIL_HOST_PASSWORD": EMAIL_HOST_PASSWORD,
+        }.items()
+        if not value
+    ]
+    if missing_email_vars:
+        warnings.warn(
+            "SMTP email is not fully configured in production. Falling back to console "
+            f"email backend until these variables are set: {', '.join(missing_email_vars)}.",
+            RuntimeWarning,
+        )
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
