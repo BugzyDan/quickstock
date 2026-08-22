@@ -394,6 +394,58 @@ class WeekOneSecurityTests(TestCase):
         profile.save()
         return user
 
+    @override_settings(QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION=False)
+    def test_public_signup_creates_active_account_when_verification_disabled(self):
+        response = self.client.post(
+            reverse("signup"),
+            {
+                "username": "public-active-signup",
+                "email": "public-active-signup@example.com",
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+                "accept_terms": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username="public-active-signup")
+        profile = UserProfile.objects.get(user=user)
+        self.assertTrue(user.is_active)
+        self.assertTrue(user.is_staff)
+        self.assertEqual(profile.role, "admin")
+        self.assertEqual(profile.status, "active")
+        self.assertContains(response, "Account created! You can now log in.")
+
+    @override_settings(
+        QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION=True,
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    )
+    def test_public_signup_can_require_email_verification(self):
+        response = self.client.post(
+            reverse("signup"),
+            {
+                "username": "public-pending-signup",
+                "email": "public-pending-signup@example.com",
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+                "accept_terms": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username="public-pending-signup")
+        profile = UserProfile.objects.get(user=user)
+        self.assertFalse(user.is_active)
+        self.assertTrue(user.is_staff)
+        self.assertEqual(profile.role, "admin")
+        self.assertEqual(profile.status, "pending")
+        self.assertTrue(
+            any(message.subject == "Activate your QuickStock JA account" for message in mail.outbox)
+        )
+        self.assertContains(response, "Account created! Verify your email to continue.")
+
     def test_customer_edit_requires_login(self):
         owner = self._make_user("owner-a")
         customer = Customer.objects.create(owner=owner, name="Alice")

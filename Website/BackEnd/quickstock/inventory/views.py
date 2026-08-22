@@ -3781,13 +3781,17 @@ def signup_view(request):
             messages.error(request, "An account already uses that email address.")
             return render(request, "inventory/signup.html")
 
+        require_email_verification = bool(
+            getattr(settings, "QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", False)
+        )
+
         # 2. Create User
-        # Staff created by Admin are active immediately; Public signups are inactive (pending email)
+        # Staff are active immediately. Public signups only wait for email when configured.
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password1,
-            is_active=True if is_admin_creating_staff else False,
+            is_active=True if is_admin_creating_staff or not require_email_verification else False,
         )
 
         # 3. Create UserProfile
@@ -3821,11 +3825,20 @@ def signup_view(request):
             
             profile.terms_accepted = True
             profile.terms_accepted_at = timezone.now()
-            profile.status = "pending" 
+            profile.status = "pending" if require_email_verification else "active"
             profile.save()
 
-            _send_activation_email(request, user)
-            messages.success(request, "Account created! Verify your email to continue.")
+            if require_email_verification:
+                email_sent = _send_activation_email(request, user)
+                if email_sent:
+                    messages.success(request, "Account created! Verify your email to continue.")
+                else:
+                    messages.warning(
+                        request,
+                        "Account created, but the activation email could not be sent. Contact support to activate it.",
+                    )
+            else:
+                messages.success(request, "Account created! You can now log in.")
             return redirect("login")
 
     return render(request, "inventory/signup.html")
@@ -9981,7 +9994,7 @@ def _send_activation_email(request, user):
     Send account activation email to the user.
     """
     if not user.email:
-        return
+        return False
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = token_generator.make_token(user)
@@ -9998,8 +10011,10 @@ def _send_activation_email(request, user):
     email.content_subtype = "html"
     try:
         email.send(fail_silently=False)
+        return True
     except Exception:
         logger.exception("Could not send activation email to user %s", user.pk)
+        return False
 
 
 @login_required

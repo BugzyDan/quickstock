@@ -102,6 +102,7 @@ if SECRET_KEY == "unsafe-dev-key" and os.getenv("RENDER"):
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DJANGO_DEBUG", True)
+QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION = _env_bool("QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", True)
 
 # Dev/LAN friendly defaults.
 raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.50.223")
