@@ -250,7 +250,7 @@ if DATABASE_URL:
 else:
     if DB_ENGINE:
         db_engine = DB_ENGINE
-    elif DEBUG or RUNNING_TESTS:
+    elif DEBUG or RUNNING_TESTS or _env_bool("DJANGO_ALLOW_SQLITE_FALLBACK", _env_bool("RENDER", False)):
         db_engine = "django.db.backends.sqlite3"
     else:
         db_engine = "django.db.backends.mysql"
