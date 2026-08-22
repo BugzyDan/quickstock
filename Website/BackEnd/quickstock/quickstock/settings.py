@@ -457,13 +457,17 @@ STARTER_ITEM_LIMIT = int(os.getenv("STARTER_ITEM_LIMIT", "100"))
 # Ensure sandbox/live credentials are present
 # -------------------------
 if WIPAY_ENVIRONMENT == "sandbox" and (not WIPAY_ACCOUNT_NUMBER_SANDBOX or not WIPAY_API_KEY_SANDBOX):
-    raise RuntimeError(
-        "Sandbox WiPay credentials are missing. Set WIPAY_ACCOUNT_NUMBER_SANDBOX and WIPAY_API_KEY_SANDBOX in your .env"
+    warnings.warn(
+        "Sandbox WiPay credentials are missing. Card payments will be unavailable until "
+        "WIPAY_ACCOUNT_NUMBER_SANDBOX and WIPAY_API_KEY_SANDBOX are set.",
+        RuntimeWarning,
     )
 
 if WIPAY_ENVIRONMENT == "live" and (not WIPAY_ACCOUNT_NUMBER_LIVE or not WIPAY_API_KEY_LIVE):
-    raise RuntimeError(
-        "Live WiPay credentials are missing. Set WIPAY_ACCOUNT_NUMBER_LIVE and WIPAY_API_KEY_LIVE in your .env"
+    warnings.warn(
+        "Live WiPay credentials are missing. Card payments will be unavailable until "
+        "WIPAY_ACCOUNT_NUMBER_LIVE and WIPAY_API_KEY_LIVE are set.",
+        RuntimeWarning,
     )
 
 if not DEBUG and WIPAY_ENVIRONMENT != "live" and not WIPAY_ALLOW_SANDBOX_IN_PROD:

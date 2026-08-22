@@ -9,9 +9,9 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        sync: false
+        value: "quickstock-ja.onrender.com,quickstockja.com,www.quickstockja.com"
       - key: DJANGO_CSRF_TRUSTED_ORIGINS
-        sync: false
+        value: "https://quickstock-ja.onrender.com,https://quickstockja.com,https://www.quickstockja.com"
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
