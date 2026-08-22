@@ -162,6 +162,8 @@ def create_user_verification(sender, instance, created, **kwargs):
 
     code = str(100000 + secrets.randbelow(900000))
     UserVerification.objects.update_or_create(user=instance, defaults={"code": code})
+    if not getattr(settings, "QUICKSTOCK_SEND_LEGACY_VERIFICATION_EMAILS", False):
+        return
     try:
         send_verification_email(instance.email, instance.username, code)
     except Exception:
@@ -179,7 +181,7 @@ from django.conf import settings
 def send_welcome_email(sender, instance, created, **kwargs):
     if kwargs.get("raw") or not created or not instance.email:
         return
-    if not getattr(settings, "QUICKSTOCK_SEND_SIGNUP_EMAILS", getattr(settings, "QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", True)):
+    if not getattr(settings, "QUICKSTOCK_SEND_SIGNUP_EMAILS", False):
         return
 
     # This is intentionally a welcome message only. Verification state and its

@@ -3,6 +3,7 @@ import json
 import logging
 import calendar
 import re
+import threading
 from types import SimpleNamespace
 from .forms import CustomerForm
 from decimal import Decimal, InvalidOperation
@@ -38,7 +39,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, get_connection
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
@@ -596,26 +597,51 @@ def _prime_authenticated_session(request):
     request.session.modified = True
 
 
-def _send_login_otp(user):
-    code = f"{secrets.randbelow(900000) + 100000:06d}"
-    cache_key = f"login_otp:{user.id}"
-    cache.set(cache_key, code, timeout=600)  # 10 minutes
+def _deliver_login_otp_email(user_id, username, email, code):
     subject = "Your QuickStock JA login code"
     body = (
-        f"Hi {user.username},\n\n"
+        f"Hi {username},\n\n"
         f"Use this code to complete your QuickStock JA login: {code}\n"
         f"The code expires in 10 minutes.\n\n"
         "If you did not attempt to sign in, please reset your password."
     )
     try:
-        EmailMessage(subject, body, to=[user.email]).send(fail_silently=False)
+        connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+        sent_count = EmailMessage(subject, body, to=[email], connection=connection).send(fail_silently=False)
+        if sent_count <= 0:
+            logger.error("Login OTP email was not accepted for delivery for user %s.", user_id)
     except Exception:
-        logger.exception("Could not send staff invite email to user %s", user.pk)
-    return code
+        logger.exception("Could not send login OTP email to user %s", user_id)
+
+
+def _send_login_otp(user):
+    if not user.email:
+        logger.warning("Cannot send login OTP for user %s without an email address.", user.pk)
+        return False
+    if (
+        not settings.DEBUG
+        and settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
+    ):
+        logger.error("Cannot send login OTP for user %s because production email uses console backend.", user.pk)
+        return False
+
+    code = f"{secrets.randbelow(900000) + 100000:06d}"
+    cache.set(f"login_otp:{user.id}", code, timeout=600)  # 10 minutes
+    threading.Thread(
+        target=_deliver_login_otp_email,
+        args=(user.id, user.username, user.email, code),
+        daemon=False,
+    ).start()
+    return True
 
 
 def _begin_login_otp_challenge(request, user):
-    _send_login_otp(user)
+    if not _send_login_otp(user):
+        messages.error(
+            request,
+            "We could not send your verification email. Please contact support or try again shortly.",
+        )
+        return _render_login(request, status=503)
     request.session["otp_user_id"] = user.id
     request.session["otp_pending_ip"] = request.META.get("REMOTE_ADDR", "unknown")
     request.session["otp_pending_fp"] = _device_fingerprint(request)
@@ -660,7 +686,8 @@ def _send_new_device_alert(user, ip_addr, ua):
         f"User-Agent: {ua[:200]}\n\n"
         "If this wasn’t you, reset your password immediately."
     )
-    EmailMessage(subject, body, to=[user.email]).send(fail_silently=True)
+    connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+    EmailMessage(subject, body, to=[user.email], connection=connection).send(fail_silently=True)
 
 
 def _get_active_profile(request):
@@ -9995,6 +10022,12 @@ def _send_activation_email(request, user):
     """
     if not user.email:
         return False
+    if (
+        not settings.DEBUG
+        and settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
+    ):
+        logger.error("Cannot send activation email for user %s because production email uses console backend.", user.pk)
+        return False
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = token_generator.make_token(user)
@@ -10007,7 +10040,8 @@ def _send_activation_email(request, user):
     }
     subject = "Activate your QuickStock JA account"
     body = render_to_string("inventory/email_verification.html", context)
-    email = EmailMessage(subject, body, to=[user.email])
+    connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+    email = EmailMessage(subject, body, to=[user.email], connection=connection)
     email.content_subtype = "html"
     try:
         email.send(fail_silently=False)

@@ -20,10 +20,16 @@ services:
           property: connectionString
       - key: DJANGO_EMAIL_HOST
         sync: false
+      - key: DJANGO_EMAIL_PORT
+        value: "587"
       - key: DJANGO_EMAIL_HOST_USER
         sync: false
       - key: DJANGO_EMAIL_HOST_PASSWORD
         sync: false
+      - key: DJANGO_EMAIL_USE_TLS
+        value: "True"
+      - key: DJANGO_EMAIL_TIMEOUT
+        value: "5"
       - key: DJANGO_DEFAULT_FROM_EMAIL
         sync: false
       - key: WIPAY_ENVIRONMENT
