@@ -103,6 +103,10 @@ if SECRET_KEY == "unsafe-dev-key" and os.getenv("RENDER"):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DJANGO_DEBUG", True)
 QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION = _env_bool("QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", True)
+QUICKSTOCK_SEND_SIGNUP_EMAILS = _env_bool(
+    "QUICKSTOCK_SEND_SIGNUP_EMAILS",
+    QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION,
+)
 
 # Dev/LAN friendly defaults.
 raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.50.223")
@@ -397,6 +401,7 @@ EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = _env_bool("DJANGO_EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = _env_bool("DJANGO_EMAIL_USE_SSL", False)
+EMAIL_TIMEOUT = _env_int("DJANGO_EMAIL_TIMEOUT", 5)
 
 if not DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     missing_email_vars = [

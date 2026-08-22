@@ -394,7 +394,10 @@ class WeekOneSecurityTests(TestCase):
         profile.save()
         return user
 
-    @override_settings(QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION=False)
+    @override_settings(
+        QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION=False,
+        QUICKSTOCK_SEND_SIGNUP_EMAILS=False,
+    )
     def test_public_signup_creates_active_account_when_verification_disabled(self):
         response = self.client.post(
             reverse("signup"),
@@ -415,6 +418,7 @@ class WeekOneSecurityTests(TestCase):
         self.assertTrue(user.is_staff)
         self.assertEqual(profile.role, "admin")
         self.assertEqual(profile.status, "active")
+        self.assertEqual(len(mail.outbox), 0)
         self.assertContains(response, "Account created! You can now log in.")
 
     @override_settings(

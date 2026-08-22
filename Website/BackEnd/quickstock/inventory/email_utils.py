@@ -1,4 +1,4 @@
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.conf import settings
 
@@ -12,6 +12,7 @@ def send_verification_email(user_email, username, code):
         'code': code
     })
     
-    msg = EmailMultiAlternatives(subject, "", from_email, [user_email])
+    connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+    msg = EmailMultiAlternatives(subject, "", from_email, [user_email], connection=connection)
     msg.attach_alternative(html_content, "text/html")
     msg.send()

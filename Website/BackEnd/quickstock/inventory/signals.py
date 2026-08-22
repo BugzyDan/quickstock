@@ -157,6 +157,8 @@ from .email_utils import send_verification_email
 def create_user_verification(sender, instance, created, **kwargs):
     if kwargs.get("raw") or not created or not instance.email:
         return
+    if not getattr(settings, "QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", True):
+        return
 
     code = str(100000 + secrets.randbelow(900000))
     UserVerification.objects.update_or_create(user=instance, defaults={"code": code})
@@ -167,7 +169,7 @@ def create_user_verification(sender, instance, created, **kwargs):
         logger.exception("Could not send account verification email to user %s", instance.pk)
 
 
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection
 from django.conf import settings
 
 # REMOVE the import from the top to prevent circular dependency
@@ -177,16 +179,20 @@ from django.conf import settings
 def send_welcome_email(sender, instance, created, **kwargs):
     if kwargs.get("raw") or not created or not instance.email:
         return
+    if not getattr(settings, "QUICKSTOCK_SEND_SIGNUP_EMAILS", getattr(settings, "QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION", True)):
+        return
 
     # This is intentionally a welcome message only. Verification state and its
     # single-use code are owned by create_user_verification above.
     try:
+        connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
         send_mail(
             subject="Welcome to QuickStock",
             message=f"Hello {instance.username}, welcome to QuickStock JA.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[instance.email],
             fail_silently=False,
+            connection=connection,
         )
     except Exception:
         logger.exception("Could not send welcome email to user %s", instance.pk)
