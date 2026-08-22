@@ -2,6 +2,32 @@
 
 This guide assumes Ubuntu, Nginx, Gunicorn, and a dedicated server-side env file. Do not deploy directly from the repository root on a developer workstation.
 
+## Render Deployment
+
+The repository root `render.yaml` is the source of truth for the Render web service and PostgreSQL database.
+
+1. Connect Render to the Git branch you intend to deploy and enable automatic deploys.
+2. Create and verify `quickstockja.com` in Resend, including the DNS records Resend provides.
+3. Create a Resend API key with sending access and set it as the Render secret `RESEND_API_KEY`. Set `QUICKSTOCK_EMAIL_TEST_RECIPIENT` to an inbox you monitor.
+4. Keep `QUICKSTOCK_EMAIL_PROVIDER=resend`. Free Render web services block SMTP ports, so Gmail SMTP is not a valid production delivery path on the free service.
+5. Set `DJANGO_DEFAULT_FROM_EMAIL=QuickStock JA <noreply@quickstockja.com>` and make sure that sender belongs to the verified Resend domain.
+6. Deploy. The build collects static files, applies migrations, creates the shared database cache table, checks runtime health, and sends a real email probe. A missing or rejected Resend configuration fails the deployment instead of leaving login stuck on a code that was never sent.
+7. Confirm `/api/health/` returns `status: ok`, including `database`, `migrations`, `cache`, and `email` checks.
+8. From a Render Shell, send a real delivery probe with `python manage.py check_email_delivery --to your-address@example.com`.
+
+Render PostgreSQL stores production records; the local SQLite database is not copied during a Git deploy. Transfer local records separately with a private fixture or database migration process. Never commit a data fixture containing user, session, customer, or payment records.
+
+To move an intentional local clone into a new, empty Render PostgreSQL database:
+
+1. Locally run `python manage.py export_deployment_bundle --output /tmp/quickstock.quickstock-deploy.zip`.
+2. Transfer that bundle to the Render Shell through a private channel. The bundle contains password hashes and business data and must never be added to Git or sent publicly.
+3. In the Render Shell run `python manage.py import_deployment_bundle /path/to/quickstock.quickstock-deploy.zip --confirm IMPORT`.
+4. Run `python manage.py check_runtime_health`, then compare user, item, location, sale, and stock counts between local and Render.
+
+The import command only loads into an empty application database. Use the existing `import_desktop_inventory` command instead when only product and stock seed data should be merged into an existing account.
+
+Free Render PostgreSQL databases expire after 30 days and have no backups. Upgrade the database before treating the service as durable production storage.
+
 ## Recommended Layout
 
 Use a deployment layout similar to:

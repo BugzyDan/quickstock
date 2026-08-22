@@ -151,7 +151,7 @@ def purge_user_data(sender, instance, **kwargs):
     Item.objects.filter(owner_id=uid).delete()
 
 
-from .email_utils import send_verification_email
+from .email_utils import get_delivery_connection, send_verification_email
 
 @receiver(post_save, sender=User)
 def create_user_verification(sender, instance, created, **kwargs):
@@ -171,7 +171,7 @@ def create_user_verification(sender, instance, created, **kwargs):
         logger.exception("Could not send account verification email to user %s", instance.pk)
 
 
-from django.core.mail import send_mail, get_connection
+from django.core.mail import send_mail
 from django.conf import settings
 
 # REMOVE the import from the top to prevent circular dependency
@@ -187,7 +187,7 @@ def send_welcome_email(sender, instance, created, **kwargs):
     # This is intentionally a welcome message only. Verification state and its
     # single-use code are owned by create_user_verification above.
     try:
-        connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+        connection = get_delivery_connection()
         send_mail(
             subject="Welcome to QuickStock",
             message=f"Hello {instance.username}, welcome to QuickStock JA.",

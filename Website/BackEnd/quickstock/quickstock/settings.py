@@ -6,8 +6,8 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
 
-# 1. Define BASE_DIR first
-BASE_DIR = Path(__file__).resolve().parent.parent.parent # Adjust .parent count as needed
+# Project root containing manage.py, db.sqlite3, staticfiles, and media.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Load local environment without hardcoding a developer machine path.
 dotenv_candidates = [
@@ -26,8 +26,8 @@ for dotenv_path in (path for path in dotenv_candidates if path):
 # -----------------------------------------------------
 # WiPay Settings
 # -----------------------------------------------------
-WIPAY_ACCOUNT_NUMBER_SANDBOX = os.getenv("WIPAY_ACCOUNT_NUMBER_SANDBOX")
-WIPAY_API_KEY_SANDBOX = os.getenv("WIPAY_API_KEY_SANDBOX")
+WIPAY_ACCOUNT_NUMBER_SANDBOX = os.getenv("WIPAY_ACCOUNT_NUMBER_SANDBOX", "")
+WIPAY_API_KEY_SANDBOX = os.getenv("WIPAY_API_KEY_SANDBOX", "")
 
 # -----------------------------------------------------
 # Add Apps Directory To Python Path
@@ -163,6 +163,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'anymail',
+    'storages',
     'rest_framework',
     'rest_framework.authtoken',
 
@@ -236,6 +238,12 @@ RUNNING_TESTS = (
     or "pytest" in sys.modules
 )
 
+if os.getenv("RENDER") and not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL must be connected to Render PostgreSQL. Refusing to start "
+        "with an ephemeral Render database."
+    )
+
 def _database_from_url(database_url: str) -> dict:
     parsed = urlparse(database_url)
     scheme = parsed.scheme.lower()
@@ -274,7 +282,7 @@ if DATABASE_URL:
 else:
     if DB_ENGINE:
         db_engine = DB_ENGINE
-    elif DEBUG or RUNNING_TESTS or _env_bool("DJANGO_ALLOW_SQLITE_FALLBACK", _env_bool("RENDER", False)):
+    elif DEBUG or RUNNING_TESTS or _env_bool("DJANGO_ALLOW_SQLITE_FALLBACK", False):
         db_engine = "django.db.backends.sqlite3"
     else:
         db_engine = "django.db.backends.mysql"
@@ -309,6 +317,28 @@ else:
                 },
             }
         }
+
+
+# Render can run more than one Gunicorn worker. Use PostgreSQL-backed cache
+# state there so OTPs and throttles do not disappear between worker processes.
+default_cache_backend = (
+    "django.core.cache.backends.db.DatabaseCache"
+    if os.getenv("RENDER") and DATABASE_URL
+    else "django.core.cache.backends.locmem.LocMemCache"
+)
+CACHES = {
+    "default": {
+        "BACKEND": _env_str("DJANGO_CACHE_BACKEND", default_cache_backend),
+        "LOCATION": _env_str(
+            "DJANGO_CACHE_LOCATION",
+            "quickstock_cache" if os.getenv("RENDER") and DATABASE_URL else "quickstock-local",
+        ),
+        "TIMEOUT": _env_int("DJANGO_CACHE_TIMEOUT", 300),
+        "OPTIONS": {
+            "MAX_ENTRIES": _env_int("DJANGO_CACHE_MAX_ENTRIES", 10000),
+        },
+    }
+}
 
 
 # Password validation
@@ -353,9 +383,43 @@ STATICFILES_DIRS = []
 
 # Add this:
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # destination for collectstatic
+MEDIA_STORAGE_PROVIDER = _env_str("QUICKSTOCK_MEDIA_STORAGE", "filesystem").lower()
+AWS_STORAGE_BUCKET_NAME = _env_str("AWS_STORAGE_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = _env_str("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = _env_str("AWS_SECRET_ACCESS_KEY")
+AWS_S3_ENDPOINT_URL = _env_str("AWS_S3_ENDPOINT_URL")
+AWS_S3_REGION_NAME = _env_str("AWS_S3_REGION_NAME", "auto")
+AWS_S3_CUSTOM_DOMAIN = _env_str("AWS_S3_CUSTOM_DOMAIN")
+
+default_storage = {
+    "BACKEND": "django.core.files.storage.FileSystemStorage",
+}
+if MEDIA_STORAGE_PROVIDER == "s3":
+    s3_options = {
+        "bucket_name": AWS_STORAGE_BUCKET_NAME,
+        "access_key": AWS_ACCESS_KEY_ID,
+        "secret_key": AWS_SECRET_ACCESS_KEY,
+        "endpoint_url": AWS_S3_ENDPOINT_URL or None,
+        "region_name": AWS_S3_REGION_NAME or None,
+        "default_acl": None,
+        "file_overwrite": False,
+        "querystring_auth": _env_bool("AWS_QUERYSTRING_AUTH", True),
+    }
+    if AWS_S3_CUSTOM_DOMAIN:
+        s3_options["custom_domain"] = AWS_S3_CUSTOM_DOMAIN
+    default_storage = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": s3_options,
+    }
+
 STORAGES = {
+    "default": default_storage,
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "whitenoise.storage.CompressedStaticFilesStorage"
+            if DEBUG or RUNNING_TESTS
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 # Ensure the directory exists to avoid startup failures before collectstatic runs.
@@ -365,6 +429,10 @@ STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+QUICKSTOCK_REQUIRE_PERSISTENT_MEDIA = _env_bool(
+    "QUICKSTOCK_REQUIRE_PERSISTENT_MEDIA",
+    False,
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -387,18 +455,34 @@ QUICKSTOCK_SECURITY_HEARTBEAT_SECONDS = max(
 )
 
 # Email backend
-# If DJANGO_EMAIL_BACKEND is set, always use it (even in DEBUG).
-EMAIL_BACKEND = os.getenv("DJANGO_EMAIL_BACKEND", "").strip()
+# Free Render web services block outbound SMTP ports. Resend uses HTTPS and is
+# therefore the production default there; SMTP remains available for local or
+# paid hosting by setting QUICKSTOCK_EMAIL_PROVIDER=smtp.
+EMAIL_PROVIDER = _env_str(
+    "QUICKSTOCK_EMAIL_PROVIDER",
+    "resend" if os.getenv("RENDER") else "smtp",
+).lower()
+RESEND_API_KEY = _env_str("RESEND_API_KEY")
+ANYMAIL = {
+    "RESEND_API_KEY": RESEND_API_KEY,
+    "REQUESTS_TIMEOUT": _env_int("DJANGO_EMAIL_TIMEOUT", 5),
+}
+
+EMAIL_BACKEND = _env_str("DJANGO_EMAIL_BACKEND")
 if not EMAIL_BACKEND:
-    # Prefer real SMTP if host/user are provided, even in DEBUG
-    if os.getenv("DJANGO_EMAIL_HOST") or os.getenv("DJANGO_EMAIL_HOST_USER"):
+    if EMAIL_PROVIDER == "resend" and RESEND_API_KEY:
+        EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    elif EMAIL_PROVIDER == "resend":
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    elif os.getenv("DJANGO_EMAIL_HOST") or os.getenv("DJANGO_EMAIL_HOST_USER"):
         EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     elif DEBUG:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
     else:
         EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
+DEFAULT_FROM_EMAIL = _env_str("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
+SERVER_EMAIL = _env_str("DJANGO_SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_HOST_USER", "")
@@ -407,7 +491,13 @@ EMAIL_USE_TLS = _env_bool("DJANGO_EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = _env_bool("DJANGO_EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = _env_int("DJANGO_EMAIL_TIMEOUT", 5)
 
-if not DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+if not DEBUG and EMAIL_PROVIDER == "resend" and not RESEND_API_KEY:
+    warnings.warn(
+        "Resend email is selected but RESEND_API_KEY is missing. Login OTP email "
+        "will remain unavailable until the Render secret is configured.",
+        RuntimeWarning,
+    )
+elif not DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     missing_email_vars = [
         name
         for name, value in {

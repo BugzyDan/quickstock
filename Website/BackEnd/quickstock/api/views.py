@@ -13,7 +13,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from typing import Any, Dict, List, Tuple
-from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.conf import settings
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
@@ -50,17 +50,15 @@ from inventory.models import (
     Customer,
     Item,
     Location,
+    PurchaseOrder,
     Sale,
     SaleItem,
     StockRecord,
+    StockTransfer,
     Supplier,
     UserProfile,
 )
 from inventory.sales import SaleWorkflowError, finalize_sale
-User = get_user_model()
-
-
-
 logger = logging.getLogger("inventory")
 
 
@@ -71,6 +69,15 @@ def _api_login_failure_key(request, username: str) -> str:
     remote_addr = str(request.META.get("REMOTE_ADDR") or "unknown").strip()
     identity = f"{remote_addr}|{str(username or '').strip().casefold()}"
     return f"api_login_fail:{hashlib.sha256(identity.encode('utf-8')).hexdigest()}"
+
+
+def _username_for_login_identifier(identifier: str) -> str:
+    value = (identifier or "").strip()
+    if not value or "@" not in value:
+        return value
+
+    matches = list(User.objects.filter(email__iexact=value).values_list("username", flat=True)[:2])
+    return matches[0] if len(matches) == 1 else value
 
 
 def _record_api_login_failure(cache_key: str, window_seconds: int) -> None:
@@ -85,6 +92,25 @@ def get_user_effective_owner(user):
     Standardizes data ownership. Staff act on behalf of the Business Owner.
     """
     return get_effective_owner(user)
+
+
+def _api_location_queryset(user):
+    locations = Location.objects.filter(
+        owner=get_user_effective_owner(user),
+        is_archived=False,
+    )
+    if user.is_superuser:
+        return locations
+    profile = UserProfile.for_user(user)
+    if profile.role == "cashier":
+        return locations.filter(pk=profile.default_location_id)
+    return locations
+
+
+def _api_can_manage_inventory(user):
+    if user.is_superuser:
+        return True
+    return UserProfile.for_user(user).role in {"admin", "manager"}
 
 def item_to_sync_dict(item: Item, location_id: int | None = None, location_name: str | None = None) -> Dict[str, Any]:
     """Convert an Item model to a sync-friendly dictionary."""
@@ -241,7 +267,267 @@ def _desktop_register_snapshot(user):
         "opened_at": shift.opened_at.isoformat(),
         "is_open": not shift.is_closed and shift.end_time is None,
     }
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_open_register(request):
+    try:
+        location_id = int(request.data.get("location_id"))
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Select a valid register location.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
 
+    try:
+        opening_cash = Decimal(
+            str(request.data.get("opening_cash", "0.00"))
+        ).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Opening cash must be a valid amount.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+
+    if opening_cash < Decimal("0.00"):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Opening cash cannot be negative.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+
+    existing_shift = (
+        CashShift.objects
+        .filter(
+            cashier=request.user,
+            is_closed=False,
+            end_time__isnull=True,
+        )
+        .order_by("-opened_at")
+        .first()
+    )
+
+    if existing_shift:
+        return JsonResponse(
+            {
+                "ok": True,
+                "message": "Register is already open.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=200,
+        )
+
+    effective_owner = get_effective_owner(request.user)
+    location = Location.objects.filter(
+        id=location_id,
+        owner=effective_owner,
+        is_archived=False,
+    ).first()
+
+    if not location:
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Location not found.",
+                "active_register": None,
+            },
+            status=404,
+        )
+
+    if not request.user.is_superuser and not location.can_be_accessed_by(request.user):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "You are not assigned to this register location.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=403,
+        )
+
+    try:
+        with transaction.atomic():
+            # Serialize opens for this operator across all locations. The
+            # existing database constraint separately protects same-location
+            # duplicates.
+            User.objects.select_for_update().get(pk=request.user.pk)
+            existing_shift = (
+                CashShift.objects
+                .filter(cashier=request.user, is_closed=False, end_time__isnull=True)
+                .order_by("-opened_at")
+                .first()
+            )
+            if existing_shift:
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "message": "Register is already open.",
+                        "active_register": _desktop_register_snapshot(request.user),
+                    },
+                    status=200,
+                )
+            shift = CashShift.objects.create(
+                owner=location.owner,
+                cashier=request.user,
+                location=location,
+                opening_cash=opening_cash,
+                is_closed=False,
+            )
+    except (IntegrityError, ValidationError) as exc:
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": str(exc),
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=409,
+        )
+
+    return JsonResponse({
+            "ok": True,
+            "message": f"Register opened at {location.name}.",
+            "active_register": {
+                "id": shift.id,
+                "location_id": shift.location_id,
+                "opened_at": shift.opened_at.isoformat(),
+                "is_open": True,
+            },
+        },
+        status=201,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_close_register(request):
+    """Close the authenticated operator's active desktop register shift."""
+
+    try:
+        register_id = int(request.data.get("register_id"))
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "A valid register shift is required.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+
+    try:
+        closing_cash = Decimal(
+            str(request.data.get("closing_cash", "0.00"))
+        ).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Closing cash must be a valid amount.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+
+    if closing_cash < Decimal("0.00"):
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "Closing cash cannot be negative.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+
+    notes = str(request.data.get("notes") or "").strip()
+
+    try:
+        with transaction.atomic():
+            shift = (
+                CashShift.objects
+                .select_for_update()
+                .filter(
+                    id=register_id,
+                    cashier=request.user,
+                    is_closed=False,
+                    end_time__isnull=True,
+                )
+                .select_related("location")
+                .first()
+            )
+
+            if not shift:
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": "No matching open register shift was found.",
+                        "active_register": _desktop_register_snapshot(
+                            request.user
+                        ),
+                    },
+                    status=404,
+                )
+
+            shift = shift.close_shift(
+                closing_cash,
+                notes=notes,
+                actor=request.user,
+            )
+
+    except ValidationError as exc:
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "; ".join(exc.messages),
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=400,
+        )
+    except Exception:
+        logger.exception(
+            "Desktop register closing failed for user %s.",
+            request.user.id,
+        )
+
+        return JsonResponse(
+            {
+                "ok": False,
+                "message": "The register shift could not be closed.",
+                "active_register": _desktop_register_snapshot(request.user),
+            },
+            status=500,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": (
+                f"Register at {shift.location.name} was closed "
+                f"with ${closing_cash:,.2f} counted."
+            ),
+            "active_register": None,
+            "closed_register": {
+                "id": shift.id,
+                "location_id": shift.location_id,
+                "opened_at": shift.opened_at.isoformat(),
+                "closed_at": shift.end_time.isoformat(),
+                "closing_cash": str(shift.actual_cash),
+                "expected_cash": str(shift.expected_cash),
+                "variance": str(shift.difference),
+            },
+        },
+        status=200,
+    )
 
 def _checkout_tax_label(location: Location) -> str:
     return "GCT" if str(location.country_code or "JM").upper() == "JM" else "VAT"
@@ -855,6 +1141,7 @@ def api_login(request):
     API endpoint for user login. Authenticates user and returns an auth token.
     """
     username = request.data.get('username')
+    auth_username = _username_for_login_identifier(username)
     password = request.data.get('password')
     max_failures = max(1, int(getattr(settings, "API_LOGIN_RATE_LIMIT_ATTEMPTS", 10) or 10))
     window_seconds = max(1, int(getattr(settings, "API_LOGIN_RATE_LIMIT_WINDOW", 300) or 300))
@@ -872,7 +1159,7 @@ def api_login(request):
             headers={"Retry-After": str(window_seconds)},
         )
 
-    user = authenticate(request, username=username, password=password)
+    user = authenticate(request, username=auth_username, password=password)
 
     if user:
         cache.delete(failure_key)
@@ -1044,10 +1331,7 @@ def api_users(request):
         "scope": scope,
     })
 
-@api_view(['POST'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def sync_push_inventory(request):
+def _sync_push_inventory_response(request):
     """
     Push local inventory changes to the server.
     
@@ -1157,10 +1441,21 @@ def sync_push_inventory(request):
         "sync_id": str(sync_log.sync_id),
     })
 
-@api_view(['GET'])
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def sync_push_inventory(request):
+    return _sync_push_inventory_response(request)
+
+
+@api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def sync_pull_inventory(request):
+    if request.method == "POST":
+        return _sync_push_inventory_response(request)
+
     last_sync = request.GET.get("last_sync")
     client_id = _sync_client_id(request.GET.get("client_id"))
     
@@ -1730,13 +2025,17 @@ def sync_reference_data(request):
     active_cat_ids = Item.objects.filter(owner=effective_owner, category__isnull=False).values_list('category_id', flat=True).distinct()
     categories = list(Category.objects.filter(id__in=active_cat_ids).values("id", "name").order_by("name"))
 
-    locations = list(Location.objects.filter(
-        owner=effective_owner
-    ).values("id", "name", "address", "is_warehouse", "country_code").order_by("name"))
+    locations = list(
+        _api_location_queryset(request.user)
+        .values("id", "name", "address", "is_warehouse", "country_code")
+        .order_by("name")
+    )
 
-    suppliers = list(Supplier.objects.filter(
-        owner=effective_owner
-    ).values("id", "name", "contact_name", "phone", "email").order_by("name"))
+    suppliers = list(
+        Supplier.objects.filter(owner=effective_owner, is_archived=False)
+        .values("id", "name", "contact_name", "phone", "email")
+        .order_by("name")
+    )
 
     customers = list(Customer.objects.filter(
         owner=effective_owner
@@ -1752,3 +2051,219 @@ def sync_reference_data(request):
         "active_register": _desktop_register_snapshot(request.user),
         "timestamp": django_timezone.now().isoformat(),
     })
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_create_category(request):
+    if not _api_can_manage_inventory(request.user):
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+    name = str(request.data.get("name") or "").strip()
+    if not name or len(name) > 100:
+        return JsonResponse({"ok": False, "error": "Enter a valid category name."}, status=400)
+    category, created = Category.objects.get_or_create(
+        owner=get_user_effective_owner(request.user),
+        name=name,
+    )
+    return JsonResponse(
+        {"ok": True, "success": True, "id": category.id, "name": category.name},
+        status=201 if created else 200,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_create_supplier(request):
+    if not _api_can_manage_inventory(request.user):
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+    name = str(request.data.get("name") or "").strip()
+    if not name:
+        return JsonResponse({"ok": False, "error": "Supplier name is required."}, status=400)
+
+    owner = get_user_effective_owner(request.user)
+    supplier = Supplier.objects.filter(owner=owner, name__iexact=name).first()
+    created = supplier is None
+    if supplier is None:
+        supplier = Supplier(owner=owner, name=name)
+    supplier.contact_name = str(request.data.get("contact_name") or "").strip() or None
+    supplier.phone = str(request.data.get("phone") or "").strip()
+    supplier.email = str(request.data.get("email") or "").strip()
+    supplier.address = str(request.data.get("address") or "").strip()
+    try:
+        supplier.full_clean()
+        supplier.save()
+    except ValidationError as exc:
+        return JsonResponse({"ok": False, "error": _safe_sync_error(exc)}, status=400)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "success": True,
+            "id": supplier.id,
+            "name": supplier.name,
+            "contact_name": supplier.contact_name,
+            "phone": supplier.phone,
+            "email": supplier.email,
+        },
+        status=201 if created else 200,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_receive_stock(request):
+    if not _api_can_manage_inventory(request.user):
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+    try:
+        quantity = int(request.data.get("quantity"))
+        unit_cost = Decimal(str(request.data.get("unit_cost", "0"))).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return JsonResponse({"ok": False, "error": "Quantity and unit cost must be valid."}, status=400)
+    if quantity <= 0 or unit_cost < 0:
+        return JsonResponse(
+            {"ok": False, "error": "Quantity must be positive and cost cannot be negative."},
+            status=400,
+        )
+
+    owner = get_user_effective_owner(request.user)
+    item = Item.objects.filter(
+        owner=owner,
+        sku=str(request.data.get("sku") or "").strip(),
+        is_deleted=False,
+    ).first()
+    supplier = Supplier.objects.filter(
+        owner=owner,
+        pk=request.data.get("supplier_id"),
+        is_archived=False,
+    ).first()
+    location = _api_location_queryset(request.user).filter(
+        pk=request.data.get("location_id")
+    ).first()
+    if not item:
+        return JsonResponse({"ok": False, "error": "Item not found."}, status=404)
+    if not supplier:
+        return JsonResponse({"ok": False, "error": "Supplier not found."}, status=404)
+    if not location:
+        return JsonResponse({"ok": False, "error": "Location not found or unavailable."}, status=404)
+
+    with transaction.atomic():
+        stock, _ = StockRecord.objects.select_for_update().get_or_create(
+            item=item,
+            location=location,
+            defaults={"quantity": 0},
+        )
+        PurchaseOrder.objects.create(
+            item=item,
+            supplier=supplier,
+            location=location,
+            quantity_received=quantity,
+            unit_cost=unit_cost,
+        )
+        stock.quantity += quantity
+        stock.save(update_fields=["quantity"])
+        AuditLog.objects.create(
+            user=request.user,
+            action="inventory",
+            message="Desktop stock receipt committed",
+            metadata={
+                "item_id": item.id,
+                "supplier_id": supplier.id,
+                "location_id": location.id,
+                "quantity": quantity,
+                "unit_cost": str(unit_cost),
+            },
+        )
+
+    return JsonResponse({"ok": True, "success": True, "quantity": stock.quantity}, status=201)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_transfer_stock(request):
+    if not _api_can_manage_inventory(request.user):
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+    try:
+        quantity = int(request.data.get("quantity"))
+    except (TypeError, ValueError):
+        return JsonResponse({"ok": False, "error": "Quantity must be valid."}, status=400)
+    if quantity <= 0:
+        return JsonResponse({"ok": False, "error": "Quantity must be positive."}, status=400)
+
+    owner = get_user_effective_owner(request.user)
+    item = Item.objects.filter(
+        owner=owner,
+        sku=str(request.data.get("sku") or "").strip(),
+        is_deleted=False,
+    ).first()
+    locations = _api_location_queryset(request.user)
+    source = locations.filter(pk=request.data.get("from_location_id")).first()
+    destination = locations.filter(pk=request.data.get("to_location_id")).first()
+    if not item:
+        return JsonResponse({"ok": False, "error": "Item not found."}, status=404)
+    if not source or not destination:
+        return JsonResponse({"ok": False, "error": "Location not found or unavailable."}, status=404)
+    if source.pk == destination.pk:
+        return JsonResponse({"ok": False, "error": "Source and destination must differ."}, status=400)
+
+    with transaction.atomic():
+        source_stock = StockRecord.objects.select_for_update().filter(
+            item=item,
+            location=source,
+        ).first()
+        if not source_stock or source_stock.quantity < quantity:
+            return JsonResponse({"ok": False, "error": "Insufficient stock."}, status=409)
+        destination_stock, _ = StockRecord.objects.select_for_update().get_or_create(
+            item=item,
+            location=destination,
+            defaults={"quantity": 0},
+        )
+        source_stock.quantity -= quantity
+        destination_stock.quantity += quantity
+        source_stock.save(update_fields=["quantity"])
+        destination_stock.save(update_fields=["quantity"])
+        transfer = StockTransfer.objects.create(
+            item=item,
+            from_location=source,
+            to_location=destination,
+            quantity=quantity,
+            status="COMPLETED",
+            user=request.user,
+        )
+        AuditLog.objects.create(
+            user=request.user,
+            action="inventory",
+            message="Desktop stock transfer committed",
+            metadata={"transfer_id": transfer.id, "item_id": item.id, "quantity": quantity},
+        )
+
+    return JsonResponse({"ok": True, "success": True, "transfer_id": transfer.id}, status=201)
+
+
+@api_view(["DELETE"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def desktop_delete_inventory_item(request, sku):
+    if not _api_can_manage_inventory(request.user):
+        return JsonResponse({"ok": False, "error": "Forbidden"}, status=403)
+    item = Item.objects.filter(
+        owner=get_user_effective_owner(request.user),
+        sku=sku,
+        is_deleted=False,
+    ).first()
+    if not item:
+        return JsonResponse({"ok": False, "error": "Item not found."}, status=404)
+    item.is_deleted = True
+    item.status = "archived"
+    item.sync_source = "desktop"
+    item.save(update_fields=["is_deleted", "status", "sync_source", "last_modified"])
+    AuditLog.objects.create(
+        user=request.user,
+        action="inventory",
+        message="Desktop inventory item archived",
+        metadata={"item_id": item.id, "sku": item.sku},
+    )
+    return JsonResponse({"ok": True, "success": True})

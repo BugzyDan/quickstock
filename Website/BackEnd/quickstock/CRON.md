@@ -1,5 +1,21 @@
 # Cron: Audit Log Cleanup
 
+On Render, create separate Cron Job services that use the same repository,
+branch, root directory, database, and environment variables as the web service.
+Use these commands:
+
+```bash
+python manage.py cleanup_audit_logs
+python manage.py send_low_stock_alerts
+python manage.py process_accounting_sync
+```
+
+Suggested schedules are daily for cleanup and low-stock alerts, and every five
+minutes for accounting sync. Render Cron Jobs are separate billed services, so
+they are documented rather than created automatically by `render.yaml`.
+
+The system-cron examples below apply to a dedicated Ubuntu host.
+
 Run the cleanup command daily to keep audit logs within retention:
 
 ```bash

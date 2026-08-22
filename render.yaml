@@ -2,10 +2,15 @@ services:
   - type: web
     name: quickstock
     runtime: python
+    branch: css-recovery-backup
     rootDir: Website/BackEnd/quickstock
     buildCommand: ./build.sh
-    startCommand: gunicorn quickstock.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: gunicorn quickstock.wsgi:application --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-2} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile -
+    healthCheckPath: /healthz/
+    autoDeployTrigger: commit
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.7"
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
@@ -18,20 +23,48 @@ services:
         fromDatabase:
           name: quickstock-db
           property: connectionString
-      - key: DJANGO_EMAIL_HOST
+      - key: DJANGO_CACHE_BACKEND
+        value: django.core.cache.backends.db.DatabaseCache
+      - key: DJANGO_CACHE_LOCATION
+        value: quickstock_cache
+      - key: QUICKSTOCK_EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
         sync: false
-      - key: DJANGO_EMAIL_PORT
-        value: "587"
-      - key: DJANGO_EMAIL_HOST_USER
+      - key: QUICKSTOCK_EMAIL_TEST_RECIPIENT
         sync: false
-      - key: DJANGO_EMAIL_HOST_PASSWORD
-        sync: false
-      - key: DJANGO_EMAIL_USE_TLS
-        value: "True"
       - key: DJANGO_EMAIL_TIMEOUT
         value: "5"
       - key: DJANGO_DEFAULT_FROM_EMAIL
+        value: "QuickStock JA <noreply@quickstockja.com>"
+      - key: QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION
+        value: "True"
+      - key: QUICKSTOCK_SEND_LEGACY_VERIFICATION_EMAILS
+        value: "False"
+      - key: QUICKSTOCK_SEND_SIGNUP_EMAILS
+        value: "False"
+      - key: QUICKSTOCK_SUPERUSER_USERNAME
         sync: false
+      - key: QUICKSTOCK_SUPERUSER_EMAIL
+        sync: false
+      - key: QUICKSTOCK_SUPERUSER_PASSWORD
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_OAUTH_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_OAUTH_TENANT_ID
+        value: common
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: GUNICORN_THREADS
+        value: "2"
+      - key: GUNICORN_TIMEOUT
+        value: "60"
       - key: WIPAY_ENVIRONMENT
         value: live
       - key: WIPAY_ACCOUNT_NUMBER_LIVE

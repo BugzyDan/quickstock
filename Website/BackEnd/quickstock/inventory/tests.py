@@ -62,6 +62,7 @@ from .accounting import (
     queue_accounting_sync,
     queue_existing_accounting_data,
 )
+from .email_utils import CONSOLE_BACKEND, RESEND_BACKEND, email_delivery_status
 from .signals import create_user_verification, send_welcome_email
 from .sales import SaleWorkflowError, finalize_sale
 from .views import (
@@ -70,6 +71,7 @@ from .views import (
     _customer_queryset_for_user,
     _daily_reconciliation_context,
     _sales_document_email_context,
+    _send_login_otp,
     _stock_queryset_for_user,
 )
 
@@ -889,7 +891,7 @@ class WeekOneSecurityTests(TestCase):
         session = self.client.session
         session["otp_user_id"] = user.id
         session["otp_pending_ip"] = "127.0.0.1"
-        session["otp_pending_fp"] = hashlib.sha256("TestBrowser|127.0.0.1".encode("utf-8")).hexdigest()
+        session["otp_pending_fp"] = hashlib.sha256("TestBrowser".encode("utf-8")).hexdigest()
         session.save()
         cache.set(f"login_otp:{user.id}", "123456", timeout=600)
 
@@ -919,7 +921,7 @@ class WeekOneSecurityTests(TestCase):
         session = self.client.session
         session["otp_user_id"] = user.id
         session["otp_pending_ip"] = "127.0.0.1"
-        session["otp_pending_fp"] = hashlib.sha256("OriginalBrowser|127.0.0.1".encode("utf-8")).hexdigest()
+        session["otp_pending_fp"] = hashlib.sha256("OriginalBrowser".encode("utf-8")).hexdigest()
         session.save()
         cache.set(f"login_otp:{user.id}", "123456", timeout=600)
 
@@ -934,6 +936,27 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(response["Location"], reverse("login"))
         self.assertNotIn("otp_user_id", self.client.session)
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_login_otp_survives_render_proxy_ip_change(self):
+        cache.clear()
+        user = self._make_user("otp-proxy-change")
+        session = self.client.session
+        session["otp_user_id"] = user.id
+        session["otp_pending_ip"] = "10.0.0.1"
+        session["otp_pending_fp"] = hashlib.sha256("StableBrowser".encode("utf-8")).hexdigest()
+        session.save()
+        cache.set(f"login_otp:{user.id}", "123456", timeout=600)
+
+        response = self.client.post(
+            reverse("login_otp"),
+            {"otp_code": "123456"},
+            HTTP_USER_AGENT="StableBrowser",
+            REMOTE_ADDR="10.0.0.2",
+            HTTP_X_FORWARDED_FOR="203.0.113.25",
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
@@ -987,6 +1010,34 @@ class WeekOneSecurityTests(TestCase):
         )
 
         self.assertEqual(UserVerification.objects.filter(user=user).count(), 1)
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND=RESEND_BACKEND,
+        RESEND_API_KEY="re_test_key",
+        DEFAULT_FROM_EMAIL="QuickStock JA <noreply@quickstockja.com>",
+    )
+    def test_resend_email_configuration_is_ready_for_render(self):
+        status = email_delivery_status()
+
+        self.assertTrue(status["ok"])
+        self.assertEqual(status["provider"], "resend")
+        self.assertTrue(status["api_key_set"])
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND=CONSOLE_BACKEND,
+        RESEND_API_KEY="",
+        DEFAULT_FROM_EMAIL="QuickStock JA <noreply@quickstockja.com>",
+    )
+    def test_login_otp_refuses_to_claim_delivery_without_render_email_credentials(self):
+        cache.clear()
+        user = self._make_user("otp-email-unconfigured")
+
+        self.assertFalse(_send_login_otp(user))
+        self.assertIsNone(cache.get(f"login_otp:{user.id}"))
 
     @override_settings(
         SOCIAL_AUTH_PROVIDERS={
@@ -5125,7 +5176,34 @@ class WeekFourReadinessTests(TestCase):
         self.assertTrue(payload["checks"]["database"]["ok"])
         self.assertTrue(payload["checks"]["migrations"]["ok"])
         self.assertTrue(payload["checks"]["media_storage"]["ok"])
+        self.assertTrue(payload["checks"]["cache"]["ok"])
+        self.assertTrue(payload["checks"]["email"]["ok"])
         self.assertTrue(payload["checks"]["logging"]["ok"])
+
+    def test_render_readiness_reports_login_dependencies(self):
+        response = self.client.get(reverse("render_readiness"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertTrue(payload["checks"]["database"]["ok"])
+        self.assertTrue(payload["checks"]["cache"]["ok"])
+        self.assertTrue(payload["checks"]["email"]["ok"])
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND=CONSOLE_BACKEND,
+        RESEND_API_KEY="",
+        DEFAULT_FROM_EMAIL="QuickStock JA <noreply@quickstockja.com>",
+    )
+    def test_api_health_is_degraded_when_render_email_is_not_configured(self):
+        response = self.client.get(reverse("api_health"))
+
+        self.assertEqual(response.status_code, 503)
+        payload = response.json()
+        self.assertEqual(payload["status"], "degraded")
+        self.assertFalse(payload["checks"]["email"]["ok"])
 
     def test_check_runtime_health_command_passes(self):
         call_command("check_runtime_health")
@@ -5180,7 +5258,11 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse("login"), response["Location"])
 
-    @override_settings(WIPAY_CONTACT_PHONE_DEFAULT="+1-876-555-0100")
+    @override_settings(
+        WIPAY_CONTACT_PHONE_DEFAULT="+1-876-555-0100",
+        WIPAY_ACCOUNT_NUMBER_SANDBOX="1234567890",
+        WIPAY_API_KEY_SANDBOX="123",
+    )
     @patch("inventory.views._probe_wipay_availability", return_value=(True, ""))
     def test_wipay_subscription_checkout_uses_configured_phone_fallback(self, _mock_probe):
         owner = self._make_user("wipay-phone-owner")
@@ -5195,7 +5277,11 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("%2B1-876-555-0100", response.json()["url"])
 
-    @override_settings(WIPAY_CONTACT_PHONE_DEFAULT="+1-876-555-0100")
+    @override_settings(
+        WIPAY_CONTACT_PHONE_DEFAULT="+1-876-555-0100",
+        WIPAY_ACCOUNT_NUMBER_SANDBOX="1234567890",
+        WIPAY_API_KEY_SANDBOX="123",
+    )
     @patch("inventory.views._probe_wipay_availability", return_value=(True, ""))
     def test_wipay_subscription_checkout_prefers_profile_phone(self, _mock_probe):
         owner = self._make_user("wipay-profile-phone-owner")
@@ -5212,7 +5298,11 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("876-777-0000", response.json()["url"])
 
-    @override_settings(WIPAY_ORIGIN="QuickStock JA POS!!!")
+    @override_settings(
+        WIPAY_ORIGIN="QuickStock JA POS!!!",
+        WIPAY_ACCOUNT_NUMBER_SANDBOX="1234567890",
+        WIPAY_API_KEY_SANDBOX="123",
+    )
     @patch("inventory.views._probe_wipay_availability", return_value=(True, ""))
     def test_wipay_subscription_checkout_sanitizes_origin(self, _mock_probe):
         owner = self._make_user("wipay-origin-owner")
@@ -5227,7 +5317,11 @@ class WeekFourReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("origin=QuickStock_JA_POS", response.json()["url"])
 
-    @override_settings(WIPAY_ORIGIN="QuickStock JA POS!!!")
+    @override_settings(
+        WIPAY_ORIGIN="QuickStock JA POS!!!",
+        WIPAY_ACCOUNT_NUMBER_SANDBOX="1234567890",
+        WIPAY_API_KEY_SANDBOX="123",
+    )
     @patch("inventory.views._probe_wipay_availability", return_value=(True, ""))
     def test_pos_card_checkout_sanitizes_wipay_origin(self, _mock_probe):
         owner = self._make_user("wipay-pos-origin-owner")
@@ -8124,12 +8218,18 @@ class CS006ProductionReadinessTests(TestCase):
     def setUp(self):
         self.owner_a = User.objects.create_user("owner_a", "owner_a@example.com", "pass123")
         self.owner_a.profile.role = "admin"
+        self.owner_a.profile.status = "active"
+        self.owner_a.profile.plan = "PRO"
+        self.owner_a.profile.pro_expires = timezone.localdate() + timedelta(days=30)
         self.location_a = Location.objects.create(name="Warehouse Alpha", owner=self.owner_a, inventory_capacity=10000)
         self.owner_a.profile.default_location = self.location_a
         self.owner_a.profile.save()
 
         self.owner_b = User.objects.create_user("owner_b", "owner_b@example.com", "pass123")
         self.owner_b.profile.role = "admin"
+        self.owner_b.profile.status = "active"
+        self.owner_b.profile.plan = "PRO"
+        self.owner_b.profile.pro_expires = timezone.localdate() + timedelta(days=30)
         self.location_b = Location.objects.create(name="Store Beta", owner=self.owner_b, inventory_capacity=5000)
         self.owner_b.profile.default_location = self.location_b
         self.owner_b.profile.save()
@@ -8190,8 +8290,6 @@ class CS006ProductionReadinessTests(TestCase):
             location=loc_b,
             subtotal=Decimal("4500.00"),
             total_amount=Decimal("4500.00"),
-            amount_paid=Decimal("0.00"),
-            remaining_balance=Decimal("4500.00"),
             status="issued",
         )
         SalesInvoiceItem.objects.create(
@@ -8206,7 +8304,7 @@ class CS006ProductionReadinessTests(TestCase):
         pay_resp = self.client.post(
             reverse("sales_invoice_payment", args=[invoice.id]),
             {
-                "payment_amount": "4500.00",
+                "amount": "4500.00",
                 "payment_method": "cash",
                 "payment_reference": "PAY-CS006-FULL",
             },
@@ -8214,7 +8312,7 @@ class CS006ProductionReadinessTests(TestCase):
         self.assertEqual(pay_resp.status_code, 302)
         invoice.refresh_from_db()
         self.assertEqual(invoice.status, "paid")
-        self.assertEqual(invoice.remaining_balance, Decimal("0.00"))
+        self.assertEqual(invoice.balance_due, Decimal("0.00"))
 
     def test_cs006_tenant_isolation_cross_tenant_access_rejection(self):
         """Verifies strict multi-tenant security: Owner B cannot view or modify Owner A's records."""
@@ -8294,7 +8392,7 @@ class CS006ProductionReadinessTests(TestCase):
         )
         self.assertEqual(pay_resp.status_code, 302)
         sup_inv.refresh_from_db()
-        self.assertEqual(sup_inv.remaining_balance, Decimal("400.00"))
+        self.assertEqual(sup_inv.balance_due, Decimal("400.00"))
 
     def test_cs006_role_permission_boundary_checks(self):
         """Verifies cashier role cannot access admin settings or update store locations."""

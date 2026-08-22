@@ -644,7 +644,7 @@ class SyncService:
         }
         
         success, message, response = self._make_api_request(
-            "/api/sync/sales/push/",
+            "/api/sales/push/",
             method="POST",
             data=payload,
         )
@@ -679,7 +679,7 @@ class SyncService:
             params["last_sync"] = last_sync.isoformat()
         
         success, message, response = self._make_api_request(
-            "/api/sync/sales/pull/",
+            "/api/sales/",
             method="GET",
             params=params,
         )

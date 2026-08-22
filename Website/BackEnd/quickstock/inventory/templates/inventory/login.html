@@ -56,21 +56,19 @@
                 <button type="submit" class="btn-primary" style="background: var(--primary-blue); color: #fff; border: 1px solid var(--primary-blue);">Sign In</button>
             </form>
 
-            <div style="margin-top: 18px;">
-                <p style="margin: 0 0 12px; text-align: center; color: #64748b; font-size: 0.9rem;">or continue with</p>
+            <div class="auth-social-login">
+                <p class="auth-social-divider">or continue with</p>
                 {% for provider in social_login_providers %}
                     {% if provider.enabled %}
                         <a
                             href="{{ provider.start_url }}"
-                            class="btn-primary"
-                            style="display: block; margin-bottom: 10px; text-align: center; text-decoration: none; background: #fff; color: #0f172a; border: 1px solid #cbd5e1;"
+                            class="btn-primary auth-social-button"
                         >
                             Sign in with {{ provider.label }}
                         </a>
                     {% else %}
                         <span
-                            class="btn-primary"
-                            style="display: block; margin-bottom: 10px; text-align: center; background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; cursor: not-allowed;"
+                            class="btn-primary auth-social-button auth-social-button-disabled"
                             aria-disabled="true"
                         >
                             {{ provider.label }} sign-in unavailable

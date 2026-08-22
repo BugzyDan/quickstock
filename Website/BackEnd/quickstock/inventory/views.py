@@ -3,7 +3,6 @@ import json
 import logging
 import calendar
 import re
-import threading
 from types import SimpleNamespace
 from .forms import CustomerForm
 from decimal import Decimal, InvalidOperation
@@ -39,7 +38,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404
-from django.core.mail import EmailMessage, get_connection
+from django.core.mail import EmailMessage
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
@@ -87,6 +86,7 @@ from urllib.parse import urlencode, urlsplit
 # ---------------------------
 from .decorators import role_required
 from .accounting import get_or_create_accounting_integration, queue_existing_accounting_data
+from .email_utils import email_delivery_status, get_delivery_connection
 from .forms import SupplierForm
 from .models import (
     AccountingIntegration,
@@ -513,10 +513,9 @@ def _send_expiry_reminder(user, expiry_date, plan_label):
 
 
 def _device_fingerprint(request):
+    """Bind an OTP to the browser without depending on a load balancer IP."""
     ua = request.META.get("HTTP_USER_AGENT", "")
-    ip = request.META.get("REMOTE_ADDR", "")
-    raw = f"{ua}|{ip}"
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return hashlib.sha256(ua.encode("utf-8")).hexdigest()
 
 
 def _client_ip_for_request(request):
@@ -606,33 +605,36 @@ def _deliver_login_otp_email(user_id, username, email, code):
         "If you did not attempt to sign in, please reset your password."
     )
     try:
-        connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+        connection = get_delivery_connection()
         sent_count = EmailMessage(subject, body, to=[email], connection=connection).send(fail_silently=False)
         if sent_count <= 0:
             logger.error("Login OTP email was not accepted for delivery for user %s.", user_id)
+            return False
+        return True
     except Exception:
         logger.exception("Could not send login OTP email to user %s", user_id)
+        return False
 
 
 def _send_login_otp(user):
     if not user.email:
         logger.warning("Cannot send login OTP for user %s without an email address.", user.pk)
         return False
-    if (
-        not settings.DEBUG
-        and settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
-    ):
-        logger.error("Cannot send login OTP for user %s because production email uses console backend.", user.pk)
+    delivery_status = email_delivery_status()
+    if not delivery_status["ok"]:
+        logger.error(
+            "Cannot send login OTP for user %s: %s",
+            user.pk,
+            delivery_status["detail"],
+        )
         return False
 
     code = f"{secrets.randbelow(900000) + 100000:06d}"
     cache.set(f"login_otp:{user.id}", code, timeout=600)  # 10 minutes
-    threading.Thread(
-        target=_deliver_login_otp_email,
-        args=(user.id, user.username, user.email, code),
-        daemon=False,
-    ).start()
-    return True
+    if _deliver_login_otp_email(user.id, user.username, user.email, code):
+        return True
+    cache.delete(f"login_otp:{user.id}")
+    return False
 
 
 def _begin_login_otp_challenge(request, user):
@@ -643,16 +645,16 @@ def _begin_login_otp_challenge(request, user):
         )
         return _render_login(request, status=503)
     request.session["otp_user_id"] = user.id
-    request.session["otp_pending_ip"] = request.META.get("REMOTE_ADDR", "unknown")
+    request.session["otp_pending_ip"] = _client_ip_for_request(request)
     request.session["otp_pending_fp"] = _device_fingerprint(request)
     messages.info(request, "Verification code sent to your email.")
     return render(request, "inventory/login_otp.html", {"username": user.username})
 
 
 def _login_otp_failure_key(request, user):
-    remote_addr = str(request.META.get("REMOTE_ADDR") or "unknown")
-    identity = f"{user.id}|{remote_addr}"
-    return f"login_otp_fail:{hashlib.sha256(identity.encode('utf-8')).hexdigest()}"
+    # Keep the guess limit account-scoped. Proxy headers can change between
+    # requests and must not let an attacker reset the OTP attempt counter.
+    return f"login_otp_fail:user:{user.id}"
 
 
 def _clear_login_otp_challenge(request, user):
@@ -667,9 +669,14 @@ def _handle_inactive_login_attempt(request, user):
     if profile.plan == "TRIAL":
         resend_key = f"activation_resend:{user.username}".lower()
         if not cache.get(resend_key):
-            _send_activation_email(request, user)
-            cache.set(resend_key, True, timeout=300)
-            messages.info(request, "Trial not activated. A new verification link has been sent.")
+            if _send_activation_email(request, user):
+                cache.set(resend_key, True, timeout=300)
+                messages.info(request, "Trial not activated. A new verification link has been sent.")
+            else:
+                messages.error(
+                    request,
+                    "Your account is awaiting activation, but email delivery is unavailable. Please contact support.",
+                )
         else:
             messages.info(request, "Please check your email to activate your 14-day free trial.")
     else:
@@ -686,7 +693,7 @@ def _send_new_device_alert(user, ip_addr, ua):
         f"User-Agent: {ua[:200]}\n\n"
         "If this wasn’t you, reset your password immediately."
     )
-    connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+    connection = get_delivery_connection()
     EmailMessage(subject, body, to=[user.email], connection=connection).send(fail_silently=True)
 
 
@@ -1075,8 +1082,12 @@ def _get_wipay_config():
     account_by_env = getattr(settings, f"WIPAY_ACCOUNT_NUMBER_{env.upper()}", "")
     api_key_by_env = getattr(settings, f"WIPAY_API_KEY_{env.upper()}", "")
 
-    account_number = (account_by_env or getattr(settings, "WIPAY_ACCOUNT_NUMBER", "")).strip()
-    api_key = (api_key_by_env or getattr(settings, "WIPAY_API_KEY", "")).strip()
+    account_number = str(
+        account_by_env or getattr(settings, "WIPAY_ACCOUNT_NUMBER", "") or ""
+    ).strip()
+    api_key = str(
+        api_key_by_env or getattr(settings, "WIPAY_API_KEY", "") or ""
+    ).strip()
 
     # ======== Add this for immediate sandbox testing ========
     if env == "sandbox" and account_number == "1119293480":
@@ -3562,7 +3573,7 @@ def login_view(request):
         return redirect("login_redirect")
 
     if request.method == "POST":
-        ip_addr = request.META.get("REMOTE_ADDR", "unknown")
+        ip_addr = _client_ip_for_request(request)
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
         auth_username = _username_for_login_identifier(username)
@@ -3662,10 +3673,8 @@ def login_otp_view(request):
     if not user:
         return redirect("login")
 
-    pending_ip = request.session.get("otp_pending_ip")
     pending_fp = request.session.get("otp_pending_fp")
-    current_ip = request.META.get("REMOTE_ADDR", "unknown")
-    if pending_ip != current_ip or pending_fp != _device_fingerprint(request):
+    if pending_fp != _device_fingerprint(request):
         _clear_login_otp_challenge(request, user)
         _log_action(
             user,
@@ -10022,11 +10031,13 @@ def _send_activation_email(request, user):
     """
     if not user.email:
         return False
-    if (
-        not settings.DEBUG
-        and settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
-    ):
-        logger.error("Cannot send activation email for user %s because production email uses console backend.", user.pk)
+    delivery_status = email_delivery_status()
+    if not delivery_status["ok"]:
+        logger.error(
+            "Cannot send activation email for user %s: %s",
+            user.pk,
+            delivery_status["detail"],
+        )
         return False
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -10040,7 +10051,7 @@ def _send_activation_email(request, user):
     }
     subject = "Activate your QuickStock JA account"
     body = render_to_string("inventory/email_verification.html", context)
-    connection = get_connection(timeout=getattr(settings, "EMAIL_TIMEOUT", 5))
+    connection = get_delivery_connection()
     email = EmailMessage(subject, body, to=[user.email], connection=connection)
     email.content_subtype = "html"
     try:
@@ -10944,7 +10955,9 @@ def mark_invoice_paid(request, invoice_id):
         supplier__owner=_inventory_owner_for_user(request.user)
     )
     invoice = get_object_or_404(invoice_qs, id=invoice_id)
-    payment_raw = request.POST.get("payment_amount", "").strip()
+    payment_raw = str(
+        request.POST.get("payment_amount") or request.POST.get("amount") or ""
+    ).strip()
     try:
         payment_amount = _safe_decimal(payment_raw or invoice.balance_due)
     except Exception:

@@ -28,6 +28,9 @@ Website/BackEnd/*.sqlite3-*
 Website/BackEnd/media/
 Website/BackEnd/staticfiles/
 Website/BackEnd/quickstock/staticfiles/
+*.quickstock-deploy.zip
+/inventory_data.json
+/Website/BackEnd/quickstock/inventory_data.json
 
 # Build/packaging output
 dist/
@@ -47,6 +50,7 @@ Thumbs.db
 # Desktop/UI runtime caches
 Desktop_UI/.env
 Desktop_UI/.env.*
+!Desktop_UI/.env.example
 Desktop_UI/__pycache__/
 Desktop_UI/src/**/__pycache__/
 Desktop_UI/tests/**/__pycache__/

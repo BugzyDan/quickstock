@@ -5,7 +5,10 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
+from django.db.models import IntegerField, Sum, Value
+from django.db.models.functions import Coalesce
 
+from inventory.email_utils import email_delivery_status, get_delivery_connection
 from inventory.models import Item
 
 
@@ -22,9 +25,26 @@ class Command(BaseCommand):
         except Exception:
             threshold = 10
 
-        low_stock_items = Item.objects.filter(quantity__lte=threshold).order_by("quantity", "name")
-        if not low_stock_items.exists():
+        low_stock_items = list(
+            Item.objects.filter(is_deleted=False)
+            .annotate(
+                stock_quantity=Coalesce(
+                    Sum("stock_at_locations__quantity"),
+                    Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .filter(stock_quantity__lte=threshold)
+            .select_related("owner")
+            .order_by("stock_quantity", "name")
+        )
+        if not low_stock_items:
             self.stdout.write(self.style.SUCCESS("No low stock items found."))
+            return
+
+        delivery = email_delivery_status()
+        if not delivery["ok"]:
+            self.stdout.write(self.style.ERROR(delivery["detail"]))
             return
 
         recipients = list(getattr(settings, "LOW_STOCK_EMAIL_RECIPIENTS", []))
@@ -56,10 +76,21 @@ class Command(BaseCommand):
             "Items:",
         ]
         for item in low_stock_items:
-            lines.append(f"- {item.name} (SKU: {item.sku or 'N/A'}) — Qty: {item.quantity}")
+            lines.append(
+                f"- {item.name} (SKU: {item.sku or 'N/A'}, "
+                f"account: {item.owner.username}) - Qty: {item.stock_quantity or 0}"
+            )
 
         body = "\n".join(lines)
-        EmailMessage(subject, body, to=recipients).send(fail_silently=True)
+        sent_count = EmailMessage(
+            subject,
+            body,
+            to=recipients,
+            connection=get_delivery_connection(),
+        ).send(fail_silently=False)
+        if sent_count != 1:
+            self.stdout.write(self.style.ERROR("The email provider did not accept the low stock alert."))
+            return
 
         cache.set(cache_key, True, timeout=60 * 60 * 24)
         self.stdout.write(self.style.SUCCESS(f"Low stock alert sent to {len(recipients)} recipient(s)."))

@@ -22,9 +22,12 @@ from inventory.models import (
     Item,
     Location,
     Payment,
+    PurchaseOrder,
     Sale,
     SaleItem,
     StockRecord,
+    StockTransfer,
+    Supplier,
     UserProfile,
 )
 from inventory import storage
@@ -197,6 +200,159 @@ class SyncPullInventoryTests(TestCase):
         if customer:
             customer.refresh_from_db()
             self.assertEqual(customer.credit_balance, customer_credit)
+
+    def test_desktop_register_open_rejects_another_tenants_location(self):
+        owner = self._make_user("register-owner")
+        other_owner = self._make_user("register-other-owner")
+        foreign_location = Location.objects.create(owner=other_owner, name="Foreign Store")
+
+        response = self.client.post(
+            reverse("desktop_open_register"),
+            {"location_id": foreign_location.id, "opening_cash": "100.00"},
+            content_type="application/json",
+            **self._auth_headers(owner),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(CashShift.objects.filter(cashier=owner).exists())
+
+    def test_desktop_register_open_rejects_cashiers_unassigned_location(self):
+        owner = self._make_user("register-location-owner")
+        assigned = Location.objects.create(owner=owner, name="Assigned Store")
+        unassigned = Location.objects.create(owner=owner, name="Other Store")
+        cashier = self._make_staff("register-location-cashier", owner, assigned)
+
+        response = self.client.post(
+            reverse("desktop_open_register"),
+            {"location_id": unassigned.id, "opening_cash": "100.00"},
+            content_type="application/json",
+            **self._auth_headers(cashier),
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(CashShift.objects.filter(cashier=cashier).exists())
+
+    def test_desktop_register_close_persists_reconciliation_and_audit(self):
+        owner = self._make_user("register-close-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+        shift = self._open_shift(owner, location)
+
+        response = self.client.post(
+            reverse("desktop_close_register"),
+            {
+                "register_id": shift.id,
+                "closing_cash": "1000.00",
+                "notes": "Desktop close",
+            },
+            content_type="application/json",
+            **self._auth_headers(owner),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        shift.refresh_from_db()
+        self.assertTrue(shift.is_closed)
+        self.assertEqual(shift.actual_cash, Decimal("1000.00"))
+        self.assertEqual(shift.reconciliation.counted_cash, Decimal("1000.00"))
+        self.assertTrue(
+            AuditLog.objects.filter(
+                user=owner,
+                action="register",
+                metadata__shift_id=shift.id,
+            ).exists()
+        )
+
+    def test_desktop_inventory_operations_are_available_online(self):
+        owner = self._make_user("desktop-operations-owner")
+        source = Location.objects.create(owner=owner, name="Main Store")
+        destination = Location.objects.create(owner=owner, name="Warehouse")
+        item = self._make_item(owner, sku="OPS-1", quantity=0)
+        StockRecord.objects.create(item=item, location=source, quantity=10)
+        headers = self._auth_headers(owner)
+
+        category_response = self.client.post(
+            reverse("desktop_create_category"),
+            {"name": "Online Category"},
+            content_type="application/json",
+            **headers,
+        )
+        self.assertEqual(category_response.status_code, 201)
+
+        supplier_response = self.client.post(
+            reverse("desktop_create_supplier"),
+            {"name": "Online Supplier", "email": "supplier@example.com"},
+            content_type="application/json",
+            **headers,
+        )
+        self.assertEqual(supplier_response.status_code, 201)
+        supplier = Supplier.objects.get(pk=supplier_response.json()["id"])
+
+        receive_response = self.client.post(
+            reverse("desktop_receive_stock"),
+            {
+                "sku": item.sku,
+                "supplier_id": supplier.id,
+                "location_id": destination.id,
+                "quantity": 3,
+                "unit_cost": "42.50",
+            },
+            content_type="application/json",
+            **headers,
+        )
+        self.assertEqual(receive_response.status_code, 201)
+        self.assertEqual(
+            StockRecord.objects.get(item=item, location=destination).quantity,
+            3,
+        )
+        self.assertTrue(PurchaseOrder.objects.filter(item=item, supplier=supplier).exists())
+
+        transfer_response = self.client.post(
+            reverse("desktop_transfer_stock"),
+            {
+                "sku": item.sku,
+                "from_location_id": source.id,
+                "to_location_id": destination.id,
+                "quantity": 4,
+            },
+            content_type="application/json",
+            **headers,
+        )
+        self.assertEqual(transfer_response.status_code, 201)
+        self.assertEqual(StockRecord.objects.get(item=item, location=source).quantity, 6)
+        self.assertEqual(StockRecord.objects.get(item=item, location=destination).quantity, 7)
+        self.assertTrue(StockTransfer.objects.filter(item=item, status="COMPLETED").exists())
+
+        delete_response = self.client.delete(
+            reverse("api_inventory_item", args=[item.sku]),
+            **headers,
+        )
+        self.assertEqual(delete_response.status_code, 200)
+        item.refresh_from_db()
+        self.assertTrue(item.is_deleted)
+        self.assertEqual(item.status, "archived")
+
+    def test_inventory_collection_accepts_desktop_post_alias(self):
+        owner = self._make_user("inventory-post-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+
+        response = self.client.post(
+            reverse("api_inventory_pull"),
+            {
+                "sku": "POST-ALIAS-1",
+                "name": "Posted inventory item",
+                "price": "100.00",
+                "cost_price": "50.00",
+                "quantity": 8,
+                "category": "General",
+                "location_id": location.id,
+            },
+            content_type="application/json",
+            **self._auth_headers(owner),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        item = Item.objects.get(owner=owner, sku="POST-ALIAS-1")
+        self.assertEqual(StockRecord.objects.get(item=item, location=location).quantity, 8)
 
     def test_sync_pull_inventory_defaults_missing_stock_records_to_zero(self):
         owner = self._make_user("legacy-owner")

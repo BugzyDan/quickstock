@@ -114,6 +114,11 @@ urlpatterns = [
     path('supplier/<int:supplier_id>/add-invoice/', views.add_invoice, name='add_invoice'),
     path('invoice/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
     path('invoice/<int:invoice_id>/pay/', views.mark_invoice_paid, name='mark_invoice_paid'),
+    path(
+        'invoice/<int:invoice_id>/payment/',
+        views.mark_invoice_paid,
+        name='supplier_invoice_payment',
+    ),
     path('invoice/<int:invoice_id>/undo-payment/', views.undo_invoice_payment, name='undo_invoice_payment'),
     path(
         'invoice/<int:invoice_id>/payment/<int:payment_id>/reverse/',

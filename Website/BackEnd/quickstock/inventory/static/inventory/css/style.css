@@ -7032,6 +7032,49 @@ body.page-signup .auth-container {
     box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
 }
 
+.auth-social-login {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.auth-social-divider {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.auth-social-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 406px);
+    min-height: 43px;
+    margin: 0 auto !important;
+    padding: 0 18px !important;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+a.auth-social-button {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.auth-social-button-disabled {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* 6. Links & Footer */
 .reset-password:hover, 
 .auth-footer a:hover {
@@ -52918,10 +52961,11 @@ body .page-wrapper > header.app-shell-header .logo-img,
 body.page-index header .logo,
 body.page-index header .logo-link img,
 body.page-cash-register .cash-mobile-brand img {
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 0 !important;
     border-radius: var(--qs-unified-radius) !important;
-    background: rgba(255, 255, 255, 0.96) !important;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
 }
 
 body header.app-shell-header .app-shell-logo,
@@ -53025,6 +53069,15 @@ body.page-cash-register .nav-toggle:focus-visible {
     background: rgba(30, 41, 59, 0.96) !important;
     outline: none !important;
     box-shadow: var(--qs-unified-focus) !important;
+}
+
+body header.app-shell-header .nav-toggle span,
+body .page-wrapper > header.app-shell-header .nav-toggle span,
+body.page-index .nav-toggle span,
+body.page-login .auth-public-header .nav-toggle span,
+body.page-signup .auth-public-header .nav-toggle span,
+body.page-cash-register .nav-toggle span {
+    background: #ffffff !important;
 }
 
 body:has(> header.app-shell-header) > #main-nav,
@@ -53291,6 +53344,7 @@ body.page-cash-register .logout-link {
 body.page-cash-register .nav-toggle span {
     position: relative !important;
     margin: 0 !important;
+    background: #ffffff !important;
     box-shadow: 0 6px 0 #ffffff, 0 -6px 0 #ffffff !important;
 }
 

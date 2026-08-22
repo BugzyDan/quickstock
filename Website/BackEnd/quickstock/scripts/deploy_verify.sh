@@ -31,6 +31,8 @@ cd "$APP_DIR"
 "$PYTHON_BIN" manage.py makemigrations --check --dry-run
 "$PYTHON_BIN" manage.py migrate --plan
 "$PYTHON_BIN" manage.py migrate
+"$PYTHON_BIN" manage.py createcachetable
+"$PYTHON_BIN" manage.py bootstrap_superuser
 "$PYTHON_BIN" manage.py check_migrations
 "$PYTHON_BIN" manage.py check_runtime_health
 
