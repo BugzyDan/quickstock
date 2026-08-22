@@ -2,6 +2,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
+from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
 
 # 1. Define BASE_DIR first
@@ -202,6 +203,7 @@ WSGI_APPLICATION = 'quickstock.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_ENGINE = os.getenv("DJANGO_DB_ENGINE", "").strip()
 RUNNING_TESTS = (
     "test" in sys.argv
@@ -210,43 +212,79 @@ RUNNING_TESTS = (
     or "pytest" in sys.modules
 )
 
-if DB_ENGINE:
-    db_engine = DB_ENGINE
-elif DEBUG or RUNNING_TESTS:
-    db_engine = "django.db.backends.sqlite3"
-else:
-    db_engine = "django.db.backends.mysql"
-
-if db_engine == "django.db.backends.sqlite3":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.getenv("DJANGO_DB_NAME", BASE_DIR / "db.sqlite3"),
-            "OPTIONS": {
-                "timeout": _env_int("SQLITE_BUSY_TIMEOUT_SECONDS", 30),
-            },
-        }
+def _database_from_url(database_url: str) -> dict:
+    parsed = urlparse(database_url)
+    scheme = parsed.scheme.lower()
+    engine_map = {
+        "postgres": "django.db.backends.postgresql",
+        "postgresql": "django.db.backends.postgresql",
+        "psql": "django.db.backends.postgresql",
+        "mysql": "django.db.backends.mysql",
+        "mysql2": "django.db.backends.mysql",
+        "sqlite": "django.db.backends.sqlite3",
+        "sqlite3": "django.db.backends.sqlite3",
     }
-else:
-    db_name = get_env_or_raise("DJANGO_DB_NAME")
-    db_user = get_env_or_raise("DJANGO_DB_USER")
-    db_password = get_env_or_raise("DJANGO_DB_PASSWORD")
-    db_host = os.getenv("DJANGO_DB_HOST", "localhost")
-    db_port = os.getenv("DJANGO_DB_PORT", "3306") # Define db_port here
+    engine = engine_map.get(scheme)
+    if not engine:
+        raise RuntimeError(f"Unsupported DATABASE_URL scheme: {scheme}")
 
-    DATABASES = {
-        "default": {
-            "ENGINE": db_engine,
-            "NAME": db_name,
-            "USER": db_user,
-            "PASSWORD": db_password,
-            "HOST": db_host,
-            "PORT": db_port,
-            "OPTIONS": {
-                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+    if engine == "django.db.backends.sqlite3":
+        return {
+            "ENGINE": engine,
+            "NAME": unquote(parsed.path.lstrip("/")) or BASE_DIR / "db.sqlite3",
+            "OPTIONS": {"timeout": _env_int("SQLITE_BUSY_TIMEOUT_SECONDS", 30)},
         }
+
+    return {
+        "ENGINE": engine,
+        "NAME": unquote(parsed.path.lstrip("/")),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "",
+        "PORT": str(parsed.port or ""),
     }
+
+
+if DATABASE_URL:
+    DATABASES = {"default": _database_from_url(DATABASE_URL)}
+else:
+    if DB_ENGINE:
+        db_engine = DB_ENGINE
+    elif DEBUG or RUNNING_TESTS:
+        db_engine = "django.db.backends.sqlite3"
+    else:
+        db_engine = "django.db.backends.mysql"
+
+    if db_engine == "django.db.backends.sqlite3":
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": os.getenv("DJANGO_DB_NAME", BASE_DIR / "db.sqlite3"),
+                "OPTIONS": {
+                    "timeout": _env_int("SQLITE_BUSY_TIMEOUT_SECONDS", 30),
+                },
+            }
+        }
+    else:
+        db_name = get_env_or_raise("DJANGO_DB_NAME")
+        db_user = get_env_or_raise("DJANGO_DB_USER")
+        db_password = get_env_or_raise("DJANGO_DB_PASSWORD")
+        db_host = os.getenv("DJANGO_DB_HOST", "localhost")
+        db_port = os.getenv("DJANGO_DB_PORT", "3306") # Define db_port here
+
+        DATABASES = {
+            "default": {
+                "ENGINE": db_engine,
+                "NAME": db_name,
+                "USER": db_user,
+                "PASSWORD": db_password,
+                "HOST": db_host,
+                "PORT": db_port,
+                "OPTIONS": {
+                    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+                },
+            }
+        }
 
 
 # Password validation
