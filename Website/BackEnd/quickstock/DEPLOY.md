@@ -7,10 +7,10 @@ This guide assumes Ubuntu, Nginx, Gunicorn, and a dedicated server-side env file
 The repository root `render.yaml` is the source of truth for the Render web service and PostgreSQL database.
 
 1. Connect Render to the Git branch you intend to deploy and enable automatic deploys.
-2. Create and verify `quickstockja.com` in Resend, including the DNS records Resend provides.
+2. Add a domain you own to Resend and verify every DNS record Resend provides. The sender domain must resolve publicly; an unregistered or placeholder domain cannot deliver mail to Gmail.
 3. Create a Resend API key with sending access and set it as the Render secret `RESEND_API_KEY`. Set `QUICKSTOCK_EMAIL_TEST_RECIPIENT` to an inbox you monitor.
 4. Keep `QUICKSTOCK_EMAIL_PROVIDER=resend`. Free Render web services block SMTP ports, so Gmail SMTP is not a valid production delivery path on the free service.
-5. Set `DJANGO_DEFAULT_FROM_EMAIL=QuickStock JA <noreply@quickstockja.com>` and make sure that sender belongs to the verified Resend domain.
+5. Set `DJANGO_DEFAULT_FROM_EMAIL=QuickStock JA <noreply@your-verified-domain>` in Render. The address must belong to the domain Resend shows as verified.
 6. Deploy. The build collects static files, applies migrations, creates the shared database cache table, checks runtime health, and sends a real email probe. A missing or rejected Resend configuration fails the deployment instead of leaving login stuck on a code that was never sent.
 7. Confirm `/api/health/` returns `status: ok`, including `database`, `migrations`, `cache`, and `email` checks.
 8. From a Render Shell, send a real delivery probe with `python manage.py check_email_delivery --to your-address@example.com`.

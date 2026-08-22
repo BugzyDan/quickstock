@@ -36,7 +36,7 @@ services:
       - key: DJANGO_EMAIL_TIMEOUT
         value: "5"
       - key: DJANGO_DEFAULT_FROM_EMAIL
-        value: "QuickStock JA <noreply@quickstockja.com>"
+        sync: false
       - key: QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION
         value: "True"
       - key: QUICKSTOCK_SEND_LEGACY_VERIFICATION_EMAILS
