@@ -320,6 +320,15 @@ def _render_login(request, status=200):
     )
 
 
+def _username_for_login_identifier(identifier: str) -> str:
+    value = (identifier or "").strip()
+    if not value or "@" not in value:
+        return value
+
+    matches = list(User.objects.filter(email__iexact=value).values_list("username", flat=True)[:2])
+    return matches[0] if len(matches) == 1 else value
+
+
 DOCUMENT_META_PREFIX = "[[QS_META]]"
 PAYMENT_CHANNEL_LABELS = {
     "pos": "POS",
@@ -598,7 +607,10 @@ def _send_login_otp(user):
         f"The code expires in 10 minutes.\n\n"
         "If you did not attempt to sign in, please reset your password."
     )
-    EmailMessage(subject, body, to=[user.email]).send(fail_silently=True)
+    try:
+        EmailMessage(subject, body, to=[user.email]).send(fail_silently=False)
+    except Exception:
+        logger.exception("Could not send staff invite email to user %s", user.pk)
     return code
 
 
@@ -3526,6 +3538,7 @@ def login_view(request):
         ip_addr = request.META.get("REMOTE_ADDR", "unknown")
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
+        auth_username = _username_for_login_identifier(username)
         
         # 1. Throttling Check
         cache_key = f"login_fail:{ip_addr}:{username}".lower()
@@ -3536,12 +3549,12 @@ def login_view(request):
 
         # 2. Pre-Authentication Inactive Check
         # This is where your "Loop" lived. We now check TRIAL status.
-        inactive_user = User.objects.filter(username=username).first()
+        inactive_user = User.objects.filter(username=auth_username).first()
         if inactive_user and not inactive_user.is_active:
             return _handle_inactive_login_attempt(request, inactive_user)
 
         # 3. Authenticate User
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=auth_username, password=password)
 
         if user is None:
             cache.set(cache_key, fail_count + 1, timeout=300)
@@ -9983,7 +9996,10 @@ def _send_activation_email(request, user):
     body = render_to_string("inventory/email_verification.html", context)
     email = EmailMessage(subject, body, to=[user.email])
     email.content_subtype = "html"
-    email.send(fail_silently=True)
+    try:
+        email.send(fail_silently=False)
+    except Exception:
+        logger.exception("Could not send activation email to user %s", user.pk)
 
 
 @login_required
