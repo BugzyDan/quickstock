@@ -1,6 +1,7 @@
 import os
 import sys
 import warnings
+import hashlib
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
@@ -84,6 +85,20 @@ def _env_str(name: str, default: str = "") -> str:
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
+if SECRET_KEY == "unsafe-dev-key" and os.getenv("RENDER"):
+    render_seed = "|".join(
+        [
+            os.getenv("RENDER_SERVICE_ID", "quickstock-render"),
+            os.getenv("RENDER_EXTERNAL_HOSTNAME", ""),
+            "quickstock-secret-key-fallback",
+        ]
+    )
+    SECRET_KEY = "render-fallback-" + hashlib.sha256(render_seed.encode("utf-8")).hexdigest()
+    warnings.warn(
+        "DJANGO_SECRET_KEY is not set. Using a Render-only fallback; set a stable "
+        "DJANGO_SECRET_KEY in Render before handling real users.",
+        RuntimeWarning,
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DJANGO_DEBUG", True)
