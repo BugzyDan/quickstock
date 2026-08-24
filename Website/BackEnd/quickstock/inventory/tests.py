@@ -2780,6 +2780,32 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(payment.status, "paid")
         self.assertEqual(profile.plan, "PRO")
 
+    def test_wipay_response_creates_missing_profile_before_upgrade(self):
+        owner = self._make_user("owner-missing-profile-wipay")
+        owner.profile.delete()
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="QS-1-missingprofile",
+            amount=Decimal("30400.00"),
+            status="pending",
+            response_payload={"billing_cycle": "yearly"},
+        )
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": "SB-72-1-QS-1-missingprofile-20260824141938",
+                "status": "Transaction Complete - Success",
+                "total": "30,400.00",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        payment.refresh_from_db()
+        profile = UserProfile.objects.get(user=owner)
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(profile.plan, "PRO")
+
     @override_settings(
         WIPAY_ENVIRONMENT="live",
         WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",

@@ -9547,13 +9547,12 @@ def wipay_response(request):
                 payment.status = "paid"
                 payment.save(update_fields=["transaction_id", "response_payload", "status"])
 
-                profile = getattr(payment.user, "profile", None)
-                if profile:
-                    profile.plan = "PRO"
-                    profile.pro_expires = timezone.localdate() + timedelta(days=_billing_cycle_days(billing_cycle))
-                    profile.status = "active"
-                    profile.plan_end = None
-                    profile.save(update_fields=["plan", "pro_expires", "plan_end", "status"])
+                profile = UserProfile.for_user(payment.user)
+                profile.plan = "PRO"
+                profile.pro_expires = timezone.localdate() + timedelta(days=_billing_cycle_days(billing_cycle))
+                profile.status = "active"
+                profile.plan_end = None
+                profile.save(update_fields=["plan", "pro_expires", "plan_end", "status"])
 
                 # Activate account once payment is confirmed
                 payment.user.is_active = True
@@ -9565,8 +9564,6 @@ def wipay_response(request):
                     "Payment successful",
                     {"order_id": order_id, "transaction_id": transaction_id},
                 )
-                _prune_auth_billing_messages(request)
-                messages.success(request, "Payment successful! QuickStock JA Pro features unlocked.")
                 return redirect(success_redirect)
 
             # 3d️⃣ Any other status = failed
