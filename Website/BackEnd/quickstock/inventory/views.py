@@ -1754,14 +1754,10 @@ def _daily_reconciliation_context(owner_user, selected_date):
 # Public Pages
 # ---------------------------
 def index(request):
-    """
-    Landing page for QuickStock JA.
-    Ensures profile is retrieved or created for authenticated users.
-    """
+    """Render the public landing page without mutating account state."""
     profile = None
     if request.user.is_authenticated:
-        # Using your helper ensures no 'NoneType' errors in the template
-        profile = UserProfile.for_user(request.user)
+        profile = UserProfile.objects.filter(user_id=request.user.pk).first()
 
     return render(request, "inventory/index.html", {"profile": profile})
 

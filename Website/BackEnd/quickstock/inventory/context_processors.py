@@ -12,6 +12,10 @@ def _get_starter_item_limit():
 
 
 def starter_plan_context(request):
+    resolver_match = getattr(request, "resolver_match", None)
+    if resolver_match and resolver_match.url_name == "index":
+        return {}
+
     user = getattr(request, "user", None)
     if not user or not user.is_authenticated:
         return {}

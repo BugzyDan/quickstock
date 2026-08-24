@@ -264,6 +264,8 @@ class SubscriptionEnforcementMiddleware(MiddlewareMixin):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         path = request.path or "/"
+        if path == "/":
+            return None
         if any(path.startswith(prefix) for prefix in self.EXEMPT_PATH_PREFIXES):
             return None
 

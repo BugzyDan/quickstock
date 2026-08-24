@@ -8524,6 +8524,18 @@ class SessionSecurityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "QuickStock JA")
 
+    def test_public_index_does_not_require_or_recreate_a_missing_profile(self):
+        user = self._make_user("landing-without-profile")
+        self.client.force_login(user)
+        user.profile.delete()
+
+        with patch("inventory.models.UserProfile.for_user", side_effect=AssertionError("profile repair must not run")):
+            response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Scale Your Business")
+        self.assertFalse(UserProfile.objects.filter(user=user).exists())
+
     def test_fingerprint_mismatch_does_not_logout_session_by_default(self):
         user = self._make_user("fingerprint-user")
         self.client.force_login(user)

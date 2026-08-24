@@ -1,12 +1,12 @@
 {% load static theme_tags %}
 <!DOCTYPE html>
-<html lang="en" {% if request.user.is_authenticated %}data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %}>
+<html lang="en" {% if profile %}data-theme="{{ profile.theme|default:'system' }}"{% if profile.theme != 'system' %} data-theme-applied="{{ profile.theme }}"{% endif %}{% if profile.theme == 'dark' %} class="force-dark"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %}>
 
 <head>
     <meta charset="UTF-8">
     <meta name="description" content="QuickStock JA - Professional Inventory & POS Solutions">
 
-    {% if request.user.is_authenticated %}
+    {% if profile %}
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     {% endif %}
 
@@ -19,7 +19,7 @@
     
 </head>
 
-<body {% if request.user.is_authenticated %}data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %} class="page-index page-index{% if not request.user.is_authenticated %} signed-out{% endif %}">
+<body {% if profile %}data-theme="{{ profile.theme|default:'system' }}"{% if profile.theme != 'system' %} data-theme-applied="{{ profile.theme }}"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %} class="page-index page-index{% if not profile %} signed-out{% endif %}">
 <div class="page-wrapper">
     
 <header>
@@ -61,7 +61,7 @@
     <ul>
         {% if request.user.is_authenticated %}
             <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            {% if request.user.profile.role == 'manager' or request.user.profile.role == 'admin' %}
+            {% if profile.role == 'manager' or profile.role == 'admin' %}
                 <li><a href="{% url 'inventory' %}">Inventory Control</a></li>
             {% endif %}
             <li><a href="{% url 'support' %}">Help & Support</a></li>
@@ -254,7 +254,7 @@
         <p class="index-plan-footnote">
             Includes Windows offline version download. Sales save locally during outages and sync to the cloud when reconnected.
         </p>
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and profile %}
             {% if profile.is_pro_active %}
                 <a href="{% url 'upgrade' %}?context=subscription&plan=pro" class="btn-upgrade is-current-plan">Current Plan (Pro)</a>
             {% else %}
@@ -266,7 +266,7 @@
     </div>
 </div>
 
-    {% if request.user.is_authenticated %}
+    {% if request.user.is_authenticated and profile %}
         <div class="current-plan-box">
             {% if profile.is_pro_active %}
                 <span>✔ <strong>Pro Member</strong> — Renewal: {{ profile.pro_expires|date:"M d, Y" }}</span>
