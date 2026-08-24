@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -2653,6 +2653,149 @@ class WeekOneSecurityTests(TestCase):
         profile.refresh_from_db()
         self.assertEqual(profile.plan, "TRIAL")
         self.assertIsNone(profile.pro_expires)
+
+    def test_upgrade_success_accepts_legacy_wipay_callback_payload(self):
+        owner = self._make_user("owner-legacy-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="LEGACY-WIPAY-1",
+            amount=Decimal("2600.00"),
+            status="pending",
+            response_payload={"billing_cycle": "monthly"},
+        )
+
+        self.client.force_login(owner)
+        response = self.client.get(
+            reverse("upgrade_success"),
+            {"order_id": payment.order_id, "status": "success", "amount": "2600.00"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], f"{reverse('upgrade_success')}?order_id=LEGACY-WIPAY-1")
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(profile.plan, "PRO")
+        self.assertEqual(profile.pro_expires, timezone.localdate() + timedelta(days=30))
+
+    def test_wipay_response_matches_sandbox_wrapped_order_reference(self):
+        owner = self._make_user("owner-wrapped-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="QS-1-115b2e",
+            amount=Decimal("30400.00"),
+            status="pending",
+            response_payload={"billing_cycle": "yearly"},
+        )
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": "SB-99-1-QS-1-115b2e-20260824135458",
+                "status": "success",
+                "amount": "30400.00",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], f"{reverse('upgrade_success')}?order_id=QS-1-115b2e")
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(payment.response_payload["raw_order_id"], "SB-99-1-QS-1-115b2e-20260824135458")
+        self.assertEqual(profile.plan, "PRO")
+        self.assertEqual(profile.pro_expires, timezone.localdate() + timedelta(days=365))
+
+    @override_settings(
+        WIPAY_ENVIRONMENT="live",
+        WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",
+        WIPAY_API_KEY_LIVE="live-secret",
+    )
+    def test_wipay_live_success_uses_transaction_hash_contract(self):
+        owner = self._make_user("owner-live-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="LIVE-UPGRADE-1",
+            amount=Decimal("30400.00"),
+            status="pending",
+            response_payload={"billing_cycle": "yearly"},
+        )
+        transaction_id = "TX-LIVE-123"
+        response_hash = hashlib.md5(f"{transaction_id}30400.00live-secret".encode()).hexdigest()
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": payment.order_id,
+                "status": "success",
+                "transaction_id": transaction_id,
+                "total": "30400.00",
+                "hash": response_hash,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(profile.plan, "PRO")
+
+    @override_settings(
+        WIPAY_ENVIRONMENT="live",
+        WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",
+        WIPAY_API_KEY_LIVE="live-secret",
+    )
+    def test_wipay_live_rejects_hash_from_order_id_contract(self):
+        owner = self._make_user("owner-old-hash-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="LIVE-UPGRADE-2",
+            amount=Decimal("30400.00"),
+            status="pending",
+        )
+        transaction_id = "TX-LIVE-456"
+        wrong_hash = hashlib.md5(f"{payment.order_id}30400.00live-secret".encode()).hexdigest()
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": payment.order_id,
+                "status": "success",
+                "transaction_id": transaction_id,
+                "total": "30400.00",
+                "hash": wrong_hash,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "failed")
+        self.assertEqual(profile.plan, "TRIAL")
 
     def test_wipay_success_preserves_checkout_billing_cycle_and_reference_redirect(self):
         owner = self._make_user("owner-monthly-renewal")
@@ -5395,6 +5538,27 @@ class WeekFourReadinessTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("%2B1-876-555-0100", response.json()["url"])
+
+    @override_settings(
+        WIPAY_ACCOUNT_NUMBER_SANDBOX="1234567890",
+        WIPAY_API_KEY_SANDBOX="123",
+    )
+    @patch("inventory.views._probe_wipay_availability", return_value=(True, ""))
+    def test_wipay_subscription_checkout_returns_to_verification_handler(self, _mock_probe):
+        owner = self._make_user("wipay-response-owner")
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("create_wipay_checkout_session"),
+            data=json.dumps({"billing_cycle": "monthly"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        checkout_url = response.json()["url"]
+        params = parse_qs(urlparse(checkout_url).query)
+        self.assertEqual(urlparse(params["response_url"][0]).path, reverse("wipay_response"))
+        self.assertEqual(urlparse(params["return_url"][0]).path, reverse("wipay_response"))
 
     @override_settings(
         WIPAY_CONTACT_PHONE_DEFAULT="+1-876-555-0100",

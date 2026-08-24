@@ -9287,6 +9287,14 @@ def create_checkout_session(request):
     return JsonResponse({"error": "Stripe is not configured."}, status=400)
 
 
+def _normalize_wipay_order_id(order_id):
+    order_id = str(order_id or "").strip()
+    if not order_id:
+        return ""
+    match = re.search(r"QS-\d+-[A-Za-z0-9]+", order_id)
+    return match.group(0) if match else order_id
+
+
 @login_required
 def create_wipay_checkout_session(request):
     if request.method == "POST":
@@ -9332,7 +9340,7 @@ def create_wipay_checkout_session(request):
             )
 
         order_id = f"QS-{request.user.id}-{uuid.uuid4().hex[:6]}"
-        success_url = request.build_absolute_uri('/upgrade/success/')
+        success_url = request.build_absolute_uri(reverse("wipay_response"))
         amount = _get_pro_price(billing_cycle)
         amount_str = f"{amount:.2f}"
 
@@ -9372,7 +9380,7 @@ def create_wipay_checkout_session(request):
     
 @login_required
 def upgrade_success(request):
-    order_id = request.GET.get('order_id')
+    order_id = _normalize_wipay_order_id(request.GET.get('order_id'))
     if not order_id:
         messages.error(request, "We could not verify your payment reference.")
         return redirect('upgrade')
@@ -9381,6 +9389,14 @@ def upgrade_success(request):
     if not payment:
         messages.error(request, "Payment record not found for this account.")
         return redirect('upgrade')
+
+    callback_status = (request.GET.get("status") or request.POST.get("status") or "").strip()
+    has_callback_verification_data = any(
+        request.GET.get(field) or request.POST.get(field)
+        for field in ("amount", "total", "hash", "transaction_id")
+    )
+    if payment.status != "paid" and callback_status and has_callback_verification_data:
+        return wipay_response(request)
 
     if payment.status != "paid":
         if payment.status == "failed":
@@ -9418,7 +9434,8 @@ def wipay_response(request):
     """
     # 1️⃣ Extract data from request
     data = request.GET.dict() if request.method == "GET" else request.POST.dict()
-    order_id = data.get("order_id")
+    raw_order_id = data.get("order_id")
+    order_id = _normalize_wipay_order_id(raw_order_id)
     status = (data.get("status") or "").lower()
     transaction_id = data.get("transaction_id")
     response_hash = data.get("hash")
@@ -9457,7 +9474,13 @@ def wipay_response(request):
             # provider callback. Provider fields are still retained for auditability.
             billing_cycle = _normalize_billing_cycle(existing_payload.get("billing_cycle") or "yearly")
             payment.transaction_id = transaction_id
-            payment.response_payload = {**existing_payload, **data, "billing_cycle": billing_cycle}
+            payment.response_payload = {
+                **existing_payload,
+                **data,
+                "raw_order_id": raw_order_id,
+                "order_id": order_id,
+                "billing_cycle": billing_cycle,
+            }
 
             # 3a️⃣ Verify amount
             if amount_str:
@@ -9490,13 +9513,13 @@ def wipay_response(request):
             env, _, api_key = _get_wipay_config()
             require_hash = env == "live"
             if require_hash:
-                if not response_hash:
+                if not response_hash or not transaction_id:
                     payment.status = "failed"
                     payment.save(update_fields=["transaction_id", "response_payload", "status"])
-                    messages.error(request, "Payment verification failed (missing hash).")
+                    messages.error(request, "Payment verification failed (missing transaction verification data).")
                     return redirect("upgrade_cancel")
                 
-                expected_str = f"{order_id}{payment.amount}{api_key}"
+                expected_str = f"{transaction_id}{payment.amount:.2f}{api_key}"
                 expected_hash = hashlib.md5(expected_str.encode()).hexdigest()
                 if not secrets.compare_digest(expected_hash, response_hash):
                     payment.status = "failed"
