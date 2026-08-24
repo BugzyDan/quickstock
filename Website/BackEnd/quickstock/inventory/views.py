@@ -9527,8 +9527,9 @@ def wipay_response(request):
                     messages.error(request, "Payment verification failed (hash mismatch).")
                     return redirect("upgrade_cancel")
 
-            # 3c️⃣ Success: update payment & profile
-            if status in {"success", "paid", "approved"}:
+            # 3c️⃣ Success: update payment & profile. WiPay has used a few
+            # equivalent labels across hosted checkout flows.
+            if status in {"success", "successful", "paid", "approved", "complete", "completed"}:
                 payment.status = "paid"
                 payment.save(update_fields=["transaction_id", "response_payload", "status"])
 
@@ -9561,7 +9562,12 @@ def wipay_response(request):
                 payment.user,
                 "payment",
                 "Payment failed",
-                {"order_id": order_id, "transaction_id": transaction_id},
+                {
+                    "order_id": order_id,
+                    "transaction_id": transaction_id,
+                    "provider_status": status,
+                    "raw_order_id": raw_order_id,
+                },
                 severity="error",
             )
             messages.error(request, "Payment failed. Please try again.")

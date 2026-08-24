@@ -2718,6 +2718,37 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(profile.plan, "PRO")
         self.assertEqual(profile.pro_expires, timezone.localdate() + timedelta(days=365))
 
+    def test_wipay_response_accepts_completed_status_label(self):
+        owner = self._make_user("owner-completed-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="QS-1-complete",
+            amount=Decimal("30400.00"),
+            status="pending",
+            response_payload={"billing_cycle": "yearly"},
+        )
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": "SB-72-1-QS-1-complete-20260824141938",
+                "status": "completed",
+                "amount": "30400.00",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(profile.plan, "PRO")
+
     @override_settings(
         WIPAY_ENVIRONMENT="live",
         WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",
