@@ -9587,14 +9587,34 @@ def wipay_response(request):
 
     except Exception as e:
         # 4️⃣ Catch-all: ensures database consistency
+        exception_type = type(e).__name__
+        exception_message = str(e)
+        try:
+            latest_payload = payment.response_payload if isinstance(payment.response_payload, dict) else {}
+            Payment.objects.filter(pk=payment.pk).update(
+                response_payload={
+                    **latest_payload,
+                    "failure_reason": "processing_exception",
+                    "exception_type": exception_type,
+                    "exception_message": exception_message,
+                    "raw_order_id": raw_order_id,
+                    "order_id": order_id,
+                    "provider_status": status,
+                }
+            )
+        except Exception:
+            logger.exception("Could not persist WiPay processing exception details for %s", order_id)
         _log_action(
             payment.user,
             "payment",
-            f"Payment processing exception: {str(e)}",
-            {"order_id": order_id},
+            f"Payment processing exception: {exception_type}: {exception_message}",
+            {"order_id": order_id, "raw_order_id": raw_order_id, "provider_status": status},
             severity="critical",
         )
-        messages.error(request, "An unexpected error occurred during payment processing.")
+        messages.error(
+            request,
+            f"Payment processing error ({exception_type}): {exception_message or 'No details returned'}. Reference: {order_id}",
+        )
         return redirect("upgrade_cancel")
 
 @login_required
