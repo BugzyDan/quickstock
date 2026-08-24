@@ -12,6 +12,9 @@ python3 manage.py collectstatic --noinput
 python3 manage.py migrate --noinput
 python3 manage.py createcachetable
 python3 manage.py bootstrap_superuser
+if [[ -n "${QUICKSTOCK_DELETE_USER_USERNAME:-}" ]]; then
+    python3 manage.py delete_deploy_user
+fi
 python3 manage.py check_migrations
 python3 manage.py check_runtime_health
 

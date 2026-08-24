@@ -1150,6 +1150,14 @@ class WeekOneSecurityTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.check_password("old-password"))
 
+    def test_delete_deploy_user_removes_configured_user(self):
+        User.objects.create_user(username="KeviiDan", password="old-password")
+
+        with patch.dict(os.environ, {"QUICKSTOCK_DELETE_USER_USERNAME": "KeviiDan"}):
+            call_command("delete_deploy_user")
+
+        self.assertFalse(User.objects.filter(username="KeviiDan").exists())
+
     @override_settings(
         SOCIAL_AUTH_PROVIDERS={
             "google": {
