@@ -2754,6 +2754,42 @@ class WeekOneSecurityTests(TestCase):
         WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",
         WIPAY_API_KEY_LIVE="live-secret",
     )
+    def test_wipay_live_config_accepts_sandbox_wrapped_reference_without_hash(self):
+        owner = self._make_user("owner-live-config-sandbox-wipay")
+        profile = UserProfile.for_user(owner)
+        profile.plan = "TRIAL"
+        profile.status = "active"
+        profile.plan_end = timezone.now() + timedelta(days=7)
+        profile.pro_expires = None
+        profile.save(update_fields=["plan", "status", "plan_end", "pro_expires"])
+        payment = Payment.objects.create(
+            user=owner,
+            order_id="QS-1-a0d8c9",
+            amount=Decimal("30400.00"),
+            status="pending",
+            response_payload={"billing_cycle": "yearly"},
+        )
+
+        response = self.client.get(
+            reverse("wipay_response"),
+            {
+                "order_id": "SB-72-1-QS-1-a0d8c9-20260824141938",
+                "status": "success",
+                "total": "30400.00",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        payment.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(payment.status, "paid")
+        self.assertEqual(profile.plan, "PRO")
+
+    @override_settings(
+        WIPAY_ENVIRONMENT="live",
+        WIPAY_ACCOUNT_NUMBER_LIVE="1234567890",
+        WIPAY_API_KEY_LIVE="live-secret",
+    )
     def test_wipay_live_success_uses_transaction_hash_contract(self):
         owner = self._make_user("owner-live-wipay")
         profile = UserProfile.for_user(owner)

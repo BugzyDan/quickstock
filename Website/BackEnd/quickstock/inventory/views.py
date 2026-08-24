@@ -9295,6 +9295,10 @@ def _normalize_wipay_order_id(order_id):
     return match.group(0) if match else order_id
 
 
+def _is_wipay_sandbox_reference(order_id):
+    return str(order_id or "").strip().upper().startswith("SB-")
+
+
 @login_required
 def create_wipay_checkout_session(request):
     if request.method == "POST":
@@ -9511,10 +9515,11 @@ def wipay_response(request):
 
             # 3b️⃣ Verify hash (only in live)
             env, _, api_key = _get_wipay_config()
-            require_hash = env == "live"
+            require_hash = env == "live" and not _is_wipay_sandbox_reference(raw_order_id)
             if require_hash:
                 if not response_hash or not transaction_id:
                     payment.status = "failed"
+                    payment.response_payload["failure_reason"] = "missing_transaction_verification_data"
                     payment.save(update_fields=["transaction_id", "response_payload", "status"])
                     messages.error(request, "Payment verification failed (missing transaction verification data).")
                     return redirect("upgrade_cancel")
@@ -9523,6 +9528,7 @@ def wipay_response(request):
                 expected_hash = hashlib.md5(expected_str.encode()).hexdigest()
                 if not secrets.compare_digest(expected_hash, response_hash):
                     payment.status = "failed"
+                    payment.response_payload["failure_reason"] = "hash_mismatch"
                     payment.save(update_fields=["transaction_id", "response_payload", "status"])
                     messages.error(request, "Payment verification failed (hash mismatch).")
                     return redirect("upgrade_cancel")
@@ -9557,6 +9563,7 @@ def wipay_response(request):
 
             # 3d️⃣ Any other status = failed
             payment.status = "failed"
+            payment.response_payload["failure_reason"] = "unpaid_provider_status"
             payment.save(update_fields=["transaction_id", "response_payload", "status"])
             _log_action(
                 payment.user,
