@@ -50,7 +50,7 @@ function initIndexMobileNav() {
     navToggle.dataset.bound = 'true';
 
     const setOpen = (isOpen) => {
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = window.innerWidth <= 900;
         nav.classList.toggle('mobile-active', isOpen);
         navToggle.classList.toggle('is-open', isOpen);
         navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -79,7 +79,7 @@ function initIndexMobileNav() {
     });
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 768) setOpen(false);
+        if (window.innerWidth > 900) setOpen(false);
     });
 
     setOpen(false);

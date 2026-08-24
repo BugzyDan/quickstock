@@ -26432,8 +26432,7 @@ body.page-privacy li {
    PAGE SECTION: Profile Page
    Source: inventory/profile.html style block 1
 ===================================================== */
-body.page-profile /* Light profile theme to match other pages */
-:root {
+body.page-profile {
     --bg-light: #f8fafc;
     --card-bg: #ffffff;
     --accent-blue: #2563eb;
@@ -26441,7 +26440,7 @@ body.page-profile /* Light profile theme to match other pages */
     --text-main: #0f172a;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
-    --mono-font: 'JetBrains Mono', monospace;
+    --mono-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 body.page-profile  {
@@ -26814,7 +26813,6 @@ html[data-theme-applied="dark"] .page-profile .terminate-link {
 }
 
 @media (max-width: 768px) {
-body.page-profile /* Match dashboard mobile header behavior (stack/fit/spacings) */
     body.page-profile header {
         padding: 15px !important;
         flex-direction: column;
@@ -26825,17 +26823,15 @@ body.page-profile /* Match dashboard mobile header behavior (stack/fit/spacings)
         position: relative;
     }
 
-    body.page-profile /* Ensure overall header keeps a dashboard-like left alignment */
     body.page-profile header .logo-area,
-body.page-profile header #userMenuBtn,
-body.page-profile header .user-info,
-body.page-profile header .user-dropdown-container {
+    body.page-profile header #userMenuBtn,
+    body.page-profile header .user-info,
+    body.page-profile header .user-dropdown-container {
         justify-content: flex-start !important;
         text-align: left !important;
     }
 
 
-    body.page-profile /* Move the app logo group to the left on mobile (dashboard style) */
     body.page-profile header > div.logo-area {
         align-items: flex-start !important;
         justify-content: flex-start !important;
@@ -26849,7 +26845,6 @@ body.page-profile header .user-dropdown-container {
         text-align: left !important;
     }
 
-    body.page-profile /* Hamburger/menu button: keep aligned to the right edge like dashboard */
     body.page-profile header .nav-toggle {
         margin-left: auto !important;
     }
@@ -26867,12 +26862,10 @@ body.page-profile header .user-dropdown-container {
         align-items: center;
     }
 
-    body.page-profile /* Prevent the "System Live" pill from forcing header width */
     body.page-profile header > div:last-child > div:nth-of-type(1) {
         display: none !important;
     }
 
-    body.page-profile /* Keep profile title/logo elements properly spaced */
     body.page-profile .profile-topbar {
         gap: 10px;
     }
@@ -29940,60 +29933,60 @@ body.page-settings /* Tax grid */
 }
 
 @media (max-width: 640px) {
-    header {
+    body.page-settings header {
         padding: 14px 16px;
     }
-    .header-title a {
+    body.page-settings .header-title a {
         font-size: 0.9rem;
         letter-spacing: -0.6px;
     }
-    .settings-card {
+    body.page-settings .settings-card {
         margin: -14px 12px 40px;
         padding: 28px;
     }
-    .info-row {
+    body.page-settings .info-row {
         flex-direction: column;
         align-items: flex-start;
     }
-    .info-row strong,
-    .info-row span,
-    .info-row div {
+    body.page-settings .info-row strong,
+    body.page-settings .info-row span,
+    body.page-settings .info-row div {
         word-break: break-word;
     }
-    form[method="POST"] .preference-group {
+    body.page-settings form[method="POST"] .preference-group {
         width: 100%;
     }
-    form[method="POST"] .preference-group input,
-    form[method="POST"] .preference-group select {
+    body.page-settings form[method="POST"] .preference-group input,
+    body.page-settings form[method="POST"] .preference-group select {
         width: 100%;
     }
-    .system-logistics-grid {
+    body.page-settings .system-logistics-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    .system-logistics-form {
+    body.page-settings .system-logistics-form {
         padding-bottom: 28px !important;
     }
-    .system-logistics-grid .preference-group:last-child {
+    body.page-settings .system-logistics-grid .preference-group:last-child {
         margin-bottom: 8px;
     }
     /* tax grid collapse */
-    .tax-grid {
+    body.page-settings .tax-grid {
         grid-template-columns: 1fr;
     }
     /* nav scrolls horizontally on small screens */
-    .settings-nav {
+    body.page-settings .settings-nav {
         justify-content: flex-start;
         gap: 8px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 8px;
     }
-    .settings-nav-links {
+    body.page-settings .settings-nav-links {
         flex-wrap: nowrap;
         white-space: nowrap;
     }
-    .settings-nav a {
+    body.page-settings .settings-nav a {
         padding: 4px 0;
     }
 }
@@ -38058,7 +38051,7 @@ body.page-operations-center .ops-card-index {
     height: 48px;
     border-radius: 16px;
     color: #0f172a;
-    font-weight: 950;
+    font-weight: 900;
     background: #e0f2fe;
     border: 1px solid rgba(14, 165, 233, 0.2);
 }
@@ -42804,6 +42797,7 @@ html[data-theme-applied="dark"] body:is(.page-sales-invoice-detail, .page-sales-
         animation: none;
     }
 }
+
 
 @media print {
     .sales-document-email-action,
@@ -54217,7 +54211,7 @@ body.page-cash-register .btn-pay {
     background: linear-gradient(135deg, var(--qs-cash-action-blue), var(--qs-cash-action-teal)) !important;
     color: #ffffff !important;
     font-size: 0.82rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.08em !important;
     box-shadow: 0 18px 30px rgba(20, 123, 209, 0.24) !important;
 }
@@ -55875,7 +55869,7 @@ body.page-cash-register {
         overflow: hidden !important;
         color: #7cadff !important;
         font-size: 0.78rem !important;
-        font-weight: 950 !important;
+        font-weight: 900 !important;
         letter-spacing: 0.09em !important;
         text-overflow: ellipsis !important;
         white-space: nowrap !important;
@@ -55894,7 +55888,7 @@ body.page-cash-register {
             linear-gradient(180deg, rgba(248, 113, 113, 0.16), rgba(127, 29, 29, 0.16)) !important;
         color: #fecaca !important;
         font-size: 0.68rem !important;
-        font-weight: 950 !important;
+        font-weight: 900 !important;
         letter-spacing: 0.045em !important;
         line-height: 1 !important;
         text-decoration: none !important;
@@ -56206,7 +56200,7 @@ body:is(
     margin: 0 0 8px;
     color: #67e8f9 !important;
     font-size: 0.76rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.18em !important;
     text-transform: uppercase;
 }
@@ -56223,7 +56217,7 @@ body:is(
     margin: 0;
     color: #ffffff !important;
     font-size: clamp(2rem, 4vw, 4.2rem) !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: -0.065em;
     line-height: 0.92;
 }
@@ -56426,7 +56420,7 @@ body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-kpi-card h3
     margin: 0;
     color: #334155 !important;
     font-size: 0.76rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.11em;
     text-transform: uppercase;
 }
@@ -56451,7 +56445,7 @@ body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-kpi-card .d
 body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-kpi-card .data-row span:last-child {
     color: var(--qs-doc-ink);
     font-size: 1.08rem;
-    font-weight: 950;
+    font-weight: 900;
     text-align: right;
 }
 
@@ -56526,7 +56520,7 @@ body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-document-li
     border-bottom: 1px solid rgba(226, 232, 240, 0.82);
     color: #334155;
     font-size: 0.76rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: 0.14em;
     text-transform: uppercase;
 }
@@ -56575,7 +56569,7 @@ body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-table-premi
     background: #f8fbff !important;
     color: #475569 !important;
     font-size: 0.71rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.095em;
     text-transform: uppercase;
 }
@@ -56615,7 +56609,7 @@ body:is(
     .page-sales-invoice-payment
 ) :is(.sales-money-value, .invoice-bold-txt, .quote-bold-txt, .sales-line-total, .sales-value-primary, .sales-payment-history-amount) {
     color: var(--qs-doc-blue) !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: -0.025em;
 }
 
@@ -56762,7 +56756,7 @@ body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-empty-state
     display: block;
     color: var(--qs-doc-ink);
     font-size: 1.18rem;
-    font-weight: 950;
+    font-weight: 900;
 }
 
 body:is(.page-sales-quotation-list, .page-sales-invoice-list) .sales-empty-state span {
@@ -56822,7 +56816,7 @@ body:is(.page-sales-quotation-create, .page-sales-invoice-create, .page-sales-in
     margin: 0;
     color: #334155 !important;
     font-size: 0.73rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.095em;
     text-transform: uppercase;
 }
@@ -56876,7 +56870,7 @@ body:is(
 ) .summary-row-premium strong {
     color: var(--qs-doc-ink);
     font-size: 0.98rem;
-    font-weight: 950;
+    font-weight: 900;
     text-align: right;
 }
 
@@ -56913,7 +56907,7 @@ body.page-sales-invoice-create .invoice-mode-btn {
     border-radius: 15px !important;
     background: rgba(255, 255, 255, 0.08) !important;
     color: rgba(226, 232, 240, 0.88) !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
 }
 
 body.page-sales-invoice-create .invoice-mode-btn.active {
@@ -56933,7 +56927,7 @@ body:is(.page-sales-quotation-create, .page-sales-invoice-create) .table-editor-
     margin: 0 0 14px;
     color: var(--qs-doc-ink);
     font-size: 1rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: -0.02em;
 }
 
@@ -56950,7 +56944,7 @@ body:is(.page-sales-quotation-create, .page-sales-invoice-create, .page-sales-qu
     background: #f8fbff !important;
     color: #475569 !important;
     font-size: 0.71rem !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
     letter-spacing: 0.085em;
     text-transform: uppercase;
 }
@@ -56975,7 +56969,7 @@ body:is(.page-sales-quotation-create, .page-sales-invoice-create) :is(.quote-lin
     border-radius: 14px !important;
     background: rgba(5, 150, 105, 0.10) !important;
     color: #047857 !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
 }
 
 body:is(.page-sales-quotation-create, .page-sales-invoice-create) :is(.quote-line-remove-premium, .table-action-remove, .quote-line-remove) {
@@ -57013,7 +57007,7 @@ body:is(.page-sales-quotation-create, .page-sales-invoice-create) .sales-form-ac
 body.page-sales-invoice-create .sales-invoice-submit-actions .qs-btn {
     min-height: 48px;
     border-radius: 14px !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
 }
 
 body:is(.page-sales-quotation-detail, .page-sales-invoice-detail) .sales-detail-grid-premium > aside.sales-card-premium {
@@ -57034,7 +57028,7 @@ body:is(.page-sales-quotation-detail, .page-sales-invoice-detail) .sales-detail-
     margin-bottom: 14px;
     color: #334155;
     font-size: 0.76rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
@@ -57083,7 +57077,7 @@ body.page-sales-invoice-detail :is(.sales-payment-history-title, .sales-credit-n
 body.page-sales-quotation-detail .sales-card-title {
     color: #2563eb !important;
     font-size: 0.72rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: 0.105em;
     text-transform: uppercase;
 }
@@ -57092,7 +57086,7 @@ body:is(.page-sales-quotation-detail, .page-sales-invoice-detail) .sales-documen
     margin: 4px 0 0;
     color: var(--qs-doc-ink);
     font-size: 1.18rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: -0.03em;
 }
 
@@ -57126,7 +57120,7 @@ body.page-sales-quotation-detail .conversion-engine-container .qs-btn,
 body.page-sales-invoice-detail :is(.sales-pickup-release-form .qs-btn, .sales-pickup-classify-form .qs-btn, .sales-credit-note-submit) {
     min-height: 46px;
     border-radius: 13px !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
 }
 
 body.page-sales-invoice-detail .sales-payment-history-row,
@@ -57190,7 +57184,7 @@ body.page-sales-invoice-payment .sales-summary-block {
 body.page-sales-invoice-payment .sales-summary-block span:first-child {
     color: var(--qs-doc-muted);
     font-size: 0.72rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -57198,7 +57192,7 @@ body.page-sales-invoice-payment .sales-summary-block span:first-child {
 body.page-sales-invoice-payment .sales-summary-block strong {
     color: var(--qs-doc-ink);
     font-size: 1.08rem;
-    font-weight: 950;
+    font-weight: 900;
     letter-spacing: -0.035em;
 }
 
@@ -57235,7 +57229,7 @@ body.page-sales-invoice-payment .sales-payment-max-btn {
     border-radius: 14px;
     background: rgba(5, 150, 105, 0.10);
     color: #047857;
-    font-weight: 950;
+    font-weight: 900;
 }
 
 body.page-sales-invoice-payment .sales-pickup-fieldset {
@@ -57249,7 +57243,7 @@ body.page-sales-invoice-payment .sales-pickup-fieldset {
 body.page-sales-invoice-payment .sales-pickup-fieldset legend {
     padding: 0 8px;
     color: var(--qs-doc-ink);
-    font-weight: 950;
+    font-weight: 900;
 }
 
 body.page-sales-invoice-payment .sales-pickup-options {
@@ -57288,7 +57282,7 @@ body.page-sales-invoice-payment .sales-pickup-option-copy {
 
 body.page-sales-invoice-payment .sales-pickup-option-copy strong {
     color: var(--qs-doc-ink);
-    font-weight: 950;
+    font-weight: 900;
 }
 
 body.page-sales-invoice-payment .sales-pickup-option-copy small,
@@ -57311,14 +57305,14 @@ body.page-sales-invoice-payment .sales-record-payment-button {
     border-radius: 14px !important;
     background: linear-gradient(135deg, var(--qs-doc-emerald), #0ea5e9) !important;
     color: #ffffff !important;
-    font-weight: 950 !important;
+    font-weight: 900 !important;
 }
 
 body.page-sales-invoice-payment .history-title {
     margin: 0 0 14px;
     color: var(--qs-doc-ink);
     font-size: 1rem;
-    font-weight: 950;
+    font-weight: 900;
 }
 
 body.page-sales-invoice-payment .sales-payment-history-list {
@@ -57688,5 +57682,437 @@ html[data-theme-applied="dark"] body:is(.page-sales-quotation-detail, .page-sale
     ) *::after {
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
+    }
+}
+/* =====================================================
+   CROSS-PLATFORM RENDERING CONTRACT
+   Final Windows/Linux sizing, typography, and overflow guard.
+===================================================== */
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/InterVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+}
+
+:root {
+    --qs-ui-font: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --qs-mono-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+html {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    font-family: var(--qs-ui-font);
+    font-synthesis: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--qs-ui-font);
+    font-synthesis: none;
+}
+
+body {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    max-width: 100%;
+    letter-spacing: 0;
+}
+
+button,
+select,
+textarea,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]) {
+    min-width: 0;
+    line-height: 1.25;
+}
+
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+    min-height: 40px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    flex: 0 0 auto;
+    accent-color: var(--primary-blue, #2563eb);
+}
+
+input[type="file"] {
+    min-width: 0;
+    max-width: 100%;
+    line-height: 1.4;
+}
+
+textarea {
+    resize: vertical;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+:is(main, section, article, aside, nav, form, fieldset, .page-wrapper, .app-shell-header, .app-shell-header-primary, .app-shell-header-actions, .app-shell-operator-row) {
+    min-width: 0;
+}
+
+:is(main, section, article, aside, nav, form, fieldset, .page-wrapper) > * {
+    min-width: 0;
+}
+
+:is(p, li, dd, dt, label, th, td, .message, .info-row, .detail-value, .operator-meta, .dropdown-link) {
+    overflow-wrap: anywhere;
+}
+
+:is(.table-responsive, .table-container, .table-wrapper, .inventory-table-wrapper, .customer-table-container, .sales-table-wrap, .report-table-wrap, .movement-table-wrap, .activity-table-wrapper) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+:is(.amount, .money, .currency, .total-amount, .card-price, .stat-value, .metric-value, .receipt-number, code, pre, kbd, samp) {
+    font-family: var(--qs-mono-font);
+    font-variant-numeric: tabular-nums;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+body header.app-shell-header,
+body .page-wrapper > header.app-shell-header,
+body.page-index header,
+body.page-cash-register .cash-register-command-bar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+body header.app-shell-header .app-shell-header-primary,
+body header.app-shell-header .app-shell-header-actions,
+body header.app-shell-header .app-shell-operator-row,
+body .page-wrapper > header.app-shell-header .app-shell-header-primary,
+body .page-wrapper > header.app-shell-header .app-shell-header-actions,
+body .page-wrapper > header.app-shell-header .app-shell-operator-row {
+    min-width: 0 !important;
+}
+
+body header.app-shell-header .pulse-ring,
+body .page-wrapper > header.app-shell-header .pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--success-green, #22c55e);
+    opacity: 0.7;
+    animation: pulse 2s infinite;
+}
+
+body header.app-shell-header .pulse-dot,
+body .page-wrapper > header.app-shell-header .pulse-dot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success-green, #22c55e);
+}
+
+body header.app-shell-header .app-system-live-pill .pill-text::after,
+body .page-wrapper > header.app-shell-header .app-system-live-pill .pill-text::after {
+    content: none !important;
+    display: none !important;
+}
+
+body header.app-shell-header .operator-avatar,
+body .page-wrapper > header.app-shell-header .operator-avatar {
+    display: inline-flex !important;
+    flex: 0 0 28px;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+
+body header.app-shell-header .app-plan-badge,
+body .page-wrapper > header.app-shell-header .app-plan-badge {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px !important;
+    background: rgba(100, 116, 139, 0.12);
+    color: #cbd5e1;
+    font-size: 0.58rem !important;
+    font-weight: 900 !important;
+    line-height: 1.2;
+}
+
+body header.app-shell-header .app-plan-badge-pro,
+body .page-wrapper > header.app-shell-header .app-plan-badge-pro {
+    border-color: var(--success-green, #22c55e);
+    background: rgba(34, 197, 94, 0.14);
+    color: #86efac;
+}
+
+body header.app-shell-header .app-plan-badge-trial,
+body .page-wrapper > header.app-shell-header .app-plan-badge-trial {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.14);
+    color: #fbbf24;
+}
+
+body header.app-shell-header .dropdown-link-logout,
+body .page-wrapper > header.app-shell-header .dropdown-link-logout {
+    color: var(--danger-red, #dc2626) !important;
+    font-weight: 800 !important;
+}
+
+body.auth-body {
+    width: 100%;
+    max-width: 100%;
+}
+
+body.auth-body .auth-container {
+    width: min(100%, 560px);
+    min-width: 0;
+    margin-inline: auto;
+}
+
+body.auth-body .auth-card,
+body.page-password-reset .auth-card,
+body.page-password-reset .security-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+body.page-profile,
+body.page-settings,
+body.page-upgrade {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: visible !important;
+}
+
+body.page-profile :is(.profile-container, .profile-card, .profile-header, .stats-row, .detail-row, .action-grid),
+body.page-settings :is(main, .settings-card, .settings-nav, .settings-nav-links, .system-logistics-grid),
+body.page-upgrade :is(.upgrade-shell, .upgrade-card, .upgrade-success-layout) {
+    min-width: 0;
+    max-width: 100%;
+}
+
+body.page-cash-register {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: visible !important;
+}
+
+body.page-cash-register .pos-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 1920px !important;
+}
+
+body.page-cash-register :is(.product-area, .checkout-sidebar, .item-grid, .product-card, .cart-row, .payment-channel-panel, .billing-summary) {
+    min-width: 0 !important;
+    max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+    body.page-dashboard .dashboard-branch-toolbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    body.page-dashboard .dashboard-branch-toolbar label {
+        grid-column: 1 / -1;
+        white-space: nowrap;
+    }
+
+    body.page-dashboard .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 700px) {
+    body.page-dashboard .dashboard-branch-toolbar,
+    body.page-dashboard .kpi-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    body.page-dashboard .dashboard-sync-btn {
+        width: 100%;
+    }
+}
+
+@media (min-width: 901px) {
+    body header.app-shell-header .nav-toggle,
+    body .page-wrapper > header.app-shell-header .nav-toggle,
+    body.page-index .nav-toggle {
+        display: none !important;
+    }
+
+    body.page-index #main-nav {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 900px) {
+    body header.app-shell-header .app-shell-brand,
+    body header.app-shell-header .logo-area,
+    body .page-wrapper > header.app-shell-header .app-shell-brand,
+    body .page-wrapper > header.app-shell-header .logo-area {
+        max-width: calc(100% - 56px) !important;
+    }
+
+    body header.app-shell-header .app-shell-operator-row,
+    body .page-wrapper > header.app-shell-header .app-shell-operator-row {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    body header.app-shell-header .app-user-menu-btn,
+    body .page-wrapper > header.app-shell-header .app-user-menu-btn {
+        max-width: calc(100% - 94px) !important;
+    }
+
+    body:has(> header.app-shell-header) > #main-nav,
+    body:has(> .page-wrapper > header.app-shell-header) > .page-wrapper > #main-nav,
+    body.page-index #main-nav,
+    body.page-cash-register #main-nav {
+        right: 12px !important;
+        left: 12px !important;
+        width: auto !important;
+        max-width: none !important;
+        margin-inline: 0 !important;
+    }
+
+    body.page-index header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+    }
+
+    body.page-index .nav-toggle {
+        display: inline-flex !important;
+    }
+
+    body.page-index #main-nav:not(.mobile-active) {
+        display: none !important;
+    }
+
+    body.page-index #main-nav.mobile-active {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+    }
+
+    body.page-index #main-nav ul {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        width: 100%;
+        min-width: 0;
+    }
+
+    body.auth-body .auth-container {
+        width: min(100%, 520px);
+        padding-inline: 16px;
+    }
+
+    body.page-settings .settings-card {
+        width: calc(100% - 24px);
+        margin-inline: 12px;
+    }
+}
+
+@media (min-width: 1100px) {
+    body.page-cash-register .pos-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, clamp(340px, 31vw, 460px)) !important;
+    }
+
+    body.page-cash-register .product-area {
+        overflow: auto !important;
+    }
+
+    body.page-cash-register .checkout-sidebar {
+        overflow-x: clip !important;
+        overflow-y: auto !important;
+    }
+}
+
+@media (max-width: 1099px) {
+    body.page-cash-register .pos-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        min-height: auto !important;
+    }
+
+    body.page-cash-register .product-area,
+    body.page-cash-register .checkout-sidebar {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    body.page-cash-register .product-area {
+        overflow: visible !important;
+    }
+
+    body.page-cash-register .checkout-sidebar {
+        overflow: hidden !important;
+    }
+
+    body.page-cash-register .cart-items-list {
+        min-height: 120px !important;
+        max-height: 320px !important;
+        overflow-y: auto !important;
+    }
+}
+
+@media (max-width: 520px) {
+    html {
+        scrollbar-gutter: auto;
+    }
+
+    body[class] header.app-shell-header .app-system-live-pill,
+    body[class] .page-wrapper > header.app-shell-header .app-system-live-pill {
+        display: none !important;
+    }
+
+    body header.app-shell-header .app-user-menu-btn,
+    body .page-wrapper > header.app-shell-header .app-user-menu-btn {
+        max-width: 100% !important;
+    }
+
+    body.auth-body .auth-container {
+        padding-inline: 12px;
     }
 }

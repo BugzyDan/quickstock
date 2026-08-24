@@ -4,7 +4,6 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="QuickStock JA - Professional Inventory & POS Solutions">
 
     {% if request.user.is_authenticated %}
@@ -15,8 +14,7 @@
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
 
     <title>QuickStock JA | Inventory Simplified</title>
-    
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=landing-pricing-integrations-1">
+    {% include 'inventory/partials/cross_platform_head.html' %}
 
     
 </head>

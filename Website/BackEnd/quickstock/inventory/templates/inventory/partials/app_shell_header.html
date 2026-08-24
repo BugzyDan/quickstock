@@ -14,43 +14,43 @@
 
         <div class="header-actions app-shell-header-actions">
             {% if show_nav_toggle %}
-            <button type="button" class="nav-toggle mobile-nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+            <button type="button" class="nav-toggle mobile-nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-controls="main-nav" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
             {% endif %}
         </div>
     </div>
 
-    <div class="user-info app-user-info app-shell-operator-row" style="display: flex; align-items: center; gap: 15px;">
-        <div class="system-live-pill app-system-live-pill" style="display: flex; align-items: center; gap: 10px; background: rgba(46, 213, 115, 0.08); padding: 8px 15px; border-radius: 10px; border: 1px solid rgba(46, 213, 115, 0.2);">
-            <span style="position: relative; display: flex; height: 8px; width: 8px;">
-                <span style="position: absolute; height: 100%; width: 100%; border-radius: 50%; background: var(--success-green); opacity: 0.75; animation: pulse 2s infinite;"></span>
-                <span style="position: relative; height: 8px; width: 8px; border-radius: 50%; background: var(--success-green);"></span>
+    <div class="user-info app-user-info app-shell-operator-row">
+        <div class="system-live-pill app-system-live-pill">
+            <span class="pulse-wrapper" aria-hidden="true">
+                <span class="pulse-ring"></span>
+                <span class="pulse-dot"></span>
             </span>
-            <span style="color: var(--success-green); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">System Live</span>
+            <span class="pill-text">System Live</span>
         </div>
 
         {% if request.user.is_authenticated %}
-        <div class="user-dropdown-container" style="position: relative;">
-            <button id="userMenuBtn" type="button" class="app-user-menu-btn" aria-expanded="false" aria-controls="userDropdown" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; padding: 8px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;">
-                <div style="text-align: left;">
-                    <div style="font-size: 0.6rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">Operator</div>
-                    <div style="font-size: 0.85rem; font-weight: 700;">{{ request.user.username|upper }}</div>
+        <div class="user-dropdown-container">
+            <button id="userMenuBtn" type="button" class="app-user-menu-btn" aria-expanded="false" aria-controls="userDropdown">
+                <div class="operator-meta">
+                    <div class="label">Operator</div>
+                    <div class="name">{{ request.user.username|upper }}</div>
                 </div>
                 {% if request.user.profile.plan_badge_label and not hide_plan_badge %}
-                <span style="color: {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#d97706{% else %}#64748b{% endif %}; font-size: 0.55rem; font-weight: 900; background: {% if request.user.profile.plan_badge_state == 'pro' %}rgba(0, 208, 132, 0.15){% elif request.user.profile.plan_badge_state == 'trial' %}rgba(245, 158, 11, 0.15){% else %}rgba(100, 116, 139, 0.1){% endif %}; padding: 2px 6px; border-radius: 4px; border: 1px solid {% if request.user.profile.plan_badge_state == 'pro' %}var(--success-green){% elif request.user.profile.plan_badge_state == 'trial' %}#f59e0b{% else %}#cbd5e1{% endif %};">{{ request.user.profile.plan_badge_label }}</span>
+                <span class="app-plan-badge app-plan-badge-{{ request.user.profile.plan_badge_state }}">{{ request.user.profile.plan_badge_label }}</span>
                 {% endif %}
-                <div style="width: 26px; height: 26px; background: var(--primary-blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: white;">
+                <div class="operator-avatar" aria-hidden="true">
                     {{ request.user.username|slice:":1"|upper }}
                 </div>
             </button>
             
-            <div id="userDropdown" class="dropdown-menu" style="display: none; position: absolute; right: 0; background: white; min-width: 180px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden; border: 1px solid #ddd; z-index: 1200;">
+            <div id="userDropdown" class="dropdown-menu" hidden>
                 {% if not logout_only_operator_menu %}
                 <a href="/profile/" class="dropdown-link">My Profile</a>
                 <a href="/settings/" class="dropdown-link">Settings</a>
                 {% endif %}
-                <a href="/logout/" class="dropdown-link" style="color: var(--danger-red); border-bottom: none; font-weight: 800;">Logout</a>
+                <a href="/logout/" class="dropdown-link dropdown-link-logout">Logout</a>
             </div>
         </div>
         {% endif %}

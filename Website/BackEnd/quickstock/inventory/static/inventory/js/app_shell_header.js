@@ -11,7 +11,7 @@
         const isMobileLayout = () => window.innerWidth <= 900;
 
         const positionDropdown = () => {
-            if (dropdown.style.display !== "block") return;
+            if (dropdown.hidden || dropdown.style.display !== "block") return;
 
             if (!isMobileLayout()) {
                 dropdown.style.position = "";
@@ -44,6 +44,7 @@
         };
 
         const setOpen = (isOpen) => {
+            dropdown.hidden = !isOpen;
             dropdown.style.display = isOpen ? "block" : "none";
             document.body.classList.toggle("qs-operator-menu-open", isOpen);
             if (isOpen) {
@@ -102,9 +103,16 @@
         const navToggle = document.getElementById("navToggle");
         const nav = document.getElementById("main-nav");
         const header = document.querySelector("header");
-        if (!navToggle || !nav || navToggle.dataset.mobileNavBound === "true") return;
+        if (!navToggle) return;
+        if (!nav) {
+            navToggle.hidden = true;
+            navToggle.setAttribute("aria-expanded", "false");
+            return;
+        }
+        if (navToggle.dataset.mobileNavBound === "true") return;
 
         navToggle.dataset.mobileNavBound = "true";
+        navToggle.hidden = false;
         document.documentElement.dataset.qsShellBound = "true";
 
         const setOpen = (isOpen) => {

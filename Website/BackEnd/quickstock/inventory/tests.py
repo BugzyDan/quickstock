@@ -80,6 +80,90 @@ from .views import (
 )
 
 
+class CrossPlatformRenderingContractTests(SimpleTestCase):
+    def setUp(self):
+        self.app_dir = Path(__file__).resolve().parent
+        self.templates_dir = self.app_dir / "templates" / "inventory"
+        self.css = (self.app_dir / "static" / "inventory" / "css" / "style.css").read_text()
+
+    def test_shared_head_uses_local_font_and_accessible_viewport(self):
+        head = (self.templates_dir / "partials" / "cross_platform_head.html").read_text()
+        font_dir = self.app_dir / "static" / "inventory" / "fonts"
+
+        self.assertEqual(head.count('name="viewport"'), 1)
+        self.assertIn('content="width=device-width, initial-scale=1"', head)
+        self.assertIn("inventory/fonts/InterVariable.woff2", head)
+        self.assertIn("inventory/css/style.css", head)
+        self.assertTrue((font_dir / "InterVariable.woff2").is_file())
+        self.assertTrue((font_dir / "LICENSE.txt").is_file())
+
+    def test_representative_templates_share_one_rendering_head(self):
+        template_names = [
+            "login.html",
+            "login_otp.html",
+            "signup.html",
+            "password_reset.html",
+            "password_reset_form.html",
+            "password_reset_confirm.html",
+            "password_reset_done.html",
+            "password_reset_complete.html",
+            "index.html",
+            "dashboard.html",
+            "profile.html",
+            "settings.html",
+            "upgrade.html",
+            "cash_register.html",
+        ]
+
+        for template_name in template_names:
+            with self.subTest(template=template_name):
+                template = (self.templates_dir / template_name).read_text()
+                self.assertEqual(template.count("cross_platform_head.html"), 1)
+                self.assertNotIn("fonts.googleapis.com", template)
+                self.assertNotIn("user-scalable=no", template)
+                self.assertNotRegex(template, r"style\.css[^\n]*\?v=")
+
+    def test_final_css_contract_repairs_known_selector_and_weight_defects(self):
+        marker = "CROSS-PLATFORM RENDERING CONTRACT"
+
+        self.assertGreater(self.css.rfind(marker), self.css.rfind("QUICKSTOCK SALES DOCUMENTS SUITE REFINEMENT"))
+        self.assertNotIn("body.page-profile body.page-profile", self.css)
+        self.assertNotIn("body.page-profile /* Light profile theme", self.css)
+        self.assertNotRegex(self.css, r"font-weight:\s*(?:9[1-9][0-9]|1000)")
+        self.assertIn('src: url("../fonts/InterVariable.woff2")', self.css)
+        self.assertIn("--qs-ui-font", self.css)
+        self.assertIn("@media (min-width: 1100px)", self.css)
+        self.assertIn("@media (max-width: 1099px)", self.css)
+
+    def test_settings_mobile_rules_are_page_scoped(self):
+        mobile_start = self.css.index("@media (max-width: 640px) {", self.css.index("PAGE SECTION: Settings Page"))
+        mobile_end = self.css.index("body.page-settings footer", mobile_start)
+        settings_mobile = self.css[mobile_start:mobile_end]
+
+        self.assertIn("body.page-settings header", settings_mobile)
+        self.assertIn("body.page-settings .settings-card", settings_mobile)
+        self.assertIn("body.page-settings .info-row", settings_mobile)
+        self.assertNotIn("\n    header {", settings_mobile)
+        self.assertNotIn("\n    .settings-card {", settings_mobile)
+        self.assertNotIn("\n    .info-row {", settings_mobile)
+
+    def test_navigation_scripts_share_the_900px_contract(self):
+        shell_js = (self.app_dir / "static" / "inventory" / "js" / "app_shell_header.js").read_text()
+        public_js = (self.app_dir / "static" / "inventory" / "js" / "script.js").read_text()
+        header = (self.templates_dir / "partials" / "app_shell_header.html").read_text()
+        settings = (self.templates_dir / "settings.html").read_text()
+        upgrade = (self.templates_dir / "upgrade.html").read_text()
+
+        self.assertIn("window.innerWidth <= 900", shell_js)
+        self.assertIn("window.innerWidth <= 900", public_js)
+        self.assertIn("window.innerWidth > 900", public_js)
+        self.assertIn("navToggle.hidden = true", shell_js)
+        self.assertIn('aria-controls="main-nav"', header)
+        self.assertNotIn("style=", header)
+        self.assertIn("show_nav_toggle=False", settings)
+        self.assertIn("show_nav_toggle=False", upgrade)
+
+
 class LoadingStateAssetTests(SimpleTestCase):
     def test_loading_state_assets_define_busy_ui_contract(self):
         app_dir = Path(__file__).resolve().parent

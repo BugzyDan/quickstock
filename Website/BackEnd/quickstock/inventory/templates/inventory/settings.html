@@ -7,11 +7,8 @@
 
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>QuickStock JA | System Configuration</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+        {% include 'inventory/partials/cross_platform_head.html' %}
         <script src="{% static 'inventory/js/settings.js' %}" defer></script>
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 
@@ -20,7 +17,7 @@
 
     <body class="page-settings">
 
-        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+        {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=False hide_starter_banner=True %}
 
     
 

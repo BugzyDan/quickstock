@@ -6,7 +6,6 @@
       {% if request.user.profile.theme == 'dark' %}class="force-dark"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cash Register | QuickStock JA</title>
     <link rel="manifest" href="{% url 'quickstock_manifest' %}">
     <meta name="theme-color" content="#0b72d9">
@@ -30,8 +29,7 @@
     <script src="{% static 'inventory/js/session_guard.js' %}?v=session-guard-fix-2" defer></script>
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
     <script src="{% static 'inventory/js/cash_register.js' %}?v=cash-register-complete-state-1" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=cash-register-complete-state-1">
+    {% include 'inventory/partials/cross_platform_head.html' %}
 </head>  
 
 <body data-theme="{{ request.user.profile.theme|default:'system' }}" class="page-cash-register">
