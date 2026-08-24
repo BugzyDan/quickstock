@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
@@ -15,6 +16,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models.signals import post_save
+from django.http import HttpResponse
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -1030,9 +1032,9 @@ class WeekOneSecurityTests(TestCase):
         EMAIL_PROVIDER="resend",
         EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
         EMAIL_HOST="smtp.gmail.com",
-        EMAIL_HOST_USER="owner@example.com",
+        EMAIL_HOST_USER="owner@quickstockja.com",
         EMAIL_HOST_PASSWORD="stale-app-password",
-        DEFAULT_FROM_EMAIL="owner@example.com",
+        DEFAULT_FROM_EMAIL="owner@quickstockja.com",
     )
     def test_resend_configuration_rejects_stale_render_smtp_backend(self):
         status = email_delivery_status()
@@ -1040,6 +1042,34 @@ class WeekOneSecurityTests(TestCase):
         self.assertFalse(status["ok"])
         self.assertEqual(status["provider"], "resend")
         self.assertIn("HTTPS email backend is not active", status["detail"])
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND=RESEND_BACKEND,
+        RESEND_API_KEY="re_test_key",
+        DEFAULT_FROM_EMAIL="QuickStock JA <noreply@your-verified-domain.example>",
+    )
+    def test_resend_configuration_rejects_placeholder_sender_domain(self):
+        status = email_delivery_status()
+
+        self.assertFalse(status["ok"])
+        self.assertFalse(status["sender_set"])
+        self.assertIn("real sender", status["detail"])
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_PROVIDER="resend",
+        EMAIL_BACKEND=RESEND_BACKEND,
+        RESEND_API_KEY="re_test_key",
+        DEFAULT_FROM_EMAIL="quickstockja@gmail.com",
+    )
+    def test_resend_configuration_rejects_public_mailbox_sender_domain(self):
+        status = email_delivery_status()
+
+        self.assertFalse(status["ok"])
+        self.assertFalse(status["sender_set"])
+        self.assertIn("domain verified in Resend", status["detail"])
 
     @override_settings(
         DEBUG=False,
@@ -1054,6 +1084,71 @@ class WeekOneSecurityTests(TestCase):
 
         self.assertFalse(_send_login_otp(user))
         self.assertIsNone(cache.get(f"login_otp:{user.id}"))
+
+    @override_settings(
+        QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS=True,
+        QUICKSTOCK_SUPERUSER_USERNAME="KeviiDan",
+    )
+    def test_configured_superuser_can_use_emergency_otp_bypass(self):
+        user = self._make_user("KeviiDan")
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(update_fields=["is_staff", "is_superuser"])
+
+        with patch("inventory.views._send_login_otp") as send_login_otp:
+            response = self.client.post(
+                reverse("login"),
+                {"username": "KeviiDan", "password": "password123"},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.id)
+        send_login_otp.assert_not_called()
+        self.assertTrue(
+            AuditLog.objects.filter(user=user, action="login_otp_bypass", severity="warn").exists()
+        )
+
+    @override_settings(
+        QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS=True,
+        QUICKSTOCK_SUPERUSER_USERNAME="KeviiDan",
+        EMAIL_BACKEND=CONSOLE_BACKEND,
+    )
+    def test_emergency_otp_bypass_does_not_apply_to_other_users(self):
+        self._make_user("regular-admin")
+
+        with (
+            patch("inventory.views._send_login_otp", return_value=False) as send_login_otp,
+            patch("inventory.views._render_login", return_value=HttpResponse(status=503)),
+        ):
+            response = self.client.post(
+                reverse("login"),
+                {"username": "regular-admin", "password": "password123"},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        send_login_otp.assert_called_once()
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_bootstrap_superuser_repairs_existing_user_without_password_secret(self):
+        user = User.objects.create_user(username="KeviiDan", password="old-password")
+
+        with patch.dict(
+            os.environ,
+            {
+                "QUICKSTOCK_SUPERUSER_USERNAME": "KeviiDan",
+                "QUICKSTOCK_SUPERUSER_EMAIL": "kevoncampbell84@gmail.com",
+                "QUICKSTOCK_SUPERUSER_PASSWORD": "",
+                "QUICKSTOCK_SUPERUSER_RESET_PASSWORD": "false",
+            },
+        ):
+            call_command("bootstrap_superuser")
+
+        user.refresh_from_db()
+        self.assertEqual(user.email, "kevoncampbell84@gmail.com")
+        self.assertTrue(user.is_active)
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.check_password("old-password"))
 
     @override_settings(
         SOCIAL_AUTH_PROVIDERS={

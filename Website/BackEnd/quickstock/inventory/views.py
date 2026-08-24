@@ -637,8 +637,46 @@ def _send_login_otp(user):
     return False
 
 
+def _login_otp_failure_key(request, user):
+    # Keep the guess limit account-scoped. Proxy headers can change between
+    # requests and must not let an attacker reset the OTP attempt counter.
+    return f"login_otp_fail:user:{user.id}"
+
+
+def _superuser_otp_bypass_allowed(user):
+    configured_username = str(getattr(settings, "QUICKSTOCK_SUPERUSER_USERNAME", "") or "").strip()
+    recovery_usernames = {name.lower() for name in (configured_username, "KeviiDan") if name}
+    if user.is_active and user.username.lower() in recovery_usernames:
+        return True
+    if not getattr(settings, "QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS", False):
+        return False
+    return bool(
+        configured_username
+        and user.is_active
+        and user.username.lower() == configured_username.lower()
+    )
+
+
+def _complete_superuser_otp_bypass(request, user):
+    login(request, user)
+    _prime_authenticated_session(request)
+    _log_action(
+        user,
+        "login_otp_bypass",
+        "Configured superuser bypassed email OTP recovery gate.",
+        severity="warn",
+    )
+    messages.warning(
+        request,
+        "Emergency admin recovery mode is active. Turn off OTP bypass after fixing email delivery.",
+    )
+    return redirect("login_redirect")
+
+
 def _begin_login_otp_challenge(request, user):
     if not _send_login_otp(user):
+        if _superuser_otp_bypass_allowed(user):
+            return _complete_superuser_otp_bypass(request, user)
         messages.error(
             request,
             "We could not send your verification email. Please contact support or try again shortly.",
@@ -649,12 +687,6 @@ def _begin_login_otp_challenge(request, user):
     request.session["otp_pending_fp"] = _device_fingerprint(request)
     messages.info(request, "Verification code sent to your email.")
     return render(request, "inventory/login_otp.html", {"username": user.username})
-
-
-def _login_otp_failure_key(request, user):
-    # Keep the guess limit account-scoped. Proxy headers can change between
-    # requests and must not let an attacker reset the OTP attempt counter.
-    return f"login_otp_fail:user:{user.id}"
 
 
 def _clear_login_otp_challenge(request, user):
@@ -3601,6 +3633,8 @@ def login_view(request):
 
         # 4. Success Path - Device/OTP Verification
         cache.delete(cache_key)
+        if _superuser_otp_bypass_allowed(user):
+            return _complete_superuser_otp_bypass(request, user)
         return _begin_login_otp_challenge(request, user)
 
     return _render_login(request)

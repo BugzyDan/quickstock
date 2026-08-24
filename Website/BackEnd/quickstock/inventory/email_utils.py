@@ -1,3 +1,5 @@
+from email.utils import parseaddr
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
@@ -8,13 +10,45 @@ CONSOLE_BACKEND = "django.core.mail.backends.console.EmailBackend"
 LOCMEM_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 RESEND_BACKEND = "anymail.backends.resend.EmailBackend"
 
+PLACEHOLDER_SENDER_DOMAINS = {
+    "example.com",
+    "example.org",
+    "example.net",
+    "your-verified-domain",
+    "your-verified-domain.example",
+}
+PUBLIC_MAILBOX_DOMAINS = {
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "outlook.com",
+    "yahoo.com",
+}
+
+
+def _sender_status(default_from, *, provider):
+    sender = parseaddr(default_from)[1].strip().lower()
+    domain = sender.rsplit("@", 1)[1] if "@" in sender else ""
+
+    if not sender or "@" not in sender or not domain:
+        return False, "A valid DEFAULT_FROM_EMAIL sender address is required."
+    if domain == "localhost" or domain.endswith(".localhost"):
+        return False, "DEFAULT_FROM_EMAIL cannot use a localhost sender in production."
+    if domain in PLACEHOLDER_SENDER_DOMAINS or domain.endswith(".example"):
+        return False, "DEFAULT_FROM_EMAIL must use a real sender on your verified email domain."
+    if provider == "resend" and domain in PUBLIC_MAILBOX_DOMAINS:
+        return False, "Resend requires DEFAULT_FROM_EMAIL to use a domain verified in Resend, not a public mailbox domain."
+    return True, "Sender address is configured."
+
 
 def email_delivery_status():
     """Return a non-secret summary of whether this process can deliver email."""
     backend = str(getattr(settings, "EMAIL_BACKEND", "") or "")
     provider = str(getattr(settings, "EMAIL_PROVIDER", "") or "").lower()
     default_from = str(getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
-    sender_ready = bool(default_from and "@localhost" not in default_from.lower())
+    sender_ready, sender_detail = _sender_status(default_from, provider=provider)
 
     if provider == "resend" and backend != RESEND_BACKEND:
         return {
@@ -22,7 +56,11 @@ def email_delivery_status():
             "provider": provider,
             "backend": backend,
             "sender_set": sender_ready,
-            "detail": "Resend is selected but its HTTPS email backend is not active.",
+            "detail": (
+                "Resend is selected but its HTTPS email backend is not active."
+                if sender_ready
+                else sender_detail
+            ),
         }
 
     if backend == RESEND_BACKEND:
@@ -31,7 +69,9 @@ def email_delivery_status():
         detail = (
             "Resend HTTPS email is configured."
             if ok
-            else "Resend requires RESEND_API_KEY and a verified sender address."
+            else sender_detail
+            if not sender_ready
+            else "Resend requires RESEND_API_KEY."
         )
         return {
             "ok": ok,

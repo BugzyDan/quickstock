@@ -15,16 +15,23 @@ class Command(BaseCommand):
         email = os.getenv("QUICKSTOCK_SUPERUSER_EMAIL", "").strip()
         password = os.getenv("QUICKSTOCK_SUPERUSER_PASSWORD", "")
         reset_password = os.getenv("QUICKSTOCK_SUPERUSER_RESET_PASSWORD", "").strip().lower()
+        should_reset_password = reset_password in {"1", "true", "yes", "on"}
 
-        if not username and not password:
+        if not username:
             self.stdout.write("Superuser bootstrap is not configured; skipping.")
             return
-        if not username or not password:
-            raise CommandError(
-                "QUICKSTOCK_SUPERUSER_USERNAME and QUICKSTOCK_SUPERUSER_PASSWORD must both be set."
-            )
 
         User = get_user_model()
+        existing_user = User.objects.filter(username=username).first()
+        if not existing_user and not password:
+            raise CommandError(
+                "QUICKSTOCK_SUPERUSER_PASSWORD must be set when creating the deploy-configured superuser."
+            )
+        if should_reset_password and not password:
+            raise CommandError(
+                "QUICKSTOCK_SUPERUSER_PASSWORD must be set when QUICKSTOCK_SUPERUSER_RESET_PASSWORD is true."
+            )
+
         user, created = User.objects.get_or_create(
             username=username,
             defaults={"email": email},
@@ -40,7 +47,7 @@ class Command(BaseCommand):
                 setattr(user, field_name, value)
                 changed_fields.append(field_name)
 
-        if created or reset_password in {"1", "true", "yes", "on"}:
+        if password and (created or should_reset_password):
             user.set_password(password)
             changed_fields.append("password")
         if changed_fields:

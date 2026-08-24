@@ -44,10 +44,14 @@ services:
       - key: QUICKSTOCK_SEND_SIGNUP_EMAILS
         value: "False"
       - key: QUICKSTOCK_SUPERUSER_USERNAME
-        sync: false
+        value: KeviiDan
+      - key: QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS
+        value: "true"
       - key: QUICKSTOCK_SUPERUSER_EMAIL
-        sync: false
+        value: kevoncampbell84@gmail.com
       - key: QUICKSTOCK_SUPERUSER_PASSWORD
+        sync: false
+      - key: QUICKSTOCK_SUPERUSER_RESET_PASSWORD
         sync: false
       - key: GOOGLE_OAUTH_CLIENT_ID
         sync: false
