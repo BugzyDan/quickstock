@@ -1754,12 +1754,8 @@ def _daily_reconciliation_context(owner_user, selected_date):
 # Public Pages
 # ---------------------------
 def index(request):
-    """Render the public landing page without mutating account state."""
-    profile = None
-    if request.user.is_authenticated:
-        profile = UserProfile.objects.filter(user_id=request.user.pk).first()
-
-    return render(request, "inventory/index.html", {"profile": profile})
+    """Render the public landing page without reading account state."""
+    return render(request, "inventory/index.html")
 
 @login_required
 @role_required(["admin", "manager", "cashier"])

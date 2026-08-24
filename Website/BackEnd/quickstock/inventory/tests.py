@@ -8536,6 +8536,16 @@ class SessionSecurityTests(TestCase):
         self.assertContains(response, "Scale Your Business")
         self.assertFalse(UserProfile.objects.filter(user=user).exists())
 
+    def test_public_index_never_queries_the_account_profile(self):
+        user = self._make_user("landing-profile-query")
+        self.client.force_login(user)
+
+        with patch("inventory.views.UserProfile.objects.filter", side_effect=AssertionError("landing must stay public")):
+            response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Scale Your Business")
+
     def test_fingerprint_mismatch_does_not_logout_session_by_default(self):
         user = self._make_user("fingerprint-user")
         self.client.force_login(user)

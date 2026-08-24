@@ -1,14 +1,10 @@
 {% load static theme_tags %}
 <!DOCTYPE html>
-<html lang="en" {% if profile %}data-theme="{{ profile.theme|default:'system' }}"{% if profile.theme != 'system' %} data-theme-applied="{{ profile.theme }}"{% endif %}{% if profile.theme == 'dark' %} class="force-dark"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %}>
+<html lang="en" data-theme="light" data-theme-applied="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="description" content="QuickStock JA - Professional Inventory & POS Solutions">
-
-    {% if profile %}
-    <script src="{% static 'inventory/js/theme.js' %}"></script>
-    {% endif %}
 
     <script src="{% static 'inventory/js/script.js' %}?v=home-mobile-nav-5" defer></script>
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
@@ -19,7 +15,7 @@
     
 </head>
 
-<body {% if profile %}data-theme="{{ profile.theme|default:'system' }}"{% if profile.theme != 'system' %} data-theme-applied="{{ profile.theme }}"{% endif %}{% else %}data-theme="light" data-theme-applied="light"{% endif %} class="page-index page-index{% if not profile %} signed-out{% endif %}">
+<body data-theme="light" data-theme-applied="light" class="page-index page-index signed-out">
 <div class="page-wrapper">
     
 <header>
@@ -61,9 +57,6 @@
     <ul>
         {% if request.user.is_authenticated %}
             <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            {% if profile.role == 'manager' or profile.role == 'admin' %}
-                <li><a href="{% url 'inventory' %}">Inventory Control</a></li>
-            {% endif %}
             <li><a href="{% url 'support' %}">Help & Support</a></li>
             <li class="index-mobile-nav-only"><a href="{% url 'profile' %}">Profile</a></li>
         {% else %}
@@ -91,70 +84,34 @@
             </div>
 
             <aside class="index-hero-panel">
-                {% if request.user.is_authenticated and profile %}
-                    <div class="index-status-card">
-                        <div class="index-status-head">
-                            <span class="index-status-label">Active Workspace</span>
-                            <span class="index-status-role">{{ profile.get_role_display|default:profile.role|upper }}</span>
+                <div class="index-status-card index-status-card-guest">
+                    <div class="index-status-head">
+                        <span class="index-status-label">What You Get</span>
+                        <span class="index-status-role">14-Day Trial</span>
+                    </div>
+                    <h3>Launch faster with less spreadsheet chaos.</h3>
+                    <p>Track stock, log sales, manage branches, and keep cleaner tax-ready records from day one.</p>
+                    <div class="index-status-metrics">
+                        <div>
+                            <span>Setup</span>
+                            <strong>Minutes, not days</strong>
                         </div>
-                        <h3>{{ request.user.username }}</h3>
-                        <p>
-                            {% if profile.default_location %}
-                                Default branch: <strong>{{ profile.default_location.name }}</strong>
-                            {% else %}
-                                Default branch not assigned yet. Update your profile to lock in your daily workspace.
-                            {% endif %}
-                        </p>
-
-                        <div class="index-status-metrics">
-                            <div class="index-status-metric">
-                                <span>Plan</span>
-                                <strong>{{ profile.plan_badge_label }}</strong>
-                            </div>
-                            <div class="index-status-metric index-status-metric-status">
-                                <span>Status</span>
-                                <strong class="index-status-value-status">
-                                    {% if profile.is_pro_active %}Ready for Pro workflows{% elif profile.is_trial_active %}Trial active{% else %}Upgrade recommended{% endif %}
-                                </strong>
-                            </div>
-                        </div>
-
-                        <div class="index-panel-actions">
-                            <a href="{% url 'cash_register' %}" class="index-panel-btn">Offline Mode</a>
-                            <a href="{% url 'profile' %}" class="index-panel-btn">Profile</a>
-                            {% if profile.is_pro_active %}
-                                <a href="{% static 'inventory/downloads/QuickStockSetup.exe' %}" class="index-panel-btn">Desktop App</a>
-                            {% else %}
-                                <a href="{% url 'upgrade' %}" class="index-panel-btn">Upgrade Options</a>
-                            {% endif %}
+                        <div>
+                            <span>Visibility</span>
+                            <strong>Inventory, margins, movement</strong>
                         </div>
                     </div>
-                {% else %}
-                    <div class="index-status-card index-status-card-guest">
-                        <div class="index-status-head">
-                            <span class="index-status-label">What You Get</span>
-                            <span class="index-status-role">14-Day Trial</span>
-                        </div>
-                        <h3>Launch faster with less spreadsheet chaos.</h3>
-                        <p>Track stock, log sales, manage branches, and keep cleaner tax-ready records from day one.</p>
-                        <div class="index-status-metrics">
-                            <div>
-                                <span>Setup</span>
-                                <strong>Minutes, not days</strong>
-                            </div>
-                            <div>
-                                <span>Visibility</span>
-                                <strong>Inventory, margins, movement</strong>
-                            </div>
-                        </div>
 
-                        <div class="index-panel-actions">
-                            <a href="#pricing" class="index-panel-btn">Compare Plans</a>
-                            <a href="{% url 'about' %}" class="index-panel-btn">Product Tour</a>
+                    <div class="index-panel-actions">
+                        <a href="#pricing" class="index-panel-btn">Compare Plans</a>
+                        <a href="{% url 'about' %}" class="index-panel-btn">Product Tour</a>
+                        {% if request.user.is_authenticated %}
+                            <a href="{% url 'dashboard' %}" class="index-panel-btn">Open Dashboard</a>
+                        {% else %}
                             <a href="{% url 'signup' %}" class="index-panel-btn">Start Trial</a>
-                        </div>
+                        {% endif %}
                     </div>
-                {% endif %}
+                </div>
             </aside>
 
         </div>
@@ -180,9 +137,6 @@
 
     <div class="pricing-grid">
     <div class="pricing-card" data-plan-card="starter">
-        {% if profile.is_trial_active and profile.plan == "TRIAL" %}
-            <div class="pro-badge is-current-plan">Current Plan</div>
-        {% endif %}
         <h4>Starter</h4>
         <p class="index-plan-caption">14-day free trial of core Starter features</p>
         <div class="price" data-price
@@ -210,14 +164,8 @@
         <p class="index-plan-footnote">
             Starter is a trial, not a permanent free tier. Pro keeps exports, GCT tools, roles, and multi-location workflows active.
         </p>
-        {% if request.user.is_authenticated and profile %}
-            {% if profile.is_trial_active %}
-                <a href="{% url 'upgrade' %}?context=subscription&plan=starter" class="btn-upgrade btn-starter index-muted-cta">Current Plan (Trial)</a>
-            {% elif profile.is_pro_active %}
-                <a href="{% url 'upgrade' %}?context=subscription&included=starter" class="btn-upgrade btn-starter">Starter Features Included</a>
-            {% else %}
-                <a href="{% url 'upgrade' %}" class="btn-upgrade btn-starter">Trial Ended</a>
-            {% endif %}
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn-upgrade btn-starter">Open Dashboard</a>
         {% else %}
             <a href="{% url 'signup' %}" class="btn-upgrade btn-starter">Start Free Trial</a>
         {% endif %}
@@ -254,29 +202,13 @@
         <p class="index-plan-footnote">
             Includes Windows offline version download. Sales save locally during outages and sync to the cloud when reconnected.
         </p>
-        {% if request.user.is_authenticated and profile %}
-            {% if profile.is_pro_active %}
-                <a href="{% url 'upgrade' %}?context=subscription&plan=pro" class="btn-upgrade is-current-plan">Current Plan (Pro)</a>
-            {% else %}
-                <a href="{% url 'upgrade' %}?plan=pro&billing=monthly" class="btn-upgrade">Upgrade to Pro</a>
-            {% endif %}
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'upgrade' %}?plan=pro&billing=monthly" class="btn-upgrade">View Pro Options</a>
         {% else %}
             <a href="{% url 'signup' %}" class="btn-upgrade">Get Pro</a>
         {% endif %}
     </div>
 </div>
-
-    {% if request.user.is_authenticated and profile %}
-        <div class="current-plan-box">
-            {% if profile.is_pro_active %}
-                <span>✔ <strong>Pro Member</strong> — Renewal: {{ profile.pro_expires|date:"M d, Y" }}</span>
-            {% elif profile.is_trial_active %}
-                <span>⏳ <strong>Current Plan: Starter (Trial)</strong> — Ends: {{ profile.plan_end|date:"M d, Y" }}</span>
-            {% else %}
-                <span>⚠ <strong>Trial Ended</strong> — <a href="{% url 'upgrade' %}" class="index-upgrade-alert-link">Upgrade for GCT Tools →</a></span>
-            {% endif %}
-        </div>
-    {% endif %}
 
     <section class="section">
         <div class="pill">Built for Growth</div>
