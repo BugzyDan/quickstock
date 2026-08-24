@@ -698,7 +698,9 @@ def _clear_login_otp_challenge(request, user):
 def _handle_inactive_login_attempt(request, user):
     profile = UserProfile.for_user(user)
 
-    if profile.plan == "TRIAL":
+    if profile.is_archived:
+        messages.error(request, "This account is archived. Please contact support to restore access.")
+    elif profile.plan == "TRIAL":
         resend_key = f"activation_resend:{user.username}".lower()
         if not cache.get(resend_key):
             if _send_activation_email(request, user):
@@ -4796,21 +4798,11 @@ def delete_account(request):
             history = _owner_financial_history_summary(user)
             if any(history.values()):
                 reason = "Account purge blocked because financial history must be retained."
-                archived_at = timezone.now()
-                for model in (Supplier, Customer, Location):
-                    model.objects.filter(owner=user).update(
-                        is_archived=True,
-                        archived_at=archived_at,
-                        archived_by=user,
-                        archive_reason=reason,
-                    )
-                if profile:
-                    _archive_user_profile(profile, user, reason)
                 _log_action(
                     user,
                     "account",
-                    "Account purge blocked; financial history retained and account archived",
-                    {"history": history, "archived": True},
+                    "Account deletion blocked; financial history retained and account left active",
+                    {"history": history, "archived": False},
                     severity="warn",
                     required=True,
                 )
@@ -4818,12 +4810,13 @@ def delete_account(request):
                     "ok": False,
                     "code": "financial_history_protected",
                     "message": reason,
-                    "archived": True,
+                    "archived": False,
+                    "retained": True,
                     "history": history,
                 }
                 if "application/json" in (request.headers.get("Accept") or ""):
                     return JsonResponse(payload, status=409)
-                messages.error(request, "Account deletion is unavailable while financial history exists. The account and records were archived.")
+                messages.error(request, "Account deletion is unavailable while financial history exists. Your account remains active and its records were retained.")
                 return redirect("settings")
 
         try:

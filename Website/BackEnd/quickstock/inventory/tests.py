@@ -7253,9 +7253,9 @@ class QS003HistoricalFinancialIntegrityTests(TestCase):
         self.assertEqual(payment.received_by_id, staff.pk)
         self.assertEqual(payment.received_by_username, staff.username)
 
-    def test_account_purge_returns_structured_block_and_archives_history(self):
+    def test_account_purge_returns_structured_block_and_keeps_account_active(self):
         owner = self._make_user("qs3-purge-owner")
-        invoice, _line, _customer, _location, _item = self._make_sales_invoice(owner, suffix="purge")
+        invoice, _line, customer, location, _item = self._make_sales_invoice(owner, suffix="purge")
         payment = SalesInvoicePayment.objects.create(
             invoice=invoice,
             received_by=owner,
@@ -7270,12 +7270,19 @@ class QS003HistoricalFinancialIntegrityTests(TestCase):
 
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.json()["code"], "financial_history_protected")
-        self.assertTrue(response.json()["archived"])
+        self.assertFalse(response.json()["archived"])
+        self.assertTrue(response.json()["retained"])
         self.assertTrue(User.objects.filter(pk=owner.pk).exists())
         self.assertTrue(SalesInvoicePayment.objects.filter(pk=payment.pk).exists())
         owner.refresh_from_db()
         owner.profile.refresh_from_db()
-        self.assertTrue(owner.profile.is_archived)
+        customer.refresh_from_db()
+        location.refresh_from_db()
+        self.assertTrue(owner.is_active)
+        self.assertEqual(owner.profile.status, "active")
+        self.assertFalse(owner.profile.is_archived)
+        self.assertFalse(customer.is_archived)
+        self.assertFalse(location.is_archived)
 
     def test_account_delete_discards_drafts_instead_of_archiving(self):
         owner = self._make_user("qs3-draft-delete-owner")
