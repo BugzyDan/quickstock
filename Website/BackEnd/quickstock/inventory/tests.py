@@ -1,4 +1,5 @@
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
@@ -1158,6 +1159,46 @@ class WeekOneSecurityTests(TestCase):
             call_command("delete_deploy_user")
 
         self.assertFalse(User.objects.filter(username="KeviiDan").exists())
+
+    def test_accidentally_archived_deploy_user_is_restored_once(self):
+        user = self._make_user("KeviiDan")
+        profile = user.profile
+        profile.is_archived = True
+        profile.archived_at = timezone.now()
+        profile.archived_by = user
+        profile.archive_reason = "Account purge blocked because financial history must be retained."
+        profile.status = "suspended"
+        profile.plan = "PRO"
+        profile.pro_expires = timezone.localdate() + timedelta(days=365)
+        profile.save()
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+
+        migration = importlib.import_module(
+            "inventory.migrations.0081_restore_accidentally_archived_account"
+        )
+        migration.restore_accidentally_archived_account(
+            importlib.import_module("django.apps").apps,
+            None,
+        )
+
+        user.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertFalse(profile.is_archived)
+        self.assertEqual(profile.status, "active")
+        self.assertEqual(profile.plan, "PRO")
+        self.assertIsNone(profile.archived_at)
+        self.assertIsNone(profile.archived_by)
+        self.assertEqual(profile.archive_reason, "")
+
+    def test_render_build_does_not_repeat_deploy_user_deletion(self):
+        project_root = Path(__file__).resolve().parents[4]
+        build_script = (project_root / "Website" / "BackEnd" / "quickstock" / "build.sh").read_text()
+        render_blueprint = (project_root / "render.yaml").read_text()
+
+        self.assertNotIn("delete_deploy_user", build_script)
+        self.assertNotIn("QUICKSTOCK_DELETE_USER_USERNAME", render_blueprint)
 
     @override_settings(
         SOCIAL_AUTH_PROVIDERS={
