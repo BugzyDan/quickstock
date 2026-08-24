@@ -9473,7 +9473,11 @@ def wipay_response(request):
         with transaction.atomic():
             # Serialize callbacks for the same order so concurrent provider retries
             # cannot process one pending payment more than once.
-            payment = Payment.objects.select_for_update().select_related("user").get(pk=payment.pk)
+            # Payment.user is nullable, so select_related("user") produces a
+            # LEFT OUTER JOIN. PostgreSQL cannot apply FOR UPDATE to the
+            # nullable side of that join. Lock only the payment row and let the
+            # user relation load separately when it is accessed below.
+            payment = Payment.objects.select_for_update().get(pk=payment.pk)
             if payment.status == "paid":
                 return redirect(success_redirect)
             if not payment.user_id:

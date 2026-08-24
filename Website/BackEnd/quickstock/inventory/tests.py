@@ -13,11 +13,12 @@ from django.core import mail
 from django.core.management import call_command
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models.signals import post_save
 from django.http import HttpResponse
 from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -2765,20 +2766,32 @@ class WeekOneSecurityTests(TestCase):
             response_payload={"billing_cycle": "yearly"},
         )
 
-        response = self.client.get(
-            reverse("wipay_response"),
-            {
-                "order_id": "SB-72-1-QS-1-phrase-20260824141938",
-                "status": "Transaction Complete - Success",
-                "total": "30,400.00",
-            },
-        )
+        with CaptureQueriesContext(connection) as captured_queries:
+            response = self.client.get(
+                reverse("wipay_response"),
+                {
+                    "order_id": "SB-72-1-QS-1-phrase-20260824141938",
+                    "status": "Transaction Complete - Success",
+                    "total": "30,400.00",
+                },
+            )
 
         self.assertEqual(response.status_code, 302)
         payment.refresh_from_db()
         profile.refresh_from_db()
         self.assertEqual(payment.status, "paid")
         self.assertEqual(profile.plan, "PRO")
+        payment_selects = [
+            query["sql"]
+            for query in captured_queries.captured_queries
+            if query["sql"].lstrip().upper().startswith("SELECT")
+            and 'FROM "inventory_payment"' in query["sql"]
+        ]
+        self.assertTrue(payment_selects)
+        self.assertFalse(
+            any('JOIN "auth_user"' in sql for sql in payment_selects),
+            "WiPay's payment row lock must not include the nullable user join.",
+        )
 
     def test_wipay_response_creates_missing_profile_before_upgrade(self):
         owner = self._make_user("owner-missing-profile-wipay")
