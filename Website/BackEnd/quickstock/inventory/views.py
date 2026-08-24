@@ -245,7 +245,7 @@ def _cleanup_audit_logs(user=None):
 def _safe_decimal(value, default="0"):
     """Safely convert a value to Decimal."""
     try:
-        return Decimal(str(value))
+        return Decimal(str(value).replace(",", "").strip())
     except Exception:
         return Decimal(str(default))
 
@@ -9299,6 +9299,14 @@ def _is_wipay_sandbox_reference(order_id):
     return str(order_id or "").strip().upper().startswith("SB-")
 
 
+def _is_wipay_paid_status(status):
+    normalized = re.sub(r"[^a-z]+", " ", str(status or "").lower()).strip()
+    if normalized in {"success", "successful", "paid", "approved", "complete", "completed"}:
+        return True
+    status_words = set(normalized.split())
+    return bool(status_words & {"success", "successful", "paid", "approved", "complete", "completed"})
+
+
 @login_required
 def create_wipay_checkout_session(request):
     if request.method == "POST":
@@ -9535,7 +9543,7 @@ def wipay_response(request):
 
             # 3c️⃣ Success: update payment & profile. WiPay has used a few
             # equivalent labels across hosted checkout flows.
-            if status in {"success", "successful", "paid", "approved", "complete", "completed"}:
+            if _is_wipay_paid_status(status):
                 payment.status = "paid"
                 payment.save(update_fields=["transaction_id", "response_payload", "status"])
 

@@ -18,7 +18,13 @@
 
     <div class="cancel-wrap">
         <div class="cancel-title">Payment canceled</div>
+        {% if messages %}
+            {% for message in messages %}
+                <p class="cancel-text">{{ message }}</p>
+            {% endfor %}
+        {% else %}
         <p class="cancel-text">No charges were made. You can try upgrading again whenever you’re ready.</p>
+        {% endif %}
         <a href="{% url 'index' %}#pricing" class="btn">Back to Pricing</a>
     </div>
 
