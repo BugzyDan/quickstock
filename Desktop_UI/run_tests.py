@@ -26,12 +26,19 @@ for path in (PROJECT_ROOT, DESKTOP_ROOT):
 class MonkeyPatch:
     def __init__(self):
         self._env = []
+        self._attrs = []
 
     def setenv(self, key, value):
         self._env.append((key, os.environ.get(key)))
         os.environ[key] = value
 
+    def setattr(self, target, name, value):
+        self._attrs.append((target, name, getattr(target, name)))
+        setattr(target, name, value)
+
     def undo(self):
+        for target, name, previous in reversed(self._attrs):
+            setattr(target, name, previous)
         for key, previous in reversed(self._env):
             if previous is None:
                 os.environ.pop(key, None)
@@ -66,10 +73,19 @@ def build_kwargs(parameters):
 
 def main():
     failures = []
+    skipped = []
     total = 0
 
     for path in sorted(TEST_ROOT.glob("test_*.py")):
-        module = load_module(path)
+        try:
+            module = load_module(path)
+        except ModuleNotFoundError as exc:
+            if exc.name == "pytest":
+                skipped.append((path.name, "requires pytest"))
+                print(f"SKIP {path.name}: requires pytest")
+                continue
+            raise
+
         for name, func in sorted(vars(module).items()):
             if not name.startswith("test_") or not callable(func):
                 continue
@@ -77,7 +93,12 @@ def main():
             cleanups = []
             try:
                 signature = inspect.signature(func)
-                kwargs, cleanups = build_kwargs(signature.parameters)
+                try:
+                    kwargs, cleanups = build_kwargs(signature.parameters)
+                except RuntimeError as exc:
+                    skipped.append((f"{path.name}::{name}", str(exc)))
+                    print(f"SKIP {path.name}::{name}: {exc}")
+                    continue
                 func(**kwargs)
                 print(f"PASS {path.name}::{name}")
             except Exception as exc:
@@ -88,10 +109,10 @@ def main():
                     cleanup()
 
     if failures:
-        print(f"\n{len(failures)} failed, {total - len(failures)} passed, {total} total")
+        print(f"\n{len(failures)} failed, {total - len(failures)} passed, {len(skipped)} skipped, {total} total")
         return 1
 
-    print(f"\n{total} passed")
+    print(f"\n{total} passed, {len(skipped)} skipped")
     return 0
 
 

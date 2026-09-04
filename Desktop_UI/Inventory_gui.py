@@ -252,7 +252,8 @@ CARIBBEAN_TAX_MAP = {
 
 class InventoryGUI:
     def __init__(self, root):
-        load_dotenv() # Load variables from .env into os.environ
+        load_dotenv(resource_path(".env"), override=False)
+        load_dotenv(override=False)
         self.system = InventorySystem()
         self.root = root
         self.current_role = None
@@ -321,73 +322,11 @@ class InventoryGUI:
 
         # --- HOME DASHBOARD ---
         self.home_frame = tk.Frame(self.root, bg="#101827")
-        self.home_frame.pack(fill="both", expand=True, padx=22, pady=18)
-        self.home_frame.columnconfigure(0, weight=1)
-        self.home_frame.rowconfigure(1, weight=1)
-
-        self.hero_frame = tk.Frame(self.home_frame, bg="#101827")
-        self.hero_frame.grid(row=0, column=0, sticky="ew", pady=(0, 18))
-        self.hero_frame.columnconfigure(1, weight=1)
-
-        # --- UI ASSETS ---
-        self.load_logo(
-            self.hero_frame,
-            size=(138, 138),
-            pack_options=None,
-            grid_options={"row": 0, "column": 0, "sticky": "w", "padx": (0, 26)}
-        )
-
-        self.hero_copy = tk.Frame(self.hero_frame, bg="#101827")
-        self.hero_copy.grid(row=0, column=1, sticky="ew")
-
-        self.brand_title = tk.Label(
-            self.hero_copy,
-            text="QuickStock JA",
-            font=("Segoe UI", 30, "bold"),
-            bg="#101827",
-            fg="#ECF4FF"
-        )
-        self.brand_title.pack(anchor="w")
-
-        self.brand_subtitle = tk.Label(
-            self.hero_copy,
-            text="Inventory, POS, reports, and offline sync in one workspace.",
-            font=("Segoe UI", 12),
-            bg="#101827",
-            fg="#9FB3C8"
-        )
-        self.brand_subtitle.pack(anchor="w", pady=(4, 0))
-
-        self.session_pill = tk.Label(
-            self.hero_copy,
-            text="Local-first desktop console",
-            font=("Segoe UI", 10, "bold"),
-            bg="#0F766E",
-            fg="#DFFCF6",
-            padx=12,
-            pady=5
-        )
-        self.session_pill.pack(anchor="w", pady=(14, 0))
-
-        # --- BUTTON FRAME ---
-        self.button_frame = tk.Frame(self.home_frame, bg="#172233", bd=0, highlightthickness=1, highlightbackground="#2B3C55")
-        self.button_frame.grid(row=1, column=0, sticky="nsew")
-
-        # --- GRID CONFIG ---
-        self.button_frame.configure(padx=18, pady=18)
-        self.button_frame.columnconfigure(0, weight=1)
-        self.button_frame.columnconfigure(1, weight=1)
-        for i in range(4):
-            self.button_frame.rowconfigure(i, weight=1)
-
-        ## --- MAIN MENU BUTTONS ---
-        self.create_button(self.button_frame, "Operations", self.open_operations_menu, row=0, col=0)
-        self.create_button(self.button_frame, "Reports", self.open_reports_menu, row=0, col=1)
-        self.create_button(self.button_frame, "Settings", self.open_settings_menu, row=1, col=0)
-        self.create_button(self.button_frame, "Switch User", self.logout, row=1, col=1)
-        self.create_button(self.button_frame, "Online", self.open_online_workspace, row=2, col=0)
-        self.create_button(self.button_frame, "Users", self.open_users_workspace, row=2, col=1)
-        self.create_button(self.button_frame, "Exit", self.root.quit, row=3, col=0)
+        self.home_frame.pack(fill="both", expand=True)
+        self.home_metric_labels = {}
+        self.home_status_chips = {}
+        self.home_identity_labels = {}
+        self._build_home_dashboard()
         self._apply_theme_preference()
         self.root.after(100, lambda: self.login_window(self.root))
        
@@ -437,6 +376,7 @@ class InventoryGUI:
                 controller.refresh_connectivity_banner(syncing=syncing)
             except Exception:
                 pass
+        self._update_home_dashboard_widgets()
 
 
     def _load_business_profile(self):
@@ -551,9 +491,304 @@ class InventoryGUI:
         }
         return palettes.get(label)
 
+    def _format_money(self, value):
+        try:
+            amount = Decimal(str(value)).quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            amount = Decimal("0.00")
+        return f"${amount:,.2f}"
+
+    def _api_status_summary(self):
+        status = str(self.api_status or "UNKNOWN").strip().upper()
+        if status == "ONLINE":
+            return "API Online", "Live sync ready", "good"
+        if status in {"SERVER_DOWN", "SSL_ERROR", "SERVER_ERROR"}:
+            return "Offline", "Using local cache", "warn"
+        if status in {"AUTH_FAILED", "TOKEN_EXPIRED", "AUTH_FORBIDDEN"}:
+            return "Login Attention", "Session needs refresh", "warn"
+        if status == "PLAN_EXPIRED":
+            return "Plan Attention", "Subscription required", "danger"
+        if self.api_token:
+            return "API Checking", "Session available", "neutral"
+        return "Local Mode", "Sign in to sync", "neutral"
+
+    def _register_status_summary(self):
+        if self.active_register_is_open:
+            location = self.active_location_name or "Selected location"
+            return "Register Open", location, "good"
+        return "Register Closed", "Open before checkout", "neutral"
+
+    def _home_inventory_metrics(self):
+        items = self._normalize_items(self.system.inventory or [])
+        units = 0
+        low_count = 0
+        retail_value = Decimal("0.00")
+        for item in items:
+            qty = self._coerce_int(item.get("Amount") or item.get("amount") or 0) or 0
+            units += qty
+            if qty <= 5:
+                low_count += 1
+            try:
+                retail_value += Decimal(str(item.get("Price") or item.get("price") or 0)) * Decimal(qty)
+            except (InvalidOperation, TypeError, ValueError):
+                continue
+        return {
+            "items": len(items),
+            "units": units,
+            "low": low_count,
+            "retail_value": retail_value,
+        }
+
+    def _today_sales_total(self):
+        today_total = Decimal("0.00")
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        for receipt in self.system.receipts or []:
+            if str(receipt.get("archived")) == "True":
+                continue
+            date_value = str(receipt.get("Date") or receipt.get("Timestamp") or "")
+            if not date_value.startswith(today_str):
+                continue
+            try:
+                today_total += Decimal(str(receipt.get("Total Bill") or 0))
+            except (InvalidOperation, TypeError, ValueError):
+                continue
+        return today_total
+
+    def _chip_colors(self, palette, tone):
+        color_map = {
+            "good": ("#E6F7EF", "#0E8E5D"),
+            "warn": ("#FFF7ED", "#B45309"),
+            "danger": ("#FEE2E2", "#B91C1C"),
+            "neutral": (palette["badge_bg"], palette["badge_fg"]),
+        }
+        if (self.system.settings.get("theme") or "system").strip().lower() == "dark":
+            color_map.update({
+                "good": ("#143D36", "#8DEFCB"),
+                "warn": ("#3D2E15", "#FACC6B"),
+                "danger": ("#4A1D1D", "#FCA5A5"),
+            })
+        return color_map.get(tone, color_map["neutral"])
+
+    def _dashboard_chip(self, parent, key, title, detail, tone="neutral"):
+        palette = self._desktop_window_palette()
+        bg, fg = self._chip_colors(palette, tone)
+        chip = tk.Frame(parent, bg=bg, padx=12, pady=7)
+        label = tk.Label(
+            chip,
+            text=title,
+            bg=bg,
+            fg=fg,
+            font=("Segoe UI", 9, "bold"),
+        )
+        label.pack(anchor="w")
+        detail_label = tk.Label(
+            chip,
+            text=detail,
+            bg=bg,
+            fg=fg,
+            font=("Segoe UI", 8),
+        )
+        detail_label.pack(anchor="w")
+        self.home_status_chips[key] = (chip, label, detail_label)
+        return chip
+
+    def _dashboard_metric_card(self, parent, key, label, value, detail, palette):
+        card = self._build_desktop_card(parent, palette)
+        tk.Label(
+            card,
+            text=label.upper(),
+            bg=palette["card"],
+            fg=palette["muted"],
+            font=("Segoe UI", 8, "bold"),
+        ).pack(anchor="w")
+        value_label = tk.Label(
+            card,
+            text=value,
+            bg=palette["card"],
+            fg=palette["title"],
+            font=("Segoe UI", 20, "bold"),
+        )
+        value_label.pack(anchor="w", pady=(6, 0))
+        detail_label = tk.Label(
+            card,
+            text=detail,
+            bg=palette["card"],
+            fg=palette["muted"],
+            font=("Segoe UI", 9),
+            justify="left",
+            wraplength=210,
+        )
+        detail_label.pack(anchor="w", pady=(4, 0))
+        self.home_metric_labels[key] = (value_label, detail_label)
+        return card
+
+    def _build_home_dashboard(self):
+        palette = self._desktop_window_palette()
+        self.all_buttons = []
+        self.home_metric_labels = {}
+        self.home_status_chips = {}
+        self.home_identity_labels = {}
+
+        for widget in self.home_frame.winfo_children():
+            widget.destroy()
+
+        self.home_frame.configure(bg=palette["bg"], padx=22, pady=18)
+        self.home_frame.columnconfigure(0, weight=1)
+        self.home_frame.rowconfigure(2, weight=1)
+
+        header = tk.Frame(self.home_frame, bg=palette["header_bg"], padx=20, pady=18)
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 14))
+        header.columnconfigure(1, weight=1)
+        self.hero_frame = header
+
+        self.load_logo(
+            header,
+            size=(96, 96),
+            pack_options=None,
+            grid_options={"row": 0, "column": 0, "sticky": "nw", "padx": (0, 18)}
+        )
+
+        self.hero_copy = tk.Frame(header, bg=palette["header_bg"])
+        self.hero_copy.grid(row=0, column=1, sticky="nsew")
+        self.brand_title = tk.Label(
+            self.hero_copy,
+            text=self.business_name or "QuickStock JA",
+            font=("Segoe UI", 22, "bold"),
+            bg=palette["header_bg"],
+            fg=palette["header_title"],
+        )
+        self.brand_title.pack(anchor="w")
+        self.brand_subtitle = tk.Label(
+            self.hero_copy,
+            text="Daily inventory, register, reports, and offline sync control center.",
+            font=("Segoe UI", 10),
+            bg=palette["header_bg"],
+            fg=palette["header_muted"],
+        )
+        self.brand_subtitle.pack(anchor="w", pady=(4, 0))
+
+        identity_row = tk.Frame(self.hero_copy, bg=palette["header_bg"])
+        identity_row.pack(fill="x", pady=(14, 0))
+        for key, label in (
+            ("operator", "Operator: Not signed in"),
+            ("role", "Role: -"),
+            ("location", "Location: All Locations"),
+        ):
+            badge = tk.Label(
+                identity_row,
+                text=label,
+                font=("Segoe UI", 9, "bold"),
+                bg=palette["button_subtle"],
+                fg=palette["button_subtle_text"],
+                padx=10,
+                pady=5,
+            )
+            badge.pack(side="left", padx=(0, 8))
+            self.home_identity_labels[key] = badge
+        self.session_pill = self.home_identity_labels["operator"]
+
+        status_panel = tk.Frame(header, bg=palette["header_bg"])
+        status_panel.grid(row=0, column=2, sticky="ne")
+        api_title, api_detail, api_tone = self._api_status_summary()
+        register_title, register_detail, register_tone = self._register_status_summary()
+        self._dashboard_chip(status_panel, "api", api_title, api_detail, api_tone).pack(anchor="e", pady=(0, 8))
+        self._dashboard_chip(status_panel, "register", register_title, register_detail, register_tone).pack(anchor="e")
+
+        metrics = tk.Frame(self.home_frame, bg=palette["bg"])
+        metrics.grid(row=1, column=0, sticky="ew", pady=(0, 14))
+        for index in range(4):
+            metrics.columnconfigure(index, weight=1)
+        metric_defs = (
+            ("sales", "Today Sales", "$0.00", "Local receipt total"),
+            ("inventory", "Inventory", "0 items", "0 units on hand"),
+            ("queue", "Sync Queue", "0", "Actions waiting"),
+            ("stock", "Stock Alerts", "0 low", "Items at five or fewer"),
+        )
+        for index, metric in enumerate(metric_defs):
+            self._dashboard_metric_card(metrics, *metric, palette).grid(
+                row=0,
+                column=index,
+                sticky="nsew",
+                padx=(0 if index == 0 else 8, 0),
+            )
+
+        self.button_frame = tk.Frame(
+            self.home_frame,
+            bg=palette["card"],
+            highlightthickness=1,
+            highlightbackground=palette["card_border"],
+            padx=16,
+            pady=16,
+        )
+        self.button_frame.grid(row=2, column=0, sticky="nsew")
+        for column in range(2):
+            self.button_frame.columnconfigure(column, weight=1)
+        for row in range(4):
+            self.button_frame.rowconfigure(row, weight=1)
+
+        self.create_button(self.button_frame, "Operations", self.open_operations_menu, row=0, col=0)
+        self.create_button(self.button_frame, "Reports", self.open_reports_menu, row=0, col=1)
+        self.create_button(self.button_frame, "Settings", self.open_settings_menu, row=1, col=0)
+        self.create_button(self.button_frame, "Switch User", self.logout, row=1, col=1)
+        self.create_button(self.button_frame, "Online", self.open_online_workspace, row=2, col=0)
+        self.create_button(self.button_frame, "Users", self.open_users_workspace, row=2, col=1)
+        self.create_button(self.button_frame, "Exit", self.root.quit, row=3, col=0)
+        self._update_home_dashboard_widgets()
+
+    def _update_home_dashboard_widgets(self):
+        if not getattr(self, "home_frame", None):
+            return
+
+        palette = self._desktop_window_palette()
+        if getattr(self, "brand_title", None):
+            self.brand_title.configure(text=self.business_name or "QuickStock JA")
+
+        identity = {
+            "operator": f"Operator: {self.current_username or 'Not signed in'}",
+            "role": f"Role: {str(self.current_role or '-').upper()}",
+            "location": f"Location: {self.active_location_name or 'All Locations'}",
+        }
+        for key, text in identity.items():
+            label = self.home_identity_labels.get(key)
+            if label:
+                label.configure(text=text)
+
+        api_title, api_detail, api_tone = self._api_status_summary()
+        register_title, register_detail, register_tone = self._register_status_summary()
+        for key, title, detail, tone in (
+            ("api", api_title, api_detail, api_tone),
+            ("register", register_title, register_detail, register_tone),
+        ):
+            chip_tuple = self.home_status_chips.get(key)
+            if not chip_tuple:
+                continue
+            chip, label, detail_label = chip_tuple
+            bg, fg = self._chip_colors(palette, tone)
+            chip.configure(bg=bg)
+            label.configure(text=title, bg=bg, fg=fg)
+            detail_label.configure(text=detail, bg=bg, fg=fg)
+
+        metrics = self._home_inventory_metrics()
+        try:
+            queue_summary = self._summarize_pending_queue()
+        except Exception:
+            queue_summary = {"total": 0, "blocked": True}
+        metric_values = {
+            "sales": (self._format_money(self._today_sales_total()), "Local receipt total"),
+            "inventory": (f"{metrics['items']:,} items", f"{metrics['units']:,} units on hand"),
+            "queue": (str(queue_summary["total"]), "Actions waiting" if not queue_summary["blocked"] else "Queue needs review"),
+            "stock": (f"{metrics['low']:,} low", f"Retail value {self._format_money(metrics['retail_value'])}"),
+        }
+        for key, (value, detail) in metric_values.items():
+            labels = self.home_metric_labels.get(key)
+            if labels:
+                value_label, detail_label = labels
+                value_label.configure(text=value)
+                detail_label.configure(text=detail)
+
     def _apply_theme_preference(self):
         pref = (self.system.settings.get("theme") or "system").strip().lower()
-        theme_mode = "System" if pref == "system" else ("Dark" if pref == "dark" else "Light")
+        theme_mode = "Dark" if pref == "dark" else "Light"
         ctk.set_appearance_mode(theme_mode)
         palette = self._desktop_window_palette()
 
@@ -633,6 +868,10 @@ class InventoryGUI:
                 )
             except Exception:
                 pass
+        if hasattr(self, "home_frame") and self.home_frame.winfo_exists():
+            self._build_home_dashboard()
+            if self.current_role:
+                self.apply_permissions()
 
     def _save_cache(self, path, data):
         try:
@@ -2565,6 +2804,8 @@ class InventoryGUI:
         container = ctk.CTkFrame(win, fg_color=palette["menu_bg"])
         container.pack(fill="both", expand=True, padx=20, pady=20)
 
+        visible_count = sum(1 for label, _command in actions if label in allowed)
+
         ctk.CTkLabel(
             container,
             text=title,
@@ -2574,29 +2815,29 @@ class InventoryGUI:
         ).pack(fill="x", pady=(0, 4))
         ctk.CTkLabel(
             container,
-            text="QuickStock desktop workspace",
+            text=f"{visible_count} available action(s) for {role.title()} access",
             font=("Segoe UI", 12),
             text_color=palette["header_muted"],
             anchor="w",
         ).pack(fill="x", pady=(0, 16))
 
         for label, command in actions:
-            # Only render button if the user's role has permission
-            if label in allowed:
-                btn = ctk.CTkButton(
-                    container, 
-                    text=label, 
-                    command=lambda c=command, w=win: [w.destroy(), c()],
-                    height=45,
-                    corner_radius=8,
-                    fg_color=palette["menu_button"],
-                    hover_color=palette["menu_button_active"],
-                    text_color=palette["header_title"],
-                    border_width=1,
-                    border_color="#2F455E",
-                    font=("Segoe UI", 13, "bold"),
-                )
-                btn.pack(fill="x", pady=8)
+            is_allowed = label in allowed
+            btn = ctk.CTkButton(
+                container,
+                text=label if is_allowed else f"{label}  |  Unavailable",
+                command=(lambda c=command, w=win: [w.destroy(), c()]) if is_allowed else None,
+                height=44,
+                corner_radius=8,
+                fg_color=palette["menu_button"] if is_allowed else "#233247",
+                hover_color=palette["menu_button_active"] if is_allowed else "#233247",
+                text_color=palette["header_title"] if is_allowed else "#6F89B2",
+                border_width=1,
+                border_color="#2F455E" if is_allowed else "#26364F",
+                font=("Segoe UI", 12, "bold"),
+                state="normal" if is_allowed else "disabled",
+            )
+            btn.pack(fill="x", pady=6)
 
     def open_operations_menu(self):
         actions = [
@@ -2931,6 +3172,7 @@ class InventoryGUI:
             self._apply_theme_preference()
             self.apply_regional_tax()
             self._persist_offline_settings()
+            self._update_home_dashboard_widgets()
             messagebox.showinfo("Saved", "Offline settings synced successfully.")
             win.destroy()
 
@@ -3737,6 +3979,7 @@ class InventoryGUI:
 
     def create_button(self, parent, text, command, row, col):
         pref = (self.system.settings.get("theme") or "system").strip().lower()
+        palette = self._desktop_window_palette()
         button_palette = self._home_button_palette(text)
         if button_palette:
             fg_color, hover_color, text_color, border_color = button_palette
@@ -3750,20 +3993,67 @@ class InventoryGUI:
             hover_color = "#D8E2EE"
             text_color = "#132238"
             border_color = "#C3D0DF"
-        button = ctk.CTkButton(
+
+        descriptions = {
+            "Operations": "Sell, receive, transfer, and control the active branch.",
+            "Reports": "Search records, inspect inventory, and review sales history.",
+            "Settings": "Business identity, tax, suppliers, locations, and sync tools.",
+            "Switch User": "Close this session and return to operator login.",
+            "Online": "Open connected QuickStock web workspaces and admin pages.",
+            "Users": "Review staff access and cached user registry state.",
+            "Exit": "Close the QuickStock desktop application.",
+        }
+        card = tk.Frame(
             parent,
+            bg=palette["card"],
+            highlightthickness=1,
+            highlightbackground=palette["card_border"],
+            padx=12,
+            pady=12,
+        )
+        card.grid(row=row, column=col, sticky="nsew", padx=8, pady=8)
+        card.columnconfigure(0, weight=1)
+        group_label = {
+            "Operations": "OPERATIONS",
+            "Reports": "REPORTING",
+            "Settings": "ADMIN",
+            "Switch User": "SESSION",
+            "Online": "ONLINE",
+            "Users": "ACCESS",
+            "Exit": "SESSION",
+        }.get(text, "COMMAND")
+        tk.Label(
+            card,
+            text=group_label,
+            bg=palette["card"],
+            fg=palette["muted"],
+            font=("Segoe UI", 8, "bold"),
+        ).grid(row=0, column=0, sticky="w")
+        tk.Label(
+            card,
+            text=descriptions.get(text, "Open this workspace."),
+            bg=palette["card"],
+            fg=palette["text"],
+            font=("Segoe UI", 9),
+            justify="left",
+            wraplength=360,
+        ).grid(row=1, column=0, sticky="ew", pady=(4, 10))
+        button = ctk.CTkButton(
+            card,
             text=text,
             command=command,
-            font=("Segoe UI", 15, "bold"),
-            corner_radius=16,
-            height=92,
+            font=("Segoe UI", 12, "bold"),
+            corner_radius=8,
+            height=42,
             fg_color=fg_color,
             hover_color=hover_color,
             text_color=text_color,
             border_width=1,
             border_color=border_color
         )
-        button.grid(row=row, column=col, sticky="nsew", padx=12, pady=12)
+        button.grid(row=2, column=0, sticky="ew")
+        button._home_card = card
+        button._home_grid = (row, col)
         self.all_buttons.append(button)
         return button
     
@@ -4733,14 +5023,15 @@ class InventoryGUI:
         # 3. Apply the Grid
         for btn in self.all_buttons:
             btn_text = btn.cget("text")
+            card = getattr(btn, "_home_card", btn)
             
             if btn_text in allowed and btn_text in button_coords:
                 r, c = button_coords[btn_text]
-                # Re-grid with explicit coordinates to prevent 'deletion'
-                btn.grid(row=r, column=c, sticky="nsew", padx=12, pady=12)
+                # Re-grid with explicit coordinates to prevent hidden cards from drifting.
+                card.grid(row=r, column=c, sticky="nsew", padx=8, pady=8)
             else:
-                # Use grid_forget() or grid_remove() to hide
-                btn.grid_remove()
+                card.grid_remove()
+        self._update_home_dashboard_widgets()
 
     def _start_role_refresh(self):
         if getattr(self, "_role_refresh_started", False):
@@ -4797,6 +5088,7 @@ class InventoryGUI:
             self.active_location_name = "All Locations"
             self.api_status = "UNKNOWN"
             self.status_label.config(text="Waiting for Login...", fg="#58D68D")
+            self._update_home_dashboard_widgets()
             self.login_window(self.root)
 
     def _clear_local_caches(self):
@@ -4901,10 +5193,12 @@ class InventoryGUI:
                 status_color = "#F39C12"
 
             self.status_label.config(text=status_text, fg=status_color)
+            self._update_home_dashboard_widgets()
 
         except Exception as e:
             print(f"Error updating dashboard: {e}")
-            self.status_label.config(text="⚠️ Dashboard Update Error", fg="#E74C3C")
+            self.status_label.config(text="Dashboard Update Error", fg="#E74C3C")
+            self._update_home_dashboard_widgets()
 
         # 6. Auto-refresh every 30 seconds
         self._refresh_id = self.root.after(30000, self.update_dashboard_stats)
@@ -5723,12 +6017,53 @@ class InventoryGUI:
             win,
             "Inventory List",
             "Review the desktop cache and live stock records in one workspace.",
-            geometry="980x620",
+            geometry="1080x680",
         )
 
-        # 1. UI Container
+        summary_row = tk.Frame(body, bg=palette["bg"])
+        summary_row.pack(fill="x", pady=(0, 12))
+        for index in range(4):
+            summary_row.columnconfigure(index, weight=1)
+
+        inventory_summary_labels = {}
+
+        def add_summary_card(index, key, title, value="0", detail=""):
+            card = self._build_desktop_card(summary_row, palette)
+            card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 8, 0))
+            tk.Label(card, text=title.upper(), font=("Segoe UI", 8, "bold"), bg=palette["card"], fg=palette["muted"]).pack(anchor="w")
+            value_label = tk.Label(card, text=value, font=("Segoe UI", 18, "bold"), bg=palette["card"], fg=palette["title"])
+            value_label.pack(anchor="w", pady=(5, 0))
+            detail_label = tk.Label(card, text=detail, font=("Segoe UI", 9), bg=palette["card"], fg=palette["muted"])
+            detail_label.pack(anchor="w", pady=(3, 0))
+            inventory_summary_labels[key] = (value_label, detail_label)
+
+        add_summary_card(0, "items", "Items")
+        add_summary_card(1, "units", "Units")
+        add_summary_card(2, "low", "Low Stock")
+        add_summary_card(3, "value", "Retail Value")
+
+        toolbar = self._build_desktop_card(body, palette)
+        toolbar.pack(fill="x", pady=(0, 12))
+        tk.Label(toolbar, text="Search inventory", font=("Segoe UI", 10, "bold"), bg=palette["card"], fg=palette["title"]).pack(side="left")
+        search_var = tk.StringVar()
+        search_entry = self._desktop_entry(toolbar, palette, textvariable=search_var)
+        search_entry.pack(side="left", fill="x", expand=True, padx=10, ipady=8)
+        source_var = tk.StringVar(value="Waiting to load")
+        source_label = tk.Label(
+            toolbar,
+            text=source_var.get(),
+            font=("Segoe UI", 9, "bold"),
+            bg=palette["badge_bg"],
+            fg=palette["badge_fg"],
+            padx=10,
+            pady=5,
+        )
+        source_label.pack(side="left")
+
         container = self._build_desktop_card(body, palette)
         container.pack(fill="both", expand=True)
+        container.columnconfigure(0, weight=1)
+        container.rowconfigure(0, weight=1)
 
         columns = ("SKU", "Barcode", "Name", "Category", "Cost", "Price", "Amount")
         v_scroll = ttk.Scrollbar(container, orient="vertical")
@@ -5755,14 +6090,64 @@ class InventoryGUI:
             tree.column(col, width=120, anchor="center")
         tree.column("Barcode", width=130)
         tree.column("Name", width=180, anchor="w")
+        tree.tag_configure("low", background="#FFF7ED", foreground="#7C2D12")
+        tree.tag_configure("empty", background="#FEE2E2", foreground="#7F1D1D")
+        tree.tag_configure("muted", foreground=palette["muted"])
 
-      # 2. DATA LOADING LOGIC (The Hybrid Part)
-        def refresh_inventory():
-            # Performance Optimization: Detach items to suppress redraw events during bulk update
-            old_items = tree.get_children()
-            if old_items: tree.detach(*old_items)
+        current_items = []
 
+        def update_summary(items, source_text):
+            total_units = 0
+            low_count = 0
+            retail_value = Decimal("0.00")
+            for item in items:
+                qty = self._coerce_int(item.get("Amount") or item.get("amount") or 0) or 0
+                total_units += qty
+                if qty <= 5:
+                    low_count += 1
+                try:
+                    retail_value += Decimal(str(item.get("Price") or item.get("price") or 0)) * Decimal(qty)
+                except (InvalidOperation, TypeError, ValueError):
+                    continue
+            values = {
+                "items": (f"{len(items):,}", source_text),
+                "units": (f"{total_units:,}", "Stock on hand"),
+                "low": (f"{low_count:,}", "Five units or fewer"),
+                "value": (self._format_money(retail_value), "Shelf-value estimate"),
+            }
+            for key, (value, detail) in values.items():
+                value_label, detail_label = inventory_summary_labels[key]
+                value_label.configure(text=value)
+                detail_label.configure(text=detail)
+
+        def render_inventory_rows():
+            term = search_var.get().strip().lower()
             tree.delete(*tree.get_children())
+            shown = 0
+            for item in current_items:
+                values = (
+                    item.get("sku") or item.get("SKU") or "N/A",
+                    item.get("barcode") or item.get("Barcode") or "",
+                    item.get("name") or item.get("Name") or "Unknown",
+                    item.get("category_name") or item.get("category") or item.get("Category") or "General",
+                    f"{self._receipt_number_value(item.get('cost') or item.get('Cost') or 0):.2f}",
+                    f"{self._receipt_number_value(item.get('price') or item.get('Price') or 0):.2f}",
+                    item.get("Amount") or item.get("amount") or 0,
+                )
+                haystack = " ".join(str(value or "") for value in values).lower()
+                if term and term not in haystack:
+                    continue
+                qty = self._coerce_int(values[-1]) or 0
+                tag = "empty" if qty <= 0 else ("low" if qty <= 5 else "")
+                tree.insert("", "end", values=values, tags=(tag,) if tag else ())
+                shown += 1
+            if shown == 0:
+                message = "No inventory rows match this search." if term else "No inventory records found."
+                tree.insert("", "end", values=("-", "-", message, "-", "-", "-", "-"), tags=("muted",))
+            source_label.configure(text=f"{source_var.get()} | Showing {shown:,}")
+
+        def refresh_inventory():
+            nonlocal current_items
             items = []
             source_text = "LIVE"
 
@@ -5799,27 +6184,20 @@ class InventoryGUI:
                         messagebox.showerror("Error", "No connection and no saved data.")
                         return
 
-            # Populate the UI with mapped keys
-            for item in items:
-                # We prioritize the mapped keys from our SQL 'as' aliases
-                tree.insert("", "end", values=(
-                    item.get("sku") or item.get("SKU") or "N/A",
-                    item.get("barcode") or item.get("Barcode") or "",
-                    item.get("name") or item.get("Name") or "Unknown",
-                    item.get("category_name") or item.get("category") or item.get("Category") or "General",
-                    item.get("cost") or item.get("Cost") or "0.00",
-                    item.get("price") or item.get("Price") or "0.00",
-                    item.get("Amount") or item.get("amount") or 0
-                ))
+            current_items = items
+            source_var.set(source_text)
+            update_summary(current_items, source_text)
+            render_inventory_rows()
             win.title(f"Inventory List - Mode: {source_text}")
 
-        # 3. DELETE LOGIC (Syncs back to DB)
         def delete_selected():
             selected = tree.selection()
             if not selected: return
             
             item_values = tree.item(selected[0], "values")
             sku = item_values[0]  # Using SKU as the ID
+            if not sku or sku == "-":
+                return
 
             if not messagebox.askyesno("Confirm", f"Delete SKU {sku} from database?"):
                 return
@@ -5829,7 +6207,7 @@ class InventoryGUI:
                 if resp and resp.get("ok"):
                     messagebox.showinfo("Success", f"Item {sku} deleted from server.")
                 else:
-                    messagebox.showerror("Error", f"Failed to delete item {sku} from server. {resp.get('message', 'Unknown error')}")
+                    messagebox.showerror("Error", f"Failed to delete item {sku} from server. {(resp or {}).get('message', 'Unknown error')}")
                     self._queue_action("DELETE", {"sku": sku}) # Queue for later sync
                     messagebox.showwarning("Offline", "Delete action queued for sync.")
             else:
@@ -5838,14 +6216,16 @@ class InventoryGUI:
             
             # Always refresh local view after attempting delete or queuing
             refresh_inventory()
-        # 4. BUTTONS
+
         btn_frame = tk.Frame(body, bg=palette["bg"])
         btn_frame.pack(fill="x", pady=(12, 0))
 
         self._desktop_button(btn_frame, "Refresh", refresh_inventory, palette, kind="accent").pack(side="left", padx=(0, 8))
         self._desktop_button(btn_frame, "Delete Selected", delete_selected, palette, kind="danger").pack(side="left")
+        self._desktop_button(btn_frame, "Export CSV", self.export_inventory_csv, palette, kind="subtle").pack(side="left", padx=(8, 0))
+        self._desktop_button(btn_frame, "Close", win.destroy, palette, kind="subtle").pack(side="right")
 
-        # Initial Load
+        search_var.trace_add("write", lambda *_args: render_inventory_rows())
         refresh_inventory()
 
 
@@ -6872,35 +7252,376 @@ class InventoryGUI:
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
+
+    def open_shift_from_desktop(self):
+        """Open a backend CashShift from the desktop application."""
+
+        if not self.api_token or self.api_status != "ONLINE":
+            messagebox.showerror(
+                "Online Connection Required",
+                "Connect to QuickStock before opening a register shift.",
+                parent=self.root,
+            )
+            return False
+
+        location_id = self._coerce_int(self.active_location_id)
+
+        if not location_id:
+            messagebox.showerror(
+                "Location Required",
+                "Select a location before opening the register.",
+                parent=self.root,
+            )
+            return False
+
+        if self.active_register_is_open:
+            return True
+
+        raw_amount = simpledialog.askstring(
+            "Open Register Shift",
+            (
+                f"Location: {self.active_location_name}\n\n"
+                "Enter the opening cash float:"
+            ),
+            initialvalue="0.00",
+            parent=self.root,
+        )
+
+        if raw_amount is None:
+            return False
+
+        try:
+            opening_cash = Decimal(
+                str(raw_amount).strip().replace(",", "")
+            ).quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            messagebox.showerror(
+                "Invalid Amount",
+                "Enter a valid opening cash amount.",
+                parent=self.root,
+            )
+            return False
+
+        if opening_cash < Decimal("0.00"):
+            messagebox.showerror(
+                "Invalid Amount",
+                "Opening cash cannot be negative.",
+                parent=self.root,
+            )
+            return False
+
+        response = self._api_request(
+            "POST",
+            "/api/register/open/",
+            payload={
+                "location_id": location_id,
+                "opening_cash": str(opening_cash),
+            },
+        )
+
+        if not response:
+            messagebox.showerror(
+                "Register Error",
+                "QuickStock could not contact the server.",
+                parent=self.root,
+            )
+            return False
+
+        active_register = response.get("active_register")
+
+        if isinstance(active_register, dict):
+            self._apply_active_register_snapshot(active_register)
+
+        if not response.get("ok"):
+            messagebox.showerror(
+                "Register Error",
+                response.get(
+                    "message",
+                    "The register shift could not be opened.",
+                ),
+                parent=self.root,
+            )
+            return False
+
+        messagebox.showinfo(
+            "Register Open",
+            response.get(
+                "message",
+                f"Register opened at {self.active_location_name}.",
+            ),
+            parent=self.root,
+        )
+
+        self._update_home_dashboard_widgets()
+        return True
+
+
     def open_cash_register(self):
-        # IF the window exists, just lift it to the top. DON'T RE-OPEN.
-        if self.cash_register_window and self.cash_register_window.winfo_exists():
+        """Open the POS and automatically request a register shift."""
+
+        if (
+            self.cash_register_window
+            and self.cash_register_window.winfo_exists()
+        ):
             self.cash_register_window.lift()
             self.cash_register_window.focus_force()
             return
 
+        if not self.active_register_is_open:
+            if not self.open_shift_from_desktop():
+                return
+
         if not self.ensure_business_profile_for_sale():
             return
 
-        # Always refresh inventory before opening cash register
         try:
             self.sync_inventory()
+
             if not self.system.inventory:
                 self.load_from_local_cache()
-        except Exception:
-            pass
 
-        # IF it doesn't exist, create it once.
+        except Exception as exc:
+            logger.warning(
+                "Could not refresh inventory before opening POS: %s",
+                exc,
+            )
+
         self.cash_register_window = tk.Toplevel(self.root)
         self.cash_register_window.title("Sell Items")
 
-        # This starts the class and hands over control
-        Cash_register_GUI(self.cash_register_window, self.system, self)
+        Cash_register_GUI(
+            self.cash_register_window,
+            self.system,
+            self,
+        )
+
+        self.cash_register_window.protocol(
+            "WM_DELETE_WINDOW",
+            self._handle_cash_register_exit,
+        )
+
+
+    def _handle_cash_register_exit(self):
+        """Prompt to close the active shift when exiting the POS."""
+
+        window = self.cash_register_window
+        controller = self.cash_register_controller
+
+        if not window or not window.winfo_exists():
+            self.cash_register_window = None
+            self.cash_register_controller = None
+            return
+
+        if self.active_register_is_open:
+            choice = messagebox.askyesnocancel(
+                "Exit Cash Register",
+                (
+                    "The register shift is still open.\n\n"
+                    "Would you like to close the shift now?\n\n"
+                    "Yes — count cash, close the shift, and exit\n"
+                    "No — exit while leaving the shift open\n"
+                    "Cancel — return to the cash register"
+                ),
+                parent=window,
+            )
+
+            # Cancel: remain in the POS.
+            if choice is None:
+                return
+
+            # Yes: complete the closing-cash workflow first.
+            if choice and not self.close_shift_from_desktop():
+                return
+
+        # Clean up bindings owned by Cash_register_GUI.
+        if controller and hasattr(controller, "_unbind_register_mousewheel"):
+            try:
+                controller._unbind_register_mousewheel()
+            except Exception as exc:
+                logger.warning(
+                    "Could not remove register mousewheel bindings: %s",
+                    exc,
+                )
+
+        window.destroy()
+        self.cash_register_window = None
+        self.cash_register_controller = None
+
+
+    def close_shift_from_desktop(self):
+        """Close the active CashShift through the QuickStock backend API."""
+
+        if not self.api_token or self.api_status != "ONLINE":
+            messagebox.showerror(
+                "Online Connection Required",
+                "Connect to QuickStock before closing the register shift.",
+                parent=self.root,
+            )
+            return False
+
+        register_id = self._coerce_int(self.active_register_id)
+
+        if not register_id or not self.active_register_is_open:
+            messagebox.showinfo(
+                "No Open Register",
+                "There is no active register shift to close.",
+                parent=self.root,
+            )
+            return False
+
+        parent_window = (
+            self.cash_register_window
+            if (
+                self.cash_register_window
+                and self.cash_register_window.winfo_exists()
+            )
+            else self.root
+        )
+
+        raw_amount = simpledialog.askstring(
+            "Close Register Shift",
+            (
+                f"Location: {self.active_location_name}\n\n"
+                "Enter the counted closing cash:"
+            ),
+            initialvalue="0.00",
+            parent=parent_window,
+        )
+
+        if raw_amount is None:
+            return False
+
+        try:
+            closing_cash = Decimal(
+                str(raw_amount).strip().replace(",", "")
+            ).quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            messagebox.showerror(
+                "Invalid Amount",
+                "Enter a valid closing cash amount.",
+                parent=parent_window,
+            )
+            return False
+
+        if closing_cash < Decimal("0.00"):
+            messagebox.showerror(
+                "Invalid Amount",
+                "Closing cash cannot be negative.",
+                parent=parent_window,
+            )
+            return False
+
+        notes = simpledialog.askstring(
+            "Close Register Shift",
+            "Enter closing notes, or leave blank:",
+            initialvalue="",
+            parent=parent_window,
+        )
+
+        if notes is None:
+            return False
+
+        confirmed = messagebox.askyesno(
+            "Confirm Register Close",
+            (
+                f"Close register at {self.active_location_name}?\n\n"
+                f"Counted cash: ${closing_cash:,.2f}"
+            ),
+            parent=parent_window,
+        )
+
+        if not confirmed:
+            return False
+
+        response = self._api_request(
+            "POST",
+            "/api/register/close/",
+            payload={
+                "register_id": register_id,
+                "closing_cash": str(closing_cash),
+                "notes": str(notes or "").strip(),
+            },
+        )
+
+        if not response:
+            messagebox.showerror(
+                "Register Error",
+                "QuickStock could not complete the close-register request.",
+                parent=parent_window,
+            )
+            return False
+
+        active_register = response.get("active_register")
+
+        if not response.get("ok"):
+            if isinstance(active_register, dict):
+                self._apply_active_register_snapshot(active_register)
+
+            messagebox.showerror(
+                "Register Error",
+                response.get(
+                    "message",
+                    "The register shift could not be closed.",
+                ),
+                parent=parent_window,
+            )
+            return False
+
+        self._apply_active_register_snapshot(None)
+
+        try:
+            cached_user = self._load_offline_credentials(
+                self.current_username
+            )
+
+            if isinstance(cached_user, dict):
+                cached_user["active_register"] = None
+                SecureCache(USER_CACHE_FILE).save(cached_user)
+
+        except Exception as exc:
+            logger.warning(
+                "Could not clear the cached register snapshot: %s",
+                exc,
+            )
+
+        messagebox.showinfo(
+            "Register Closed",
+            response.get(
+                "message",
+                "The register shift was closed successfully.",
+            ),
+            parent=parent_window,
+        )
+        self._update_home_dashboard_widgets()
+
+        controller = getattr(
+            self,
+            "cash_register_controller",
+            None,
+        )
+
+        if controller:
+            try:
+                if hasattr(controller, "refresh_register_status"):
+                    controller.refresh_register_status()
+
+                if hasattr(controller, "refresh_connectivity_banner"):
+                    controller.refresh_connectivity_banner()
+
+            except Exception as exc:
+                logger.warning(
+                    "Could not refresh the cash-register interface: %s",
+                    exc,
+                )
+
+        return True
 
 class Cash_register_GUI:
     def __init__(self, root, system,gui_parent):   
         self.system = system
         self.gui_parent = gui_parent
+        if self.gui_parent:
+            self.gui_parent.cash_register_controller = self
         self.cart = []
         self.root = root
         self.root.protocol("WM_DELETE_WINDOW", self.close_register)
@@ -7129,14 +7850,14 @@ class Cash_register_GUI:
         hero.pack(side="left", fill="both", expand=True, padx=26, pady=10)
         tk.Label(
             hero,
-            text="QuickStock Cash Register",
+            text=getattr(self.gui_parent, "business_name", None) or "QuickStock Cash Register",
             font=("Segoe UI", 20, "bold"),
             bg=palette["header_bg"],
             fg=palette["header_title"],
         ).pack(anchor="w", pady=(12, 0))
         tk.Label(
             hero,
-            text="A cleaner offline-first checkout space with live sync cues for the cashier.",
+            text="Fast checkout with register, location, and sync status always visible.",
             font=("Segoe UI", 10),
             bg=palette["header_bg"],
             fg=palette["header_muted"],
@@ -7153,7 +7874,7 @@ class Cash_register_GUI:
         ).pack(anchor="e", pady=(14, 0))
         self.station_value_label = tk.Label(
             header_actions,
-            text=str(getattr(self.gui_parent, "username", "") or "cashier").upper(),
+            text=str(getattr(self.gui_parent, "current_username", "") or "cashier").upper(),
             font=("Segoe UI", 12, "bold"),
             bg=palette["header_bg"],
             fg=palette["header_accent"],
@@ -7271,7 +7992,7 @@ class Cash_register_GUI:
         scanner_card.pack(fill="x", pady=(0, 12))
         tk.Label(
             scanner_card,
-            text="Scan Barcode or Type Product Name...",
+            text="Scan Barcode or Type Product Name",
             font=("Segoe UI", 16, "bold"),
             bg=palette["card"],
             fg=palette["title"],
@@ -7470,7 +8191,7 @@ class Cash_register_GUI:
         tk.Label(checkout_card, text="Checkout Details", font=("Segoe UI", 13, "bold"), bg=palette["card"], fg=palette["title"]).pack(anchor="w")
         tk.Label(
             checkout_card,
-            text="Keep the sale details visible and simple for fast register work.",
+            text="Confirm payment details before finalizing the sale.",
             font=("Segoe UI", 10),
             bg=palette["card"],
             fg=palette["muted"],
@@ -7727,7 +8448,7 @@ class Cash_register_GUI:
             "header_bg": "#121B2F",
             "header_title": "#F8FAFC",
             "header_muted": "#94A3B8",
-            "header_accent": "#3D7BFF",
+            "header_accent": "#5EEAD4",
             "header_button_bg": "#1F2D46",
             "header_button_active": "#2A3C5A",
             "header_button_fg": "#F8FAFC",
@@ -7774,9 +8495,9 @@ class Cash_register_GUI:
             "badge_active_fg": "#FFFFFF",
             "queue_bg": "#E6F7EF",
             "queue_fg": "#0E8E5D",
-            "payment_bg": "#1E88E5",
-            "payment_total_fg": "#14E19C",
-            "payment_subtle_fg": "#DCEBFF",
+            "payment_bg": "#0F766E",
+            "payment_total_fg": "#DFFCF6",
+            "payment_subtle_fg": "#CFF8EA",
             "notice_bg": "#EFF6FF",
             "notice_fg": "#1D4ED8",
         }
@@ -7959,6 +8680,15 @@ class Cash_register_GUI:
             "danger": palette["danger"],
         }
         self.scanner_hint_label.configure(text=text, fg=tones.get(tone, palette["accent"]))
+
+    def refresh_register_status(self):
+        if self.station_value_label and self.station_value_label.winfo_exists():
+            self.station_value_label.configure(
+                text=str(getattr(self.gui_parent, "current_username", "") or "cashier").upper()
+            )
+        if self.terminal_location_label and self.terminal_location_label.winfo_exists():
+            self.terminal_location_label.configure(text=self._current_terminal_label())
+        self.refresh_connectivity_banner()
 
     def refresh_connectivity_banner(self, syncing=False):
         if not self.status_card or not self.status_card.winfo_exists() or not self.gui_parent:
@@ -8437,10 +9167,14 @@ class Cash_register_GUI:
             self.combo["values"] = items
 
     def close_register(self):
-        self._unbind_register_mousewheel()
+        """Route POS exit through the parent shift-close workflow."""
+
         if self.gui_parent:
-            self.gui_parent.cash_register_window = None
-            self.gui_parent.cash_register_controller = None
+            self.gui_parent._handle_cash_register_exit()
+            return
+
+        # Fallback if no parent controller exists.
+        self._unbind_register_mousewheel()
         self.root.destroy()
 
 

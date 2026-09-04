@@ -36,7 +36,7 @@ services:
       - key: DJANGO_EMAIL_TIMEOUT
         value: "5"
       - key: DJANGO_DEFAULT_FROM_EMAIL
-        sync: false
+        value: "QuickStock JA <noreply@quickstockja.com>"
       - key: QUICKSTOCK_REQUIRE_EMAIL_VERIFICATION
         value: "True"
       - key: QUICKSTOCK_SEND_LEGACY_VERIFICATION_EMAILS
@@ -69,6 +69,8 @@ services:
         value: "2"
       - key: GUNICORN_TIMEOUT
         value: "60"
+      - key: DJANGO_SECURE_HSTS_PRELOAD
+        value: "true"
       - key: WIPAY_ENVIRONMENT
         value: live
       - key: WIPAY_ACCOUNT_NUMBER_LIVE

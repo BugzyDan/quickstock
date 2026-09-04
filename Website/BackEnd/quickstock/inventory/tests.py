@@ -9,6 +9,8 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.contrib.messages.storage.base import Message
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.cache import cache
 from django.core import mail
 from django.core.management import call_command
@@ -18,7 +20,7 @@ from django.db import IntegrityError, connection, transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models.signals import post_save
 from django.http import HttpResponse
-from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.test import Client, RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
@@ -74,6 +76,7 @@ from .views import (
     _compose_document_notes,
     _customer_queryset_for_user,
     _daily_reconciliation_context,
+    _prune_login_page_operational_messages,
     _sales_document_email_context,
     _send_login_otp,
     _stock_queryset_for_user,
@@ -1172,6 +1175,33 @@ class WeekOneSecurityTests(TestCase):
         self.assertIsNone(cache.get(f"login_otp:{user.id}"))
 
     @override_settings(
+        QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS=False,
+        QUICKSTOCK_SUPERUSER_USERNAME="KeviiDan",
+        EMAIL_BACKEND=CONSOLE_BACKEND,
+    )
+    def test_configured_superuser_cannot_use_emergency_otp_bypass_when_disabled(self):
+        user = self._make_user("KeviiDan")
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(update_fields=["is_staff", "is_superuser"])
+
+        with (
+            patch("inventory.views._send_login_otp", return_value=False) as send_login_otp,
+            patch("inventory.views._render_login", return_value=HttpResponse(status=503)),
+        ):
+            response = self.client.post(
+                reverse("login"),
+                {"username": "KeviiDan", "password": "password123"},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        send_login_otp.assert_called_once()
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertFalse(
+            AuditLog.objects.filter(user=user, action="login_otp_bypass", severity="warn").exists()
+        )
+
+    @override_settings(
         QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS=True,
         QUICKSTOCK_SUPERUSER_USERNAME="KeviiDan",
     )
@@ -1214,6 +1244,23 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(response.status_code, 503)
         send_login_otp.assert_called_once()
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_login_page_prunes_stale_operational_messages(self):
+        request = RequestFactory().get(reverse("login"))
+        request.session = self.client.session
+        storage = FallbackStorage(request)
+        storage._loaded_data = [
+            Message(30, "Emergency admin recovery mode is active. Turn off OTP bypass after fixing email delivery."),
+            Message(40, "Register is not open. Please open a shift before processing sales."),
+            Message(25, "Shift started at Main Store with $1233 float."),
+            Message(40, "Invalid username or password."),
+        ]
+        setattr(request, "_messages", storage)
+
+        _prune_login_page_operational_messages(request)
+
+        retained = [str(message) for message in storage._queued_messages]
+        self.assertEqual(retained, ["Invalid username or password."])
 
     def test_bootstrap_superuser_repairs_existing_user_without_password_secret(self):
         user = User.objects.create_user(username="KeviiDan", password="old-password")

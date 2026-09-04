@@ -184,22 +184,38 @@ AUTH_BILLING_MESSAGE_PATTERNS = (
     "payment successful",
 )
 
+LOGIN_PAGE_OPERATIONAL_MESSAGE_PATTERNS = (
+    "emergency admin recovery mode is active",
+    "register is not open",
+    "shift started",
+    "shift closeout finalized",
+    "shift closed",
+)
 
-def _prune_auth_billing_messages(request):
+
+def _prune_messages_matching(request, patterns):
     """
-    Remove stale auth/billing flashes so redirects don't stack contradictory notices.
+    Remove stale flashes so redirects don't stack contradictory notices.
     """
     storage = messages.get_messages(request)
     retained = []
     for msg in storage:
         text = str(getattr(msg, "message", "") or "").lower()
-        if any(pattern in text for pattern in AUTH_BILLING_MESSAGE_PATTERNS):
+        if any(pattern in text for pattern in patterns):
             continue
         retained.append((msg.level, msg.message, getattr(msg, "extra_tags", "")))
 
     storage.used = True
     for level, text, extra_tags in retained:
         messages.add_message(request, level, text, extra_tags=extra_tags)
+
+
+def _prune_auth_billing_messages(request):
+    _prune_messages_matching(request, AUTH_BILLING_MESSAGE_PATTERNS)
+
+
+def _prune_login_page_operational_messages(request):
+    _prune_messages_matching(request, LOGIN_PAGE_OPERATIONAL_MESSAGE_PATTERNS)
 
 
 INVENTORY_CAPACITY = 1000
@@ -644,15 +660,15 @@ def _login_otp_failure_key(request, user):
 
 
 def _superuser_otp_bypass_allowed(user):
-    configured_username = str(getattr(settings, "QUICKSTOCK_SUPERUSER_USERNAME", "") or "").strip()
-    recovery_usernames = {name.lower() for name in (configured_username, "KeviiDan") if name}
-    if user.is_active and user.username.lower() in recovery_usernames:
-        return True
     if not getattr(settings, "QUICKSTOCK_ALLOW_SUPERUSER_OTP_BYPASS", False):
         return False
+
+    configured_username = str(getattr(settings, "QUICKSTOCK_SUPERUSER_USERNAME", "") or "").strip()
+    if not configured_username:
+        return False
+
     return bool(
-        configured_username
-        and user.is_active
+        user.is_active
         and user.username.lower() == configured_username.lower()
     )
 
@@ -715,6 +731,7 @@ def _handle_inactive_login_attempt(request, user):
             messages.info(request, "Please check your email to activate your 14-day free trial.")
     else:
         messages.error(request, "Payment is required before your account can be activated. Please complete checkout.")
+    _prune_login_page_operational_messages(request)
     return _render_login(request)
 
 

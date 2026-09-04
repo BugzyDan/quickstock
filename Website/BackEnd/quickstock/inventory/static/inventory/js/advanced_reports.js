@@ -129,13 +129,36 @@
                         tension: 0.4,
                         borderWidth: 3,
                         pointRadius: 0,
-                        pointHoverRadius: 6
+                        pointHitRadius: 18,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: colors.accent,
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true,
+                            displayColors: false,
+                            backgroundColor: '#0f172a',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e2e8f0',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                title: (items) => items && items.length ? items[0].label : '',
+                                label: (item) => `Revenue: ${currencyFormatter.format(item.parsed.y || 0)}`
+                            }
+                        }
+                    },
                     scales: {
                         y: { 
                             grid: { color: colors.grid },

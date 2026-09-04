@@ -5,27 +5,24 @@ Provides encryption for sensitive local cache files using machine-specific keys.
 
 import os
 import json
-import hashlib
 import platform
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
 
-# Try to import cryptography, fall back to basic hashing if not available
 try:
+    import base64
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.backends import default_backend
-    import base64
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
+    base64 = None
     Fernet = None
     PBKDF2HMAC = None
     hashes = None
     default_backend = None
-    base64 = None
 
 
 def get_machine_id() -> str:
@@ -84,25 +81,23 @@ def derive_key(machine_id: str, salt: bytes = None) -> tuple:
     Derive an encryption key from the machine ID.
     Returns (key, salt) tuple.
     """
+    if not CRYPTO_AVAILABLE:
+        raise RuntimeError(
+            "SecureCache requires the 'cryptography' package. Install Desktop_UI requirements before storing credentials."
+        )
+
     if salt is None:
         salt = os.urandom(16)
-    
-    if CRYPTO_AVAILABLE:
-        # Use PBKDF2 for key derivation
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
-            backend=default_backend()
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(machine_id.encode()))
-        return key, salt
-    else:
-        # Fallback: Simple hash-based key (less secure but better than nothing)
-        key_material = f"{machine_id}-{salt.hex()}".encode()
-        key = base64.urlsafe_b64encode(hashlib.sha256(key_material).digest())
-        return key, salt
+
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(machine_id.encode()))
+    return key, salt
 
 
 class SecureCache:
@@ -150,17 +145,9 @@ class SecureCache:
             Encrypted text (base64 encoded)
         """
         key = self._get_key()
-        
-        if CRYPTO_AVAILABLE:
-            f = Fernet(key)
-            return f.encrypt(plaintext.encode()).decode()
-        else:
-            # Fallback: Simple XOR-based encryption (not cryptographically secure)
-            key_bytes = base64.urlsafe_b64decode(key)
-            plaintext_bytes = plaintext.encode()
-            encrypted = bytes([p ^ key_bytes[i % len(key_bytes)] 
-                             for i, p in enumerate(plaintext_bytes)])
-            return base64.b64encode(encrypted).decode()
+
+        f = Fernet(key)
+        return f.encrypt(plaintext.encode()).decode()
     
     def decrypt(self, ciphertext: str) -> str:
         """
@@ -173,17 +160,9 @@ class SecureCache:
             Decrypted plaintext
         """
         key = self._get_key()
-        
-        if CRYPTO_AVAILABLE:
-            f = Fernet(key)
-            return f.decrypt(ciphertext.encode()).decode()
-        else:
-            # Fallback: Simple XOR-based decryption
-            key_bytes = base64.urlsafe_b64decode(key)
-            encrypted = base64.b64decode(ciphertext)
-            decrypted = bytes([e ^ key_bytes[i % len(key_bytes)] 
-                             for i, e in enumerate(encrypted)])
-            return decrypted.decode()
+
+        f = Fernet(key)
+        return f.decrypt(ciphertext.encode()).decode()
     
     def save(self, data: dict) -> None:
         """

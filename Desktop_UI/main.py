@@ -25,12 +25,28 @@ from src.storage import save_data as save_local_data
 logger = setup_logger("quickstock.main")
 
 
+def _configure_desktop_runtime():
+    """Normalize Tk/CustomTkinter startup behavior across Windows and Linux."""
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+
+    ctk.set_appearance_mode("Light")
+    ctk.set_default_color_theme("blue")
+
+
 def main():
     """Main entry point for the application."""
     try:
-        # Initialize customtkinter
-        ctk.set_appearance_mode("system")
-        ctk.set_default_color_theme("blue")
+        # Initialize desktop rendering before creating widgets.
+        _configure_desktop_runtime()
         
         # Create main window
         root = ctk.CTk()

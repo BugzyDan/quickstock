@@ -15,6 +15,33 @@ The repository root `render.yaml` is the source of truth for the Render web serv
 7. Confirm `/api/health/` returns `status: ok`, including `database`, `migrations`, `cache`, and `email` checks.
 8. From a Render Shell, send a real delivery probe with `python manage.py check_email_delivery --to your-address@example.com`.
 
+### Social Sign-In
+
+Google and Microsoft buttons become active automatically when their OAuth client ID and secret are present in the Render web service environment.
+
+Set these Render environment variables:
+
+```text
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+MICROSOFT_OAUTH_CLIENT_ID=...
+MICROSOFT_OAUTH_CLIENT_SECRET=...
+MICROSOFT_OAUTH_TENANT_ID=common
+```
+
+Configure the OAuth applications with these redirect/callback URLs:
+
+```text
+https://quickstock-ja.onrender.com/login/social/google/callback/
+https://quickstock-ja.onrender.com/login/social/microsoft/callback/
+https://quickstockja.com/login/social/google/callback/
+https://quickstockja.com/login/social/microsoft/callback/
+https://www.quickstockja.com/login/social/google/callback/
+https://www.quickstockja.com/login/social/microsoft/callback/
+```
+
+Social sign-in only logs into an existing QuickStock account whose email address matches the verified email returned by Google or Microsoft. It does not create a new QuickStock account automatically.
+
 Render PostgreSQL stores production records; the local SQLite database is not copied during a Git deploy. Transfer local records separately with a private fixture or database migration process. Never commit a data fixture containing user, session, customer, or payment records.
 
 To move an intentional local clone into a new, empty Render PostgreSQL database:

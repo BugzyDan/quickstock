@@ -94,6 +94,124 @@
     </section>
     {% endif %}
 
+    <section class="dashboard-feature-hub" aria-labelledby="dashboardFeatureHubTitle">
+        <div class="dashboard-feature-panel">
+            <div class="dashboard-feature-head">
+                <div>
+                    <span class="kpi-label">Online Feature Hub</span>
+                    <h3 id="dashboardFeatureHubTitle">Run store operations from here</h3>
+                </div>
+                <span class="dashboard-feature-scope">
+                    {% if current_location_id == "all" %}
+                        All locations
+                    {% else %}
+                        {% for loc in locations %}
+                            {% if current_location_id == loc.id|stringformat:"s" %}{{ loc.name }}{% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </span>
+            </div>
+
+            <nav class="dashboard-feature-actions" aria-label="Online operations shortcuts">
+                <a href="{% url 'cash_register' %}" class="dashboard-feature-action dashboard-feature-action-primary">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-register" aria-hidden="true"></span>
+                    <span>
+                        <strong>Cash Register</strong>
+                        <small>Start sales</small>
+                    </span>
+                </a>
+                <a href="{% url 'open_shift' %}?next={% url 'cash_register' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-shift" aria-hidden="true"></span>
+                    <span>
+                        <strong>Open Shift</strong>
+                        <small>Web register</small>
+                    </span>
+                </a>
+                <a href="{% url 'inventory_add' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-add" aria-hidden="true"></span>
+                    <span>
+                        <strong>Add Item</strong>
+                        <small>New SKU</small>
+                    </span>
+                </a>
+                <a href="{% url 'receive_stock' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-receive" aria-hidden="true"></span>
+                    <span>
+                        <strong>Receive Stock</strong>
+                        <small>Inbound goods</small>
+                    </span>
+                </a>
+                <a href="{% url 'transfer_stock' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-transfer" aria-hidden="true"></span>
+                    <span>
+                        <strong>Transfer Stock</strong>
+                        <small>Branch moves</small>
+                    </span>
+                </a>
+                <a href="{% url 'export_inventory_csv' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-export" aria-hidden="true"></span>
+                    <span>
+                        <strong>Export Inventory</strong>
+                        <small>CSV download</small>
+                    </span>
+                </a>
+                <a href="{% url 'daily_summary' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-summary" aria-hidden="true"></span>
+                    <span>
+                        <strong>Daily Summary</strong>
+                        <small>Revenue review</small>
+                    </span>
+                </a>
+                <a href="{% url 'sales_history' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-receipt" aria-hidden="true"></span>
+                    <span>
+                        <strong>Receipt History</strong>
+                        <small>Sales records</small>
+                    </span>
+                </a>
+                <a href="{% url 'settings' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-settings" aria-hidden="true"></span>
+                    <span>
+                        <strong>Settings</strong>
+                        <small>Workspace setup</small>
+                    </span>
+                </a>
+                <a href="{% url 'locations' %}" class="dashboard-feature-action">
+                    <span class="dashboard-feature-icon dashboard-feature-icon-location" aria-hidden="true"></span>
+                    <span>
+                        <strong>Locations</strong>
+                        <small>Branch network</small>
+                    </span>
+                </a>
+            </nav>
+        </div>
+
+        <aside class="dashboard-feature-status" aria-label="Dashboard status snapshot">
+            <div class="dashboard-status-row">
+                <span>Register Shifts</span>
+                <strong>{{ open_shift_count|default:"0" }} open</strong>
+            </div>
+            <div class="dashboard-status-row {% if low_stock_count > 0 %}is-warning{% endif %}">
+                <span>Low Stock</span>
+                <strong>{{ low_stock_count|default:"0" }} warning{{ low_stock_count|default:0|pluralize }}</strong>
+            </div>
+            <div class="dashboard-status-row">
+                <span>Today's Revenue</span>
+                <strong>${{ today_revenue_display|default:"0.00" }}</strong>
+            </div>
+            <div class="dashboard-status-row">
+                <span>Scope</span>
+                <strong>
+                    {% if current_location_id == "all" %}
+                        Global
+                    {% else %}
+                        Branch
+                    {% endif %}
+                </strong>
+            </div>
+        </aside>
+    </section>
+
     <div class="kpi-grid">
         <div class="kpi-card dashboard-revenue-card">
             <span class="kpi-label">Gross Revenue (JMD)</span>

@@ -3,6 +3,7 @@ import sys
 import warnings
 import hashlib
 from pathlib import Path
+from typing import List
 from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
 
@@ -81,6 +82,63 @@ def _env_str(name: str, default: str = "") -> str:
     if value is None:
         return default
     return value.strip()
+
+
+def _looks_like_placeholder(value: str) -> bool:
+    normalized = value.strip().lower()
+    placeholder_markers = (
+        "changeme",
+        "change-me",
+        "example",
+        "placeholder",
+        "replace-me",
+        "yourdomain",
+        "your-domain",
+    )
+    return any(marker in normalized for marker in placeholder_markers)
+
+
+def _validate_production_secret_key(secret_key: str) -> None:
+    if not secret_key or secret_key == "unsafe-dev-key":
+        raise RuntimeError("DJANGO_SECRET_KEY must be set in production!")
+    if secret_key.startswith("render-fallback-"):
+        raise RuntimeError("DJANGO_SECRET_KEY must be a stable production secret, not the Render fallback.")
+    if len(secret_key) < 32 or _looks_like_placeholder(secret_key):
+        raise RuntimeError("DJANGO_SECRET_KEY must be a strong non-placeholder value in production!")
+
+
+def _validate_production_allowed_hosts(hosts: List[str]) -> None:
+    unsafe_hosts = {"*", "localhost", "127.0.0.1", "0.0.0.0", "::1"}
+    if not hosts:
+        raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set to your real domain(s) in production!")
+
+    for host in hosts:
+        normalized = host.strip().lower()
+        if (
+            normalized in unsafe_hosts
+            or normalized.startswith("http://")
+            or normalized.startswith("https://")
+            or normalized.endswith(".local")
+            or _looks_like_placeholder(normalized)
+        ):
+            raise RuntimeError("DJANGO_ALLOWED_HOSTS must contain only real production hostnames.")
+
+
+def _validate_production_csrf_trusted_origins(origins: List[str]) -> None:
+    if not origins:
+        raise RuntimeError("CSRF_TRUSTED_ORIGINS must be set in production!")
+
+    for origin in origins:
+        parsed = urlparse(origin)
+        hostname = (parsed.hostname or "").lower()
+        if (
+            parsed.scheme != "https"
+            or not hostname
+            or hostname in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+            or hostname.endswith(".local")
+            or _looks_like_placeholder(origin)
+        ):
+            raise RuntimeError("DJANGO_CSRF_TRUSTED_ORIGINS must contain only HTTPS production origins.")
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -655,16 +713,11 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = os.getenv("DJANGO_SECURE_CROSS_ORIGIN_OPENER
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-if not DEBUG and SECRET_KEY == "unsafe-dev-key":
-    raise RuntimeError("DJANGO_SECRET_KEY must be set in production.")
-
 # Fail-fast checks for production
 if not DEBUG:
-    if SECRET_KEY in ("unsafe-dev-key", ""):
-        raise RuntimeError("DJANGO_SECRET_KEY must be set in production!")
-
-    if not ALLOWED_HOSTS or ALLOWED_HOSTS == ["localhost"] or "yourdomain.com" in ALLOWED_HOSTS:
-        raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set to your real domain(s) in production!")
+    _validate_production_secret_key(SECRET_KEY)
+    _validate_production_allowed_hosts(ALLOWED_HOSTS)
+    _validate_production_csrf_trusted_origins(CSRF_TRUSTED_ORIGINS)
 
     # SQLite in production is discouraged but allowed here; ensure durability requirements are understood.
     if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":

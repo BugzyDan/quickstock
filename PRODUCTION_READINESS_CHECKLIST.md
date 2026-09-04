@@ -1,4 +1,4 @@
-# QuickStock JA - Production Readiness Checklist
+![alt text](image.png)# QuickStock JA - Production Readiness Checklist
 
 This document provides a comprehensive checklist for deploying QuickStock JA to production.
 
@@ -121,13 +121,13 @@ This document provides a comprehensive checklist for deploying QuickStock JA to 
   - [ ] Test Nginx configuration
   - [ ] Enable site and reload Nginx
 
-- [ ] **Security Hardening**
-  - [ ] Set `DJANGO_DEBUG=False`
-  - [ ] Set `DJANGO_SECRET_KEY` to strong random value
-  - [ ] Configure `DJANGO_ALLOWED_HOSTS`
-  - [ ] Set `DJANGO_CSRF_TRUSTED_ORIGINS`
-  - [ ] Enable `SECURE_SSL_REDIRECT`
-  - [ ] Set `SECURE_HSTS_SECONDS` > 0
+- [x] **Security Hardening**
+  - [x] Set `DJANGO_DEBUG=False`
+  - [x] Set `DJANGO_SECRET_KEY` to strong random value
+  - [x] Configure `DJANGO_ALLOWED_HOSTS`
+  - [x] Set `DJANGO_CSRF_TRUSTED_ORIGINS`
+  - [x] Enable `SECURE_SSL_REDIRECT`
+  - [x] Set `SECURE_HSTS_SECONDS` > 0
 
 - [ ] **Smoke Tests**
   - [ ] Homepage loads over HTTPS
