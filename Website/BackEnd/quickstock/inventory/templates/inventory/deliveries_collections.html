@@ -72,7 +72,10 @@
                         <div class="ops-category-group">
                             <h4>{{ group.category }}</h4>
                             {% for row in group.items %}
-                                <div class="data-row"><span>{{ row.name }}</span><strong>{{ row.quantity }}</strong></div>
+                                <div class="data-row">
+                                    <span>{{ row.name }}{% if row.customers %}<small class="ops-item-customers">Customer: {{ row.customers|join:", " }}</small>{% endif %}</span>
+                                    <strong>{{ row.quantity }}</strong>
+                                </div>
                             {% endfor %}
                         </div>
                     {% empty %}
@@ -89,7 +92,10 @@
                         <div class="ops-category-group">
                             <h4>{{ group.category }}</h4>
                             {% for row in group.items %}
-                                <div class="data-row"><span>{{ row.name }}</span><strong>{{ row.quantity }}</strong></div>
+                                <div class="data-row">
+                                    <span>{{ row.name }}{% if row.customers %}<small class="ops-item-customers">Customer: {{ row.customers|join:", " }}</small>{% endif %}</span>
+                                    <strong>{{ row.quantity }}</strong>
+                                </div>
                             {% endfor %}
                         </div>
                     {% empty %}

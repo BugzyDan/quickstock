@@ -1642,19 +1642,33 @@ def _daily_summary_items_grouped_by_category(invoice_items):
             or "Unnamed Item"
         ).strip()
         category_bucket = grouped_totals.setdefault(category_name, {})
-        category_bucket[item_name] = category_bucket.get(item_name, 0) + int(invoice_item.quantity or 0)
+        item_bucket = category_bucket.setdefault(item_name, {"quantity": 0, "customers": set()})
+        item_bucket["quantity"] += int(invoice_item.quantity or 0)
+        invoice = getattr(invoice_item, "invoice", None)
+        customer = getattr(invoice, "customer", None)
+        customer_name = getattr(customer, "name", "") if customer else ""
+        if not customer_name:
+            sale = getattr(invoice_item, "sale", None)
+            customer_name = getattr(sale, "customer_name", "") if sale else ""
+        customer_name = str(customer_name or "").strip()
+        if customer_name:
+            item_bucket["customers"].add(customer_name)
 
     return [
         {
             "category": category_name,
             "items": [
-                {"name": item_name, "quantity": quantity}
-                for item_name, quantity in sorted(items.items(), key=lambda row: row[0].lower())
-                if quantity > 0
+                {
+                    "name": item_name,
+                    "quantity": item_data["quantity"],
+                    **({"customers": sorted(item_data["customers"], key=str.lower)} if item_data["customers"] else {}),
+                }
+                for item_name, item_data in sorted(items.items(), key=lambda row: row[0].lower())
+                if item_data["quantity"] > 0
             ],
         }
         for category_name, items in sorted(grouped_totals.items(), key=lambda row: row[0].lower())
-        if any(quantity > 0 for quantity in items.values())
+        if any(item_data["quantity"] > 0 for item_data in items.values())
     ]
 
 
@@ -5086,6 +5100,8 @@ def _build_inventory_movement_context(effective_owner, active_location=None):
             if line.sale.receipt_no
             else f"Receipt #{line.sale_id}"
         )
+        if line.sale.customer_name:
+            receipt_reference = f"{line.sale.customer_name.strip()} · {receipt_reference}"
         transfer_out_events.append(
             {
                 "item_name": line.item.name,
@@ -5112,7 +5128,12 @@ def _build_inventory_movement_context(effective_owner, active_location=None):
         )
 
     recent_pos_invoice_lines = (
-        SalesInvoiceItem.objects.select_related("item", "invoice", "invoice__location")
+        SalesInvoiceItem.objects.select_related(
+            "item",
+            "invoice",
+            "invoice__customer",
+            "invoice__location",
+        )
         .filter(
             item__owner=effective_owner,
             invoice__owner=effective_owner,
@@ -5130,12 +5151,15 @@ def _build_inventory_movement_context(effective_owner, active_location=None):
         if metadata.get("source") != "cash_register":
             continue
         invoice_location = getattr(line.invoice, "location", None)
+        invoice_reference = line.invoice.invoice_no or f"Invoice #{line.invoice_id}"
+        if line.invoice.customer:
+            invoice_reference = f"{line.invoice.customer.name} · {invoice_reference}"
         transfer_out_events.append(
             {
                 "item_name": line.item_name or line.item.name,
                 "quantity": line.quantity,
                 "location_name": invoice_location.name if invoice_location else "Unassigned",
-                "reference": line.invoice.invoice_no or f"Invoice #{line.invoice_id}",
+                "reference": invoice_reference,
                 "status": "Customer purchase",
                 "_timestamp": line.invoice.issued_at,
                 "_sort_id": line.id,
