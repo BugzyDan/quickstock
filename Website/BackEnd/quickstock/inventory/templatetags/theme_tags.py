@@ -1,5 +1,5 @@
 from django import template
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 
 register = template.Library()
@@ -26,25 +26,22 @@ def _resolve_theme_from_context(context, user=None):
     return _resolve_theme(resolved_user)
 
 
+def _theme_attributes(theme, *, body=False):
+    attrs = [format_html('data-theme="{}"', theme)]
+    if theme != "system":
+        attrs.append(format_html('data-theme-applied="{}"', theme))
+        if not body and theme == "dark":
+            attrs.append(format_html('class="force-dark"'))
+    return format_html_join(" ", "{}", ((attr,) for attr in attrs))
+
+
 @register.simple_tag(takes_context=True)
 def html_theme_attrs(context, user=None):
     theme = _resolve_theme_from_context(context, user)
-    attrs = [f'data-theme="{theme}"']
-
-    if theme != "system":
-        attrs.append(f'data-theme-applied="{theme}"')
-        if theme == "dark":
-            attrs.append('class="force-dark"')
-
-    return mark_safe(" ".join(attrs))
+    return _theme_attributes(theme)
 
 
 @register.simple_tag(takes_context=True)
 def body_theme_attrs(context, user=None):
     theme = _resolve_theme_from_context(context, user)
-    attrs = [f'data-theme="{theme}"']
-
-    if theme != "system":
-        attrs.append(f'data-theme-applied="{theme}"')
-
-    return mark_safe(" ".join(attrs))
+    return _theme_attributes(theme, body=True)

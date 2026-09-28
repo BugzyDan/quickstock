@@ -2,13 +2,23 @@
 
 ## Executive Summary
 
-**Status:** ✅ **PRODUCTION READY** (Remediation Complete)
+**Status:** Security review refreshed; this report is not a production certification.
 
-**Last Audit Date:** 2026  
-**Remediation Date:** 2026  
-**Auditor:** Security Analysis Tool
+**Last Review Date:** 2026-09-28
+**Scope:** Python dependency advisories, targeted source scanning, and production configuration review.
 
-All critical and high-severity security vulnerabilities have been successfully remediated. The QuickStock JA system is now production-ready with comprehensive security hardening applied.
+The refreshed dependency scan found vulnerable pinned releases in the backend requirements. Those pins have been updated. The source scan also flags the MD5 checksum used for WiPay callback verification; WiPay currently specifies that checksum format, so changing its algorithm locally would break verification. See the residual findings below.
+
+## Refresh Findings
+
+- Backend pins updated: Django 5.2.17, Django REST framework 3.17.2, Requests 2.34.2, python-dotenv 1.2.2, and Pillow 12.3.0.
+- Desktop minimums for Requests, python-dotenv, and Pillow raised to those patched releases.
+- Removed `mark_safe()` from theme attributes; the values now use Django's escaping HTML formatter.
+- No tracked `.env` or credential files were found during this review.
+- Bandit still reports the WiPay MD5 response checksum. WiPay documents this response hash as `md5(transaction_id + total + api_key)`. Keep the API key server-side and continue using constant-time comparison. Prefer a provider-supported stronger signature if WiPay offers one for this flow.
+- The live Render health endpoint returned HTTP 503 because the database and database-backed cache were unreachable; email sender configuration was also rejected. These deployment-side issues prevent a production-readiness conclusion and require Render account access to repair.
+
+This source review is not a penetration test or an assessment against PCI DSS, GDPR, SOX, or ISO 27001.
 
 ## Remediation Summary
 
@@ -138,12 +148,7 @@ if os.getenv("QUICKSTOCK_ENV") == "production" and not url.startswith("https") a
 
 ## Compliance Notes
 
-This production hardening addresses several compliance requirements:
-
-- **PCI DSS:** Encrypted storage of authentication tokens, no plaintext credentials
-- **GDPR:** Audit logging for data access, data protection measures
-- **SOX:** Financial transaction tracking and audit trails
-- **ISO 27001:** Information security management controls
+The controls described in this report may support security work, but no compliance assessment or certification was performed.
 
 ## Recommendations
 
@@ -171,12 +176,4 @@ This production hardening addresses several compliance requirements:
 
 ## Conclusion
 
-The QuickStock JA system has been successfully hardened for production deployment. All previously identified security vulnerabilities have been remediated, and comprehensive security measures are now in place.
-
-**Production Readiness Status:** ✅ **APPROVED**
-
----
-
-**Original Audit Date:** 2026  
-**Remediation Complete:** 2026  
-**Next Scheduled Review:** 2027 (Annual)
+The identified Python dependency advisories and unsafe theme HTML construction have been addressed in source. The WiPay checksum remains constrained by its provider protocol. Production availability and email configuration still need repair in Render, and must be rechecked after that service is restored.

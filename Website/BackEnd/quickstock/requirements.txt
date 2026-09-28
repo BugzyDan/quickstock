@@ -1,12 +1,12 @@
-Django==5.2.4
+Django==5.2.17
 django-anymail==15.1
 django-storages[s3]==1.14.6
-djangorestframework==3.17.1
+djangorestframework==3.17.2
 gunicorn==26.1.0
 mysqlclient==2.2.8
 psycopg2-binary==2.9.10
-requests==2.32.3
+requests==2.34.2
 stripe==15.1.0
 whitenoise==6.12.0
-python-dotenv==1.0.1
-Pillow==10.4.0
+python-dotenv==1.2.2
+Pillow==12.3.0

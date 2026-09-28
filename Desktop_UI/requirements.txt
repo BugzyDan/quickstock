@@ -3,13 +3,13 @@
 
 # GUI Framework
 customtkinter>=5.2.0
-Pillow>=10.0.0
+Pillow>=12.3.0
 
 # Environment & Configuration
-python-dotenv>=1.0.0
+python-dotenv>=1.2.2
 
 # HTTP Requests (for API sync)
-requests>=2.31.0
+requests>=2.34.2
 
 # Security & Encryption
 cryptography>=41.0.0
