@@ -8,9 +8,8 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
 
-          <script 
-        src="{% static 'inventory/js/customer_list.js' %}" defer>
-    </script>
+        <script src="{% static 'inventory/js/theme.js' %}" defer></script>
+        <script src="{% static 'inventory/js/customer_list.js' %}" defer></script>
     </head>
 
     <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-customer-list">
@@ -120,11 +119,15 @@
                                 Edit
                                 </a>
 
-                                <a href="{% url 'delete_customer' customer.id %}" 
-                                class="customer-directory-action customer-directory-action-delete"
-                                onclick="return confirm('Are you sure you want to delete {{ customer.name }}?')">
-                                Delete
-                                </a>
+                            <form method="post" action="{% url 'delete_customer' customer.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ customer.name }}? If they have invoices or quotes, they will be archived instead.');">
+                                {% csrf_token %}
+                                <button type="submit" class="customer-directory-action customer-directory-action-delete" style="background: none; border: none; font: inherit; cursor: pointer;">
+                                    Delete
+                                </button>
+                            </form>
+
+
+
                                 </div>
                             </td>
                         </tr>

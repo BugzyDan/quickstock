@@ -1,0 +1,12 @@
+{% extends 'inventory/confirm_delete.html' %}  {% comment %} Or whatever your base template is {% endcomment %}
+
+{% block content %}
+<h2>Delete Customer</h2>
+<p>Are you sure you want to delete customer "{{ customer }}"?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    <a href="{% url 'customer_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

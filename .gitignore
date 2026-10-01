@@ -8,6 +8,18 @@ venv/
 myenv/
 .venv/
 
+# Python tooling caches and reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.egg-info/
+
 # Environment and secrets
 .env
 .env.*
@@ -31,6 +43,7 @@ Website/BackEnd/quickstock/staticfiles/
 *.quickstock-deploy.zip
 /inventory_data.json
 /Website/BackEnd/quickstock/inventory_data.json
+/backups/
 
 # Build/packaging output
 dist/

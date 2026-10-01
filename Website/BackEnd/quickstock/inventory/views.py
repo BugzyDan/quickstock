@@ -3138,10 +3138,13 @@ def edit_customer(request, pk):
     }
     return render(request, 'inventory/edit_customer.html', context)
 
+
+
+#s
 @login_required
-@role_required(["admin", "manager"])
 def delete_customer(request, pk):
     customer = get_object_or_404(_customer_queryset_for_user(request.user), pk=pk)
+
     if request.method == 'POST':
         try:
             customer_id = customer.id
@@ -3156,6 +3159,8 @@ def delete_customer(request, pk):
                     severity="warn",
                     required=True,
                 )
+            messages.success(request, f"Customer '{customer_name}' was successfully deleted.")
+
         except ProtectedError:
             _archive_record(customer, request.user, "Customer retained because financial history is protected.")
             _log_action(
@@ -3165,9 +3170,12 @@ def delete_customer(request, pk):
                 {"customer_id": customer.id, "reason": "protected_financial_history"},
                 required=True,
             )
-            messages.warning(request, "This customer has financial history and was archived for ledger reconciliation.")
+            messages.warning(request, f"Customer '{customer.name}' has existing invoice/quote history and was archived instead of deleted.")
+
+        # Both full deletion and archiving now redirect back to the Customer Directory
         return redirect('customer_list')
-    return render(request, 'inventory/customer_confirm_delete.html', {'customer': customer})
+
+    return redirect('customer_detail', pk=customer.pk)
 
 def inventory_api(request):
     if not request.user.is_authenticated:

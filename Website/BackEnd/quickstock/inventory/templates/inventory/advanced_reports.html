@@ -29,9 +29,10 @@
             }
         }
     </script>
+    <script src="{% static 'inventory/js/theme.js' %}" defer></script>
     <script src="{% static 'inventory/js/page_config.js' %}" defer></script>
 
-<script src="{% static 'inventory/js/advanced_reports.js' %}" defer></script>
+    <script src="{% static 'inventory/js/advanced_reports.js' %}" defer></script>
 </head>
 
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"

@@ -1,0 +1,21 @@
+{% extends 'inventory/index.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Delete Customer</h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">Are you sure you want to delete <strong>"{{ customer.name }}"</strong>?</p>
+            <p class="text-muted">If this customer has existing invoices or quotations, they will be archived instead of deleted.</p>
+
+            <form method="post" action="{% url 'delete_customer' customer.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                <a href="{% url 'customer_detail' customer.id %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

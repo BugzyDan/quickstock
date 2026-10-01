@@ -1,9 +1,8 @@
-- [x] Confirm where operator badge is rendered (headers/partials)
-- [x] Patch any missing operator plan badge snippet (trial/pro) so it always shows
-- [x] Verify compiled templates render badge state correctly from UserProfile.plan_badge_label/state
-- [x] Run tests (if available) / sanity-check template rendering
-- [x] Fix operator dropdown click handler regression on dashboard after badge change
-- [x] Ensure support.js no longer interferes with dashboard dropdown (gated to support page)
+# Current Follow-ups
 
+## Render Recovery
 
-
+- [ ] Check why `quickstock-db` is suspended and restore it while its data is recoverable.
+- [ ] Confirm the backend `DATABASE_URL` points to the restored database's internal URL, then deploy migrations and the shared cache table.
+- [ ] Set `DJANGO_DEFAULT_FROM_EMAIL` to an address on a verified Resend domain and confirm email delivery.
+- [ ] Confirm `/healthz/` and `/api/health/` report healthy status, then verify browser login and email-code delivery.

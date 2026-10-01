@@ -58619,3 +58619,60 @@ html body.page-support .page-wrapper > header.app-shell-header .slogan {
     line-height: 1.1 !important;
     text-transform: uppercase !important;
 }
+
+/* Final shared UI polish: focus, state feedback, responsive data, and reduced motion. */
+:root {
+    --qs-final-focus-ring: #2563eb;
+    --qs-final-focus-halo: rgba(37, 99, 235, 0.22);
+    --qs-final-scroll-surface: #ffffff;
+    --qs-final-scroll-shadow: rgba(15, 23, 42, 0.25);
+}
+
+html.force-dark,
+html[data-theme-applied="dark"] {
+    --qs-final-focus-ring: #93c5fd;
+    --qs-final-focus-halo: rgba(147, 197, 253, 0.25);
+    --qs-final-scroll-surface: #0f172a;
+    --qs-final-scroll-shadow: rgba(0, 0, 0, 0.52);
+}
+
+body:not(.page-cash-register) :is(a, button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 3px solid var(--qs-final-focus-ring);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px var(--qs-final-focus-halo);
+}
+
+body:not(.page-cash-register) :is(button, input, select, textarea, [role="button"], .btn, .btn-apply, .btn-filter, .btn-export):is(:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+    filter: saturate(0.7);
+    opacity: 0.58;
+}
+
+body:not(.page-cash-register) :is(button, [role="button"], .btn, .btn-apply, .btn-filter, .btn-export)[aria-busy="true"] {
+    cursor: progress;
+    opacity: 0.72;
+}
+
+@media (max-width: 720px) {
+    body:not(.page-cash-register) :is(.table-responsive, .table-container, .table-wrapper, .inventory-table-wrapper, .customer-table-container > div, .sales-table-wrap, .report-table-wrap, .movement-table-wrap, .activity-table-wrapper, .analytics-table-wrap) {
+        background:
+            linear-gradient(to right, var(--qs-final-scroll-surface) 30%, transparent) 0 0 / 2.5rem 100% local no-repeat,
+            linear-gradient(to left, var(--qs-final-scroll-surface) 30%, transparent) 100% 0 / 2.5rem 100% local no-repeat,
+            radial-gradient(farthest-side at 0 50%, var(--qs-final-scroll-shadow), transparent) 0 0 / 0.75rem 100% scroll no-repeat,
+            radial-gradient(farthest-side at 100% 50%, var(--qs-final-scroll-shadow), transparent) 100% 0 / 0.75rem 100% scroll no-repeat;
+        scrollbar-color: var(--qs-final-focus-ring) transparent;
+        scrollbar-width: thin;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body:not(.page-cash-register),
+    body:not(.page-cash-register) *,
+    body:not(.page-cash-register) *::before,
+    body:not(.page-cash-register) *::after {
+        scroll-behavior: auto;
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+    }
+}
