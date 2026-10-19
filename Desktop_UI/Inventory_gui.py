@@ -261,6 +261,9 @@ class InventoryGUI:
         self.current_user_id = None
         self.current_tenant_id = None
         self.current_operator_status = None
+        # Subscription details come from the authenticated profile and are kept
+        # in the encrypted offline-login snapshot for use without a connection.
+        self.current_plan_snapshot = {}
         self.default_location_id = None
         self.active_register_id = None
         self.active_register_location_id = None
@@ -592,6 +595,51 @@ class InventoryGUI:
         self.home_status_chips[key] = (chip, label, detail_label)
         return chip
 
+    def _set_plan_snapshot(self, snapshot):
+        """Keep only the subscription fields needed by the desktop UI."""
+        snapshot = snapshot if isinstance(snapshot, dict) else {}
+        self.current_plan_snapshot = {
+            "plan": str(snapshot.get("plan") or "").strip().upper(),
+            "plan_status": str(snapshot.get("plan_status") or snapshot.get("status") or "").strip().lower(),
+            "plan_end": snapshot.get("plan_end"),
+            "pro_expires": snapshot.get("pro_expires"),
+        }
+
+    def _plan_display_summary(self):
+        """Return subscription text suitable for the dashboard and preferences."""
+        snapshot = getattr(self, "current_plan_snapshot", {}) or {}
+        plan = str(snapshot.get("plan") or "").upper()
+        status = str(snapshot.get("plan_status") or "").lower()
+        if not plan:
+            return "Plan unavailable", "Sign in online to refresh subscription details.", "neutral"
+
+        end = None
+        if plan == "PRO":
+            expiry = self._parse_cached_date(snapshot.get("pro_expires"))
+            if expiry:
+                end = datetime.combine(expiry, datetime.max.time(), tzinfo=timezone.utc)
+            else:
+                end = self._parse_cached_datetime(snapshot.get("plan_end"))
+        else:
+            end = self._parse_cached_datetime(snapshot.get("plan_end"))
+
+        title = f"{plan.title()} Plan"
+        if status and status != "active":
+            return title, f"Status: {status.title()}", "danger"
+        if not end:
+            return title, "Expiry date unavailable — reconnect to refresh.", "warn"
+
+        now = datetime.now(timezone.utc)
+        days_remaining = (end.date() - now.date()).days
+        expiry_text = end.strftime("%b %d, %Y")
+        if days_remaining < 0:
+            return title, f"Expired {expiry_text}", "danger"
+        if days_remaining == 0:
+            return title, f"Expires today ({expiry_text})", "danger"
+        tone = "warn" if days_remaining <= 7 else "good"
+        day_label = "day" if days_remaining == 1 else "days"
+        return title, f"{days_remaining} {day_label} left · expires {expiry_text}", tone
+
     def _dashboard_metric_card(self, parent, key, label, value, detail, palette):
         card = self._build_desktop_card(parent, palette)
         tk.Label(
@@ -691,8 +739,10 @@ class InventoryGUI:
         status_panel.grid(row=0, column=2, sticky="ne")
         api_title, api_detail, api_tone = self._api_status_summary()
         register_title, register_detail, register_tone = self._register_status_summary()
+        plan_title, plan_detail, plan_tone = self._plan_display_summary()
         self._dashboard_chip(status_panel, "api", api_title, api_detail, api_tone).pack(anchor="e", pady=(0, 8))
-        self._dashboard_chip(status_panel, "register", register_title, register_detail, register_tone).pack(anchor="e")
+        self._dashboard_chip(status_panel, "register", register_title, register_detail, register_tone).pack(anchor="e", pady=(0, 8))
+        self._dashboard_chip(status_panel, "plan", plan_title, plan_detail, plan_tone).pack(anchor="e")
 
         metrics = tk.Frame(self.home_frame, bg=palette["bg"])
         metrics.grid(row=1, column=0, sticky="ew", pady=(0, 14))
@@ -755,9 +805,11 @@ class InventoryGUI:
 
         api_title, api_detail, api_tone = self._api_status_summary()
         register_title, register_detail, register_tone = self._register_status_summary()
+        plan_title, plan_detail, plan_tone = self._plan_display_summary()
         for key, title, detail, tone in (
             ("api", api_title, api_detail, api_tone),
             ("register", register_title, register_detail, register_tone),
+            ("plan", plan_title, plan_detail, plan_tone),
         ):
             chip_tuple = self.home_status_chips.get(key)
             if not chip_tuple:
@@ -3059,6 +3111,22 @@ class InventoryGUI:
         access_entry.configure(state="readonly")
         access_entry.pack(pady=4, fill="x", ipady=8)
 
+        plan_title, plan_detail, _plan_tone = self._plan_display_summary()
+        add_label("Subscription Plan")
+        plan_entry = self._desktop_entry(content, palette, width=52)
+        plan_entry.insert(0, plan_title)
+        plan_entry.configure(state="readonly")
+        plan_entry.pack(pady=4, fill="x", ipady=8)
+        self._desktop_label(
+            content,
+            plan_detail,
+            palette,
+            surface="bg",
+            role="muted",
+            justify="left",
+            wraplength=460,
+        ).pack(anchor="w", pady=(0, 6))
+
         add_label("System Theme")
         theme_combo = ttk.Combobox(content, textvariable=theme_var, values=["system", "light", "dark"], state="readonly")
         theme_combo.pack(pady=4, fill="x")
@@ -4749,7 +4817,10 @@ class InventoryGUI:
             plan_end = self._parse_cached_datetime(cached_user.get("plan_end"))
             if pro_expires and now_utc.date() > pro_expires:
                 return False, "Your subscription expired. Reconnect and renew to continue."
-            if plan_end and now_utc > plan_end:
+            # A Pro renewal supersedes any historical trial end.  Old local
+            # snapshots can contain both values, so only consult plan_end
+            # when the account has no Pro expiry to evaluate.
+            if not pro_expires and plan_end and now_utc > plan_end:
                 return False, "Your subscription expired. Reconnect and renew to continue."
             if not pro_expires and not plan_end:
                 return False, "Offline access needs a recent plan check. Please sign in online first."
@@ -4871,6 +4942,7 @@ class InventoryGUI:
                         self.current_user_id = self._coerce_int(offline_user.get("user_id"))
                         self.current_tenant_id = self._coerce_int(offline_user.get("tenant_id"))
                         self.current_operator_status = offline_user.get("operator_status") or "active"
+                        self._set_plan_snapshot(offline_user)
                         self.default_location_id = self._coerce_int(offline_user.get("default_location_id"))
                         self._apply_active_register_snapshot(offline_user.get("active_register"))
                         self.api_status = "OFFLINE_CACHE"
@@ -4915,6 +4987,7 @@ class InventoryGUI:
             self.current_user_id = user.get("id")
             self.current_tenant_id = self._coerce_int(user.get("tenant_id"))
             self.current_operator_status = user.get("operator_status") or "active"
+            self._set_plan_snapshot(user)
             self.default_location_id = self._coerce_int(user.get("default_location_id"))
             self._apply_active_register_snapshot(user.get("active_register"))
             self.api_status = "ONLINE"
@@ -5051,7 +5124,10 @@ class InventoryGUI:
                     new_default_location_id = self._coerce_int(user_info.get("default_location_id"))
                     self.current_tenant_id = self._coerce_int(user_info.get("tenant_id"))
                     self.current_operator_status = user_info.get("operator_status") or self.current_operator_status
+                    if any(key in user_info for key in ("plan", "plan_end", "pro_expires", "plan_status")):
+                        self._set_plan_snapshot(user_info)
                     self._apply_active_register_snapshot(user_info.get("active_register"))
+                    self._update_home_dashboard_widgets()
             # Offline case: Stick to the currently cached role
             # and skip the DB query entirely to avoid the error loop.
 
@@ -5082,6 +5158,7 @@ class InventoryGUI:
             self.current_user_id = None
             self.current_tenant_id = None
             self.current_operator_status = None
+            self._set_plan_snapshot(None)
             self.default_location_id = None
             self._apply_active_register_snapshot(None)
             self.active_location_id = None
@@ -8287,6 +8364,11 @@ class Cash_register_GUI:
         self.total_value_label.pack(side="right")
 
         tk.Label(checkout_card, text="Amount Paid", font=("Segoe UI", 10, "bold"), bg=palette["card"], fg=palette["label"]).pack(anchor="w")
+        # A zero default makes a normal cash/card checkout fail validation
+        # until the cashier manually retypes the displayed total. Keep the
+        # field in sync with the cart until the cashier enters a tendered
+        # amount deliberately (for change, split payment, or credit).
+        self._amount_paid_manually_edited = False
         self.amount_paid_var = tk.StringVar(value="0.00")
         self.amount_paid_entry = tk.Entry(
             checkout_card,
@@ -8401,7 +8483,7 @@ class Cash_register_GUI:
 
         self.discount_entry.bind("<KeyRelease>", lambda _event: self.refresh_checkout_preview())
         self.customer_entry.bind("<KeyRelease>", lambda _event: self.refresh_checkout_preview())
-        self.amount_paid_entry.bind("<KeyRelease>", lambda _event: self.refresh_checkout_preview())
+        self.amount_paid_entry.bind("<KeyRelease>", self._on_amount_paid_changed)
         self.credit_to_apply_entry.bind("<KeyRelease>", lambda _event: self.refresh_checkout_preview())
         payment_method_menu.bind("<<ComboboxSelected>>", lambda _event: self.refresh_checkout_preview())
 
@@ -8827,8 +8909,15 @@ class Cash_register_GUI:
             "total_bill": float(total_bill),
         }
 
+    def _on_amount_paid_changed(self, _event=None):
+        """Preserve a cashier-entered tender instead of replacing it with the total."""
+        self._amount_paid_manually_edited = True
+        self.refresh_checkout_preview()
+
     def refresh_checkout_preview(self):
         totals = self._current_checkout_totals()
+        if not getattr(self, "_amount_paid_manually_edited", False):
+            self.amount_paid_var.set(f"{totals['total_bill']:.2f}")
         amount_paid = self._receipt_number_value(getattr(self, "amount_paid_var", None).get() if getattr(self, "amount_paid_var", None) else 0)
         total_bill = totals["total_bill"]
         payment_method = (self.payment_method_var.get().strip().lower() if getattr(self, "payment_method_var", None) else "cash") or "cash"
@@ -9129,6 +9218,7 @@ class Cash_register_GUI:
             if getattr(self, "amount_paid_entry", None) and self.amount_paid_entry.winfo_exists():
                 self.amount_paid_entry.delete(0, tk.END)
                 self.amount_paid_entry.insert(0, "0.00")
+            self._amount_paid_manually_edited = False
             if getattr(self, "credit_to_apply_entry", None) and self.credit_to_apply_entry.winfo_exists():
                 self.credit_to_apply_entry.delete(0, tk.END)
                 self.credit_to_apply_entry.insert(0, "0.00")
