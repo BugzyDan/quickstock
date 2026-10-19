@@ -1,0 +1,202 @@
+/* Shared internal-page header.  Navigation intentionally has no rules here. */
+@media (min-width: 901px) {
+    body:not(.page-index) header.app-shell-header,
+    body:not(.page-index) .page-wrapper > header.app-shell-header {
+        min-height: 116px !important;
+        padding: 16px clamp(28px, 3.1vw, 48px) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 28px !important;
+        background: linear-gradient(104deg, #101a3d 0%, #12264c 58%, #0b5666 100%) !important;
+        border: 0 !important;
+        border-bottom: 3px solid #2784e9 !important;
+        border-radius: 0 !important;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-header-primary,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-header-primary {
+        display: contents !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-brand,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-brand {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        min-width: 0 !important;
+        text-decoration: none !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-logo,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-logo {
+        width: 78px !important;
+        height: 78px !important;
+        max-width: 78px !important;
+        max-height: 78px !important;
+        flex: 0 0 78px !important;
+        object-fit: contain !important;
+        border: 1px solid rgba(191, 219, 254, 0.2) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 7px 17px rgba(2, 6, 23, 0.24) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .logo-text-group,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-text-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 7px !important;
+        min-width: 0 !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .logo-wordmark,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-wordmark {
+        display: inline-flex !important;
+        align-items: baseline !important;
+        font-size: clamp(1.8rem, 2.45vw, 2.25rem) !important;
+        font-weight: 850 !important;
+        line-height: 1 !important;
+        letter-spacing: -0.035em !important;
+        white-space: nowrap !important;
+        transform: scaleX(1.14) !important;
+        transform-origin: left center !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .slogan,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .slogan {
+        margin: 0 !important;
+        padding: 4px 10px !important;
+        border: 1px solid rgba(203, 213, 225, 0.26) !important;
+        border-radius: 4px !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #f8fafc !important;
+        font-size: 0.68rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.14em !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-header-actions,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-header-actions {
+        display: none !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-operator-row,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-operator-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 14px !important;
+        width: auto !important;
+        margin-left: auto !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-system-live-pill,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-system-live-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 9px !important;
+        min-height: 48px !important;
+        padding: 0 18px !important;
+        border: 1px solid rgba(45, 212, 191, 0.36) !important;
+        border-radius: 999px !important;
+        background: rgba(5, 94, 103, 0.45) !important;
+        color: #f0fdf4 !important;
+        box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.05) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-system-live-pill .pill-text,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-system-live-pill .pill-text {
+        color: #f0fdf4 !important;
+        font-size: 0.88rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.01em !important;
+        text-transform: none !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-user-menu-btn,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-user-menu-btn {
+        min-height: 62px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 8px 14px 8px 18px !important;
+        border: 1px solid rgba(191, 219, 254, 0.24) !important;
+        border-radius: 999px !important;
+        background: rgba(255, 255, 255, 0.075) !important;
+        color: #f8fafc !important;
+        box-shadow: none !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta {
+        text-align: left !important;
+        line-height: 1.1 !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta .label,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta .label {
+        color: #f8fafc !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta .name,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta .name {
+        color: #e0f2fe !important;
+        font-size: 0.84rem !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-avatar,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-avatar {
+        width: 28px !important;
+        height: 28px !important;
+        flex: 0 0 28px !important;
+        border-radius: 6px !important;
+        background: #3672dd !important;
+    }
+
+    /* Keep the application command navigation available while page content scrolls. */
+    body:not(.page-index) #main-nav {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 3600 !important;
+    }
+}
+
+@media (max-width: 900px) {
+    body:not(.page-index) header.app-shell-header .logo-wordmark,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-wordmark {
+        font-size: clamp(1.28rem, 5.5vw, 1.55rem) !important;
+        letter-spacing: -0.02em !important;
+        transform: scaleX(1.16) !important;
+        transform-origin: left center !important;
+    }
+}
+
+/* Brand lockup (previously inline styles on app_shell_header.html) */
+header.app-shell-header .app-shell-wordmark {
+    font-size: 1.7rem !important;
+    letter-spacing: 0 !important;
+}
+
+header.app-shell-header .app-shell-logo-product {
+    display: inline-flex;
+    transform: scaleX(1.3) scaleY(1.55);
+    transform-origin: left center;
+    margin-right: 1.45rem;
+}
+
+header.app-shell-header .app-shell-logo-ja {
+    display: inline-flex;
+    transform: scaleY(1.55);
+    transform-origin: left center;
+}

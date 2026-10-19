@@ -7,6 +7,7 @@
     <title>Payment | {{ invoice.invoice_no|default:"Invoice" }} | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=sales-documents-refine-1">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
     <script src="{% static 'inventory/js/supplier_list.js' %}" defer></script>
     <script id="salesInvoicePaymentConfig" type="application/json">
@@ -87,7 +88,7 @@
                     This invoice is fully settled. You can still review the payment history.
                 </div>
                 {% else %}
-                <form method="post" class="sales-payment-form">
+                <form method="post" class="sales-payment-form" id="salesPaymentForm">
                     {% csrf_token %}
                     <div class="qs-alert qs-alert-info">
                         {% if invoice.customer %}
@@ -241,6 +242,20 @@
         </aside>
     </div>
 </main>
+<script>
+(function () {
+    // Browsers omit an untouched pre-selected radio group from the POST, which
+    // would make a settling payment look like no pickup choice was made.
+    var form = document.getElementById("salesPaymentForm");
+    if (!form) { return; }
+    form.addEventListener("submit", function () {
+        if (!form.querySelector('input[name="pickup_status"]:checked')) {
+            var fallback = document.getElementById("collected-now-radio");
+            if (fallback) { fallback.checked = true; }
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

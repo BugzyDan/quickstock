@@ -2567,7 +2567,7 @@ class WeekOneSecurityTests(TestCase):
         self.assertEqual(deliveries_response.status_code, 200)
         self.assertContains(operations_response, "Operations Center")
         self.assertContains(reconciliation_response, "Cash Reconciliation")
-        self.assertContains(deliveries_response, "Deliveries & Collections")
+        self.assertContains(deliveries_response, "Deliveries &amp; Collections")
         self.assertNotContains(reconciliation_response, "$125,000")
         self.assertNotContains(reconciliation_response, "$124,500")
 
@@ -5986,6 +5986,7 @@ class WeekFourReadinessTests(TestCase):
                 "payment_method": "cash",
                 "reference": "OVERPAY-1",
                 "notes": "Customer paid extra",
+                "pickup_status": "collected_now",
             },
         )
 
@@ -6049,6 +6050,7 @@ class WeekFourReadinessTests(TestCase):
                 "payment_method": "cash",
                 "reference": "CREDIT-APPLY-1",
                 "notes": "Apply saved credit",
+                "pickup_status": "collected_now",
             },
         )
 
@@ -8313,6 +8315,29 @@ class SalesInvoiceCollectionLifecycleTests(TestCase):
             self._panel_item_names(overview, "remaining_in_store_rows"),
         )
 
+    def test_deliveries_collection_admin_sees_held_items_at_every_owned_location(self):
+        owner = self._make_user("pickup-deliveries-admin-owner")
+        main_store = Location.objects.create(owner=owner, name="Main Store")
+        collection_store = Location.objects.create(owner=owner, name="Collection Store")
+        owner.profile.default_location = main_store
+        owner.profile.save(update_fields=["default_location"])
+        self._make_invoice(
+            owner,
+            collection_store,
+            item_name="Held Collection Fridge",
+            sku="PICKUP-DELIVERIES-HELD",
+            status="paid",
+            collection_status="awaiting_collection",
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("deliveries_collections"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["collection_location_name"], "All locations")
+        self.assertEqual(response.context["remaining_total_quantity"], 1)
+        self.assertContains(response, "Held Collection Fridge")
+
     def test_cashier_cannot_record_pickup_for_another_location(self):
         owner = self._make_user("pickup-location-guard-owner")
         main_store = Location.objects.create(owner=owner, name="Main Store")
@@ -8928,6 +8953,7 @@ class CS006ProductionReadinessTests(TestCase):
                 "amount": "4500.00",
                 "payment_method": "cash",
                 "payment_reference": "PAY-CS006-FULL",
+                "pickup_status": "collected_now",
             },
         )
         self.assertEqual(pay_resp.status_code, 302)
@@ -9030,3 +9056,117 @@ class CS006ProductionReadinessTests(TestCase):
             {"action": "update_location", "new_location": self.location_a.id},
         )
         self.assertEqual(loc_resp.status_code, 302)
+
+
+class ClockOutFlowTests(TestCase):
+    """Clock Out must sit after Logout on the register and be actionable in Settings."""
+
+    def _make_user(self, username, *, role="admin", owner=None, default_location=None):
+        user = User.objects.create_user(username=username, password="password123")
+        profile = UserProfile.for_user(user)
+        profile.role = role
+        profile.status = "active"
+        profile.plan = "PRO"
+        profile.pro_expires = timezone.now().date() + timedelta(days=30)
+        profile.plan_end = timezone.now() + timedelta(days=30)
+        profile.parent_admin = UserProfile.for_user(owner) if owner else None
+        profile.default_location = default_location
+        profile.save()
+        return user
+
+    def _open_shift(self, cashier, location, *, opening_cash="100.00"):
+        return CashShift.objects.create(
+            cashier=cashier,
+            location=location,
+            opening_cash=Decimal(opening_cash),
+            expected_cash=Decimal(opening_cash),
+            is_closed=False,
+        )
+
+    def test_register_clock_out_link_follows_logout_control(self):
+        owner = self._make_user("clockout-register-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+        owner.profile.default_location = location
+        owner.profile.save(update_fields=["default_location"])
+        self._open_shift(owner, location)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("cash_register"))
+
+        self.assertEqual(response.status_code, 200)
+        template = response.content.decode()
+        logout_pos = template.index('class="logout-link">LOGOUT</a>')
+        clock_out_pos = template.index("CLOCK OUT</a>")
+        self.assertGreater(clock_out_pos, logout_pos)
+
+    def test_settings_lists_clock_in_and_clock_out_times_for_open_shift(self):
+        owner = self._make_user("clockout-settings-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+        owner.profile.default_location = location
+        owner.profile.save(update_fields=["default_location"])
+        shift = self._open_shift(owner, location)
+        self._make_user("clockout-settings-staff", role="cashier", owner=owner, default_location=location)
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("settings"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Clocked In")
+        self.assertContains(response, "Clocked Out")
+        self.assertContains(response, 'name="action" value="clock_out_shift"')
+        self.assertContains(response, f'name="shift_id" value="{shift.id}"')
+
+    def test_admin_clocks_out_staff_from_settings(self):
+        admin = self._make_user("clockout-admin")
+        location = Location.objects.create(owner=admin, name="Main Store")
+        admin.profile.default_location = location
+        admin.profile.save(update_fields=["default_location"])
+        cashier = self._make_user(
+            "clockout-cashier", role="cashier", owner=admin, default_location=location
+        )
+        shift = self._open_shift(cashier, location)
+        self.client.force_login(admin)
+
+        response = self.client.post(
+            reverse("settings"),
+            {"action": "clock_out_shift", "shift_id": shift.id, "clock_out_cash": "100.00"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        shift.refresh_from_db()
+        self.assertTrue(shift.is_closed)
+        self.assertIsNotNone(shift.end_time)
+        closed_page = self.client.get(reverse("settings"))
+        self.assertContains(closed_page, "Finished")
+
+    def test_admin_clock_out_rejects_shift_from_another_tenant(self):
+        admin = self._make_user("clockout-admin-a")
+        Location.objects.create(owner=admin, name="A Store")
+        other_admin = self._make_user("clockout-admin-b")
+        other_location = Location.objects.create(owner=other_admin, name="B Store")
+        other_cashier = self._make_user(
+            "clockout-cashier-b", role="cashier", owner=other_admin, default_location=other_location
+        )
+        other_shift = self._open_shift(other_cashier, other_location)
+        self.client.force_login(admin)
+
+        response = self.client.post(
+            reverse("settings"),
+            {"action": "clock_out_shift", "shift_id": other_shift.id, "clock_out_cash": "100.00"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        other_shift.refresh_from_db()
+        self.assertFalse(other_shift.is_closed)
+
+    def test_cashier_clock_out_page_shows_expected_drawer_total(self):
+        owner = self._make_user("clockout-page-owner")
+        location = Location.objects.create(owner=owner, name="Main Store")
+        cashier = self._make_user("clockout-page-cashier", role="cashier", owner=owner, default_location=location)
+        self._open_shift(cashier, location, opening_cash="250.00")
+        self.client.force_login(cashier)
+
+        response = self.client.get(reverse("logout_with_clock_out"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["expected_cash"], Decimal("250.00"))

@@ -2,7 +2,7 @@ services:
   - type: web
     name: quickstock
     runtime: python
-    branch: css-recovery-backup
+    branch: main
     rootDir: Website/BackEnd/quickstock
     buildCommand: ./build.sh
     startCommand: gunicorn quickstock.wsgi:application --bind 0.0.0.0:$PORT --workers ${WEB_CONCURRENCY:-2} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile -
@@ -71,6 +71,12 @@ services:
         value: "60"
       - key: DJANGO_SECURE_HSTS_PRELOAD
         value: "true"
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.05"
       - key: WIPAY_ENVIRONMENT
         value: live
       - key: WIPAY_ACCOUNT_NUMBER_LIVE
@@ -83,5 +89,11 @@ services:
         sync: false
 
 databases:
+  # Production records require durable storage with automated backups.
+  # Render's free Postgres expires after 30 days and has no backups, so it must
+  # never hold customer, sale, or payment data. "basic-256mb" is the smallest
+  # paid plan that includes automated backups; scale up as data grows.
   - name: quickstock-db
-    plan: free
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    ipAllowList: []

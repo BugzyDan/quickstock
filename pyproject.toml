@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quickstock"
+version = "1.0.0"
+description = "Inventory Management and Cash Registration System"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Kevon Campbell", email = "kevoncampbell84@gmail.com"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django :: 5.2",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.optional-dependencies]
+backend-dev = [
+    "pytest>=8.4",
+    "pytest-django>=4.11",
+    "pytest-cov>=6.2",
+    "ruff>=0.11",
+    "mypy>=1.16",
+    "django-debug-toolbar>=5.5",
+]
+desktop-dev = [
+    "pytest>=8.4",
+    "pytest-qt>=4.4",
+    "ruff>=0.11",
+    "mypy>=1.16",
+    "pyinstaller>=6.12",
+]
+dev = [
+    "pytest>=8.4",
+    "ruff>=0.11",
+    "mypy>=1.16",
+    "pre-commit>=4.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "I", "W", "UP", "B", "C4", "SIM", "T10", "T20"]
+ignore = ["E501", "SIM102", "SIM103", "SIM113"]
+exclude = [".venv", "migrations", "staticfiles", "__pycache__", ".pytest_cache", "db.sqlite3", "*.log"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = ["migrations", ".venv", "staticfiles"]
+
+[tool.pytest.ini_options]
+testpaths = ["Website/BackEnd/quickstock", "Desktop_UI"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "--strict-markers --strict-config"
+
+[tool.coverage.run]
+source = ["Website/BackEnd/quickstock/inventory", "Desktop_UI"]
+omit = ["*/migrations/*", "*/tests/*", "*/test_*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.setuptools.packages.find]
+where = ["Website/BackEnd/quickstock", "Desktop_UI"]
+include = ["*"]

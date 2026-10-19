@@ -1803,6 +1803,12 @@ def deliveries_collections(request):
     active_location = getattr(profile, "default_location", None)
     if active_location and active_location.owner_id != getattr(owner_user, "id", None):
         active_location = None
+    # This is a handoff/exception report. Administrators need to see every
+    # paid order still in the business, not only the branch saved as their
+    # default profile location. Managers and cashiers remain scoped to their
+    # assigned branch below.
+    if request.user.is_superuser or profile.role == "admin":
+        active_location = None
     collection_lines = _sales_collection_activity_lines(
         owner_user,
         selected_date=selected_date,
@@ -3141,40 +3147,82 @@ def edit_customer(request, pk):
 
 
 #s
+def _customer_has_financial_history(customer):
+    """Return True when deleting the customer would detach financial records.
+
+    Most customer foreign keys use SET_NULL, so a plain delete succeeds and
+    silently strips the customer from invoices, quotes, payments, and credit
+    movements. Those rows must stay reconcilable, so such customers are archived.
+    """
+    for manager_name in (
+        "sales_invoices",
+        "sales_quotations",
+        "sales_invoice_payment_ledger",
+        "credit_movements",
+    ):
+        manager = getattr(customer, manager_name, None)
+        if manager is not None and manager.exists():
+            return True
+    return False
+
+
 @login_required
+@role_required({"admin", "manager", "cashier"})
 def delete_customer(request, pk):
     customer = get_object_or_404(_customer_queryset_for_user(request.user), pk=pk)
-
     if request.method == 'POST':
-        try:
-            customer_id = customer.id
-            customer_name = customer.name
-            with transaction.atomic():
-                customer.delete()
-                _log_action(
-                    request.user,
-                    "customer",
-                    "Customer deleted",
-                    {"customer_id": customer_id, "customer_name": customer_name},
-                    severity="warn",
-                    required=True,
-                )
-            messages.success(request, f"Customer '{customer_name}' was successfully deleted.")
-
-        except ProtectedError:
+        customer_id = customer.id
+        customer_name = customer.name
+        archived = False
+        if _customer_has_financial_history(customer):
             _archive_record(customer, request.user, "Customer retained because financial history is protected.")
             _log_action(
                 request.user,
                 "customer",
                 "Customer archived instead of deleted",
-                {"customer_id": customer.id, "reason": "protected_financial_history"},
+                {"customer_id": customer_id, "reason": "protected_financial_history"},
                 required=True,
             )
-            messages.warning(request, f"Customer '{customer.name}' has existing invoice/quote history and was archived instead of deleted.")
-
-        # Both full deletion and archiving now redirect back to the Customer Directory
+            messages.warning(request, f"Customer '{customer_name}' has existing invoice/quote history and was archived instead of deleted.")
+            return redirect('customer_list')
+        try:
+            with transaction.atomic():
+                if _customer_has_financial_history(customer):
+                    _archive_record(customer, request.user, "Customer retained because financial history is protected.")
+                    archived = True
+                    _log_action(
+                        request.user,
+                        "customer",
+                        "Customer archived instead of deleted",
+                        {"customer_id": customer_id, "reason": "protected_financial_history"},
+                        required=True,
+                    )
+                else:
+                    customer.delete()
+                    _log_action(
+                        request.user,
+                        "customer",
+                        "Customer deleted",
+                        {"customer_id": customer_id, "customer_name": customer_name},
+                        severity="warn",
+                        required=True,
+                    )
+        except ProtectedError:
+            _archive_record(customer, request.user, "Customer retained because financial history is protected.")
+            archived = True
+            _log_action(
+                request.user,
+                "customer",
+                "Customer archived instead of deleted",
+                {"customer_id": customer_id, "reason": "protected_financial_history"},
+                required=True,
+            )
+        if archived:
+            messages.warning(request, f"Customer '{customer_name}' has existing invoice/quote history and was archived instead of deleted.")
+        else:
+            messages.success(request, f"Customer '{customer_name}' was successfully deleted.")
+        # Both full deletion and archiving redirect back to the Customer Directory
         return redirect('customer_list')
-
     return redirect('customer_detail', pk=customer.pk)
 
 def inventory_api(request):
@@ -9582,8 +9630,7 @@ def wipay_response(request):
             # 3c️⃣ Success: update payment & profile. WiPay has used a few
             # equivalent labels across hosted checkout flows.
             if _is_wipay_paid_status(status):
-                payment.status = "paid"
-                payment.save(update_fields=["transaction_id", "response_payload", "status"])
+                payment.mark_paid(transaction_id=transaction_id)
 
                 profile = UserProfile.for_user(payment.user)
                 profile.plan = "PRO"
@@ -9667,6 +9714,52 @@ def settings_view(request):
         try:
             with transaction.atomic():
                 # --- Handle system logistics (Admin Only) ---
+                if request.POST.get("action") == "clock_out_shift":
+                    if not is_admin:
+                        messages.error(request, "Only Administrators can clock out staff from Settings.")
+                        return redirect("settings")
+
+                    shift_id = request.POST.get("shift_id")
+                    shift_qs = CashShift.objects.filter(
+                        owner=owner_user,
+                        is_closed=False,
+                        end_time__isnull=True,
+                    )
+                    if not request.user.is_superuser:
+                        shift_qs = shift_qs.filter(owner=owner_user)
+                    shift = shift_qs.filter(id=shift_id).first() if shift_id else None
+                    if not shift:
+                        messages.error(request, "That open shift could not be found or is already closed.")
+                        return redirect("settings")
+
+                    raw_count = (request.POST.get("clock_out_cash") or "").strip()
+                    try:
+                        counted_cash = shift.expected_cash if not raw_count else Decimal(raw_count)
+                    except (TypeError, ValueError):
+                        messages.error(request, "Enter a valid counted cash amount before clocking out.")
+                        return redirect("settings")
+
+                    try:
+                        shift.close_shift(
+                            counted_cash,
+                            actor=request.user,
+                            notes="Shift closed by administrator from Settings.",
+                        )
+                    except (ValidationError, TypeError, ValueError) as exc:
+                        messages.error(request, f"Could not clock out {shift.cashier_username or shift.cashier}: {exc}")
+                        return redirect("settings")
+
+                    _log_action(
+                        request.user,
+                        "register",
+                        f"Admin clocked out {shift.cashier_username or shift.cashier} at {shift.location.name}.",
+                    )
+                    messages.success(
+                        request,
+                        f"{shift.cashier_username or shift.cashier} clocked out — shift #{shift.id} closed at {timezone.localtime(shift.end_time):%I:%M %p}.",
+                    )
+                    return redirect("settings")
+
                 if request.POST.get("action") == "update_tax_rate_single":
                     if not is_admin:
                         messages.error(request, "Only Administrators can update country and tax settings.")
@@ -9975,7 +10068,10 @@ def logout_with_clock_out(request):
             actual_cash = (request.POST.get("actual_cash") or "").strip()
             if not actual_cash:
                 messages.error(request, "Enter counted cash before closing the shift.")
-                return render(request, "inventory/reconcile_and_logout.html")
+                return render(request, "inventory/reconcile_and_logout.html", {
+                    "shift": active_shift,
+                    "expected_cash": active_shift.reconciliation_totals()["expected_cash"],
+                })
             try:
                 active_shift.close_shift(
                     actual_cash,
@@ -9984,14 +10080,21 @@ def logout_with_clock_out(request):
                 )
             except (ValidationError, TypeError, ValueError) as exc:
                 messages.error(request, str(exc))
-                return render(request, "inventory/reconcile_and_logout.html")
+                return render(request, "inventory/reconcile_and_logout.html", {
+                    "shift": active_shift,
+                    "expected_cash": active_shift.reconciliation_totals()["expected_cash"],
+                })
 
         logout(request)
         return redirect('login')
-    
-    # If they hit this via GET (e.g. clicking a link), redirect to the 
+
+    # If they hit this via GET (e.g. clicking a link), redirect to the
     # reconciliation page so they are FORCED to enter cash totals.
-    return render(request, 'inventory/reconcile_and_logout.html')
+    active_shift = CashShift.get_active_shift(request.user)
+    return render(request, 'inventory/reconcile_and_logout.html', {
+        "shift": active_shift,
+        "expected_cash": active_shift.reconciliation_totals()["expected_cash"] if active_shift else Decimal("0.00"),
+    })
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -13245,8 +13348,9 @@ def sales_invoice_payment(request, invoice_id):
         if raw_pickup_status and raw_pickup_status not in VALID_PICKUP_STATUSES:
             messages.error(request, "Choose whether the customer collected the items or left them in store.")
             return redirect("sales_invoice_payment", invoice_id=invoice.id)
+        # The form pre-selects "collected now"; Django nevertheless submits an
+        # empty value when a pre-selected radio group is never touched.
         pickup_status = _normalize_sales_invoice_pickup_status(raw_pickup_status)
-
         if amount <= 0 and credit_to_apply <= 0:
             messages.error(request, "Enter a payment amount or apply customer credit before saving.")
             return redirect("sales_invoice_payment", invoice_id=invoice.id)
@@ -13366,6 +13470,13 @@ def sales_invoice_payment(request, invoice_id):
             # Check if fully paid and update status
             _, updated_balance = _sales_invoice_payment_totals(invoice)
             if updated_balance <= 0:
+                if raw_pickup_status not in VALID_PICKUP_STATUSES:
+                    transaction.set_rollback(True)
+                    messages.error(
+                        request,
+                        "This payment settles the invoice. Choose whether the customer collected the items or left them in store.",
+                    )
+                    return redirect("sales_invoice_payment", invoice_id=invoice.id)
                 invoice.status = "paid"
                 invoice.save(update_fields=["status"])
                 final_collection_status = _apply_sales_invoice_pickup_choice(

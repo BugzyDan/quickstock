@@ -1,12 +1,15 @@
 {% load static %}
+{% if request.user.is_authenticated %}
+<link rel="stylesheet" href="{% static 'inventory/css/app_shell_header.css' %}?v=shared-internal-header-3">
+{% endif %}
 <header class="app-shell-header">
     <div class="app-shell-header-primary">
         <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="logo-link logo-area app-shell-brand">
             <img src="{% static 'images/QuickStock_Logo.jpg' %}" class="logo logo-img app-shell-logo" alt="QuickStock JA Logo">
 
             <div class="logo-text-group">
-                <span class="logo-wordmark">
-                    <span class="logo-quick">Quick</span> <span class="logo-stock">Stock</span> <span class="logo-ja">JA</span>
+                <span class="logo-wordmark app-shell-wordmark">
+                    <span class="logo-product-name app-shell-logo-product"><span class="logo-quick">Quick</span><span class="logo-stock">Stock</span></span><span class="logo-ja app-shell-logo-ja">JA</span>
                 </span>
                 <p class="slogan">INVENTORY SIMPLIFIED</p>
             </div>

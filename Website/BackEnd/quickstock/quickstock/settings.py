@@ -19,7 +19,11 @@ dotenv_candidates = [
 ]
 for dotenv_path in (path for path in dotenv_candidates if path):
     if dotenv_path.exists():
-        load_dotenv(dotenv_path)
+        # A local project env file is the source of truth for a development
+        # server. Without override=True, stale shell variables (for example a
+        # former console/Resend backend) can silently win and make login OTPs
+        # print in the terminal instead of being sent through SMTP.
+        load_dotenv(dotenv_path, override=True)
         break
 
 # Now your other imports and logic follow...
@@ -228,6 +232,7 @@ INSTALLED_APPS = [
 
     'inventory.apps.InventoryConfig',  # keep this
     'api.apps.ApiConfig',
+    'billing.apps.BillingConfig',
 ]
 
 MIDDLEWARE = [
@@ -558,6 +563,12 @@ EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_HOST_PASSWORD", "")
+# Google displays app passwords in groups of four characters (for example,
+# ``abcd efgh ijkl mnop``), but its SMTP endpoint expects the unspaced value.
+# Keeping this normalization here prevents a harmless copy/paste format from
+# blocking login OTP delivery. Do not alter passwords for other SMTP providers.
+if EMAIL_HOST.strip().lower() in {"smtp.gmail.com", "smtp.googlemail.com"}:
+    EMAIL_HOST_PASSWORD = "".join(EMAIL_HOST_PASSWORD.split())
 EMAIL_USE_TLS = _env_bool("DJANGO_EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = _env_bool("DJANGO_EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = _env_int("DJANGO_EMAIL_TIMEOUT", 5)
@@ -771,25 +782,64 @@ if not DEBUG:
         raise RuntimeError("quickstock.log is not writable in production!")
 
 
+# SaaS billing. Access is derived from the billing ledger; the grace window lets
+# an account whose renewal lapsed still close open cash shifts and export data.
+QUICKSTOCK_BILLING_ENFORCED = _env_bool("QUICKSTOCK_BILLING_ENFORCED", True)
+QUICKSTOCK_BILLING_GRACE_DAYS = _env_int("QUICKSTOCK_BILLING_GRACE_DAYS", 3)
 SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
 SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", "development" if DEBUG else "production").strip()
 SENTRY_TRACES_SAMPLE_RATE = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0"))
 SENTRY_PROFILES_SAMPLE_RATE = float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0"))
 SENTRY_SEND_PII = _env_bool("SENTRY_SEND_DEFAULT_PII", False)
 
+def _sentry_scope_processor(event, hint):
+    """Attach the acting tenant and role without leaking credentials."""
+    try:
+        from inventory.models import UserProfile
+        from inventory.views import _inventory_owner_for_user
+    except Exception:
+        return event
+    request = event.get("request") or {}
+    user = getattr(request, "user", None)
+    if not user or not getattr(user, "is_authenticated", False):
+        return event
+    scope = event.setdefault("tags", {})
+    scope["quickstock_user_id"] = str(user.pk)
+    try:
+        owner = _inventory_owner_for_user(user)
+    except Exception:
+        owner = None
+    if owner is not None:
+        scope["quickstock_tenant_id"] = str(owner.pk)
+    try:
+        scope["quickstock_role"] = UserProfile.for_user(user).role
+    except Exception:
+        pass
+    return event
+
+
 if SENTRY_DSN:
     try:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
     except Exception as exc:
         if not DEBUG:
             raise RuntimeError("SENTRY_DSN is set but sentry-sdk is not installed.") from exc
     else:
+        import logging as _logging
+
         sentry_sdk.init(
             dsn=SENTRY_DSN,
             environment=SENTRY_ENVIRONMENT,
-            integrations=[DjangoIntegration()],
+            integrations=[
+                DjangoIntegration(),
+                # Errors are still captured, but do not send a breadcrumb for
+                # every INFO line or production logs become noisy and costly.
+                LoggingIntegration(level=_logging.WARNING, event_level=_logging.ERROR),
+            ],
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
             send_default_pii=SENTRY_SEND_PII,
+            before_send=_sentry_scope_processor,
         )

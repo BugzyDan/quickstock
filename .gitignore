@@ -67,3 +67,10 @@ Desktop_UI/.env.*
 Desktop_UI/__pycache__/
 Desktop_UI/src/**/__pycache__/
 Desktop_UI/tests/**/__pycache__/
+
+# Legacy untracked copy of the Django project, kept locally for reference only.
+# The canonical project is Website/BackEnd/quickstock (see render.yaml rootDir).
+/.legacy-backend-untracked/
+# TLS material and production env files
+/certs/
+.env.production

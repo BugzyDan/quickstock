@@ -1,0 +1,108 @@
+version: '3.8'
+
+# Development / staging stack. For production use docker-compose.prod.yml,
+# which adds TLS, health-gated release steps, and secrets from env files.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: quickstock-db
+    environment:
+      POSTGRES_DB: quickstock
+      POSTGRES_USER: quickstock
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickstock -d quickstock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: quickstock-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: quickstock-backend
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["gunicorn", "quickstock.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-"]
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1}
+      DATABASE_URL: postgres://quickstock:${POSTGRES_PASSWORD:-changeme}@postgres:5432/quickstock
+      DJANGO_CACHE_BACKEND: django.core.cache.backends.redis.RedisCache
+      DJANGO_CACHE_LOCATION: redis://redis:6379/1
+      QUICKSTOCK_EMAIL_PROVIDER: ${QUICKSTOCK_EMAIL_PROVIDER:-smtp}
+      DJANGO_EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      DJANGO_EMAIL_HOST: ${DJANGO_EMAIL_HOST:-smtp.gmail.com}
+      DJANGO_EMAIL_PORT: ${DJANGO_EMAIL_PORT:-587}
+      DJANGO_EMAIL_HOST_USER: ${DJANGO_EMAIL_HOST_USER}
+      DJANGO_EMAIL_HOST_PASSWORD: ${DJANGO_EMAIL_HOST_PASSWORD}
+      DJANGO_EMAIL_USE_TLS: "True"
+      DJANGO_DEFAULT_FROM_EMAIL: ${DJANGO_DEFAULT_FROM_EMAIL}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
+      MICROSOFT_OAUTH_CLIENT_ID: ${MICROSOFT_OAUTH_CLIENT_ID}
+      MICROSOFT_OAUTH_CLIENT_SECRET: ${MICROSOFT_OAUTH_CLIENT_SECRET}
+      MICROSOFT_OAUTH_TENANT_ID: ${MICROSOFT_OAUTH_TENANT_ID:-common}
+      WIPAY_ACCOUNT_NUMBER_LIVE: ${WIPAY_ACCOUNT_NUMBER_LIVE}
+      WIPAY_API_KEY_LIVE: ${WIPAY_API_KEY_LIVE}
+      WIPAY_ENVIRONMENT: live
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ENVIRONMENT: production
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: quickstock-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:
+
+networks:
+  default:
+    name: quickstock-network

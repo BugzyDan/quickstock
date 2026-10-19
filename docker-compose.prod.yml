@@ -1,0 +1,94 @@
+# QuickStock JA - production stack (self-hosted / VPS).
+#
+# Usage:
+#   1. cp .env.example .env.production  and fill in every secret
+#   2. put fullchain.pem + privkey.pem in ./certs/
+#   3. docker compose -f docker-compose.prod.yml up -d --build
+#
+# Nothing is exposed except 80/443. Postgres and Redis stay on the private
+# network and are never published to the host.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: quickstock
+      POSTGRES_USER: quickstock
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups/postgres:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickstock -d quickstock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      DJANGO_DEBUG: "False"
+      DATABASE_URL: postgres://quickstock:${POSTGRES_PASSWORD}@postgres:5432/quickstock
+      DJANGO_CACHE_BACKEND: django.core.cache.backends.redis.RedisCache
+      DJANGO_CACHE_LOCATION: redis://redis:6379/1
+      DJANGO_SECURE_SSL_REDIRECT: "False"
+      SENTRY_ENVIRONMENT: production
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+      - ./certs:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:
+  certbot_webroot:
+
+networks:
+  default:
+    name: quickstock-network

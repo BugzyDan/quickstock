@@ -734,6 +734,35 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.order_id}"
 
+    def mark_paid(self, *, transaction_id=None, payload=None):
+        """Record a confirmed payment and extend the tenant subscription once."""
+        from billing.models import record_billing_events
+
+        self.status = "paid"
+        if transaction_id:
+            self.transaction_id = transaction_id
+        if payload is not None:
+            merged = self.response_payload if isinstance(self.response_payload, dict) else {}
+            merged.update(payload)
+            self.response_payload = merged
+        self.save(update_fields=["status", "transaction_id", "response_payload", "updated_at"])
+        record_billing_events(self)
+
+
+@receiver(post_save, sender=Payment)
+def _extend_subscription_for_paid_payment(sender, instance, **kwargs):
+    """Any code path that marks a Payment paid also extends paid access.
+
+    This keeps the webhook, the success page, and manual admin reconciliation
+    from drifting apart. ``Subscription.activate`` is idempotent per order, so a
+    replayed callback cannot double-charge the period.
+    """
+    if instance.status != "paid" or not instance.user_id:
+        return
+    from billing.models import record_billing_events
+
+    record_billing_events(instance)
+
 class CashShiftQuerySet(models.QuerySet):
     PROTECTED_UPDATE_FIELDS = {
         "cashier",
@@ -773,7 +802,9 @@ class CashShift(models.Model):
     cashier = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="shifts"
+        related_name="shifts",
+        null=True,
+        blank=True,
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -2973,10 +3004,11 @@ class SalesInvoicePayment(models.Model):
     customer = models.ForeignKey(
         Customer,
         related_name="sales_invoice_payment_ledger",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
+    customer_name = models.CharField(max_length=255, blank=True, default="")
     location = models.ForeignKey(
         Location,
         related_name="sales_invoice_payment_ledger",
@@ -3125,6 +3157,8 @@ class SalesInvoicePayment(models.Model):
             self.owner_id = self.invoice.owner_id
             self.customer_id = self.invoice.customer_id
             self.location_id = self.invoice.location_id
+            if not self.customer_name and self.invoice.customer:
+                self.customer_name = self.invoice.customer.name
             if self.shift_id:
                 if self.shift.owner_id and self.shift.owner_id != self.owner_id:
                     raise ValidationError("Payment shift must belong to the invoice tenant.")
@@ -3334,8 +3368,11 @@ class CustomerCreditMovement(models.Model):
     customer = models.ForeignKey(
         Customer,
         related_name="credit_movements",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
+    customer_name = models.CharField(max_length=255, blank=True, default="")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     movement_type = models.CharField(max_length=32, choices=TYPE_CHOICES)
     created_by = models.ForeignKey(
@@ -3440,6 +3477,8 @@ class CustomerCreditMovement(models.Model):
     def save(self, *args, **kwargs):
         if self.pk:
             raise ValidationError("Customer credit movements cannot be changed.")
+        if not self.customer_name and self.customer:
+            self.customer_name = self.customer.name
         if self.created_by and not self.created_by_username:
             self.created_by_username = self.created_by.get_username()
         self.full_clean()
@@ -3611,6 +3650,18 @@ class UserProfile(models.Model):
             # Security Fix: Paid accounts must have an expiration date to be considered active
             if not sub_holder.pro_expires and not sub_holder.plan_end:
                 return False
+            # The billing ledger is the source of truth for paid SaaS access. A
+            # plan flag without a paid subscription (expired card, refunded
+            # charge, manual edit) must not unlock premium modules.
+            if getattr(settings, "QUICKSTOCK_BILLING_ENFORCED", True):
+                try:
+                    from billing.models import Subscription
+
+                    subscription = Subscription.objects.filter(owner=sub_holder.user).first()
+                except (OperationalError, ProgrammingError):
+                    subscription = None
+                if subscription is not None and not subscription.has_access:
+                    return False
 
             # Prefer the dedicated paid expiry field when present.
             if sub_holder.pro_expires:

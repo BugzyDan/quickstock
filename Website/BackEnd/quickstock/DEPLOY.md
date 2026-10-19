@@ -53,7 +53,9 @@ To move an intentional local clone into a new, empty Render PostgreSQL database:
 
 The import command only loads into an empty application database. Use the existing `import_desktop_inventory` command instead when only product and stock seed data should be merged into an existing account.
 
-Free Render PostgreSQL databases expire after 30 days and have no backups. Upgrade the database before treating the service as durable production storage.
+Production databases must use a paid plan. Free Render PostgreSQL databases expire after 30 days and have no backups, so they must never hold customer, sale, or payment data. `render.yaml` declares the smallest paid plan (`basic-256mb`) with automated backups; scale the plan as data grows.
+
+`build.sh` also takes a pre-migration backup unless `QUICKSTOCK_BACKUP_ON_BUILD=false`, writing to `QUICKSTOCK_BACKUP_DIR` (default `/tmp/quickstock-backups`). Set `QUICKSTOCK_BACKUP_DIR` to durable storage in production. Set `QUICKSTOCK_REQUIRE_BACKUP=false` only when the platform provides verified point-in-time recovery.
 
 ## Recommended Layout
 
@@ -149,6 +151,15 @@ The supplied config assumes:
 ## Backups
 
 Use [`scripts/backup_db.sh`](./scripts/backup_db.sh) with the cron template in [`scripts/backup_db.cron`](./scripts/backup_db.cron). Test one restore before launch.
+
+The Django management commands are the preferred path because they verify the archive and write a checksum:
+
+```bash
+python manage.py backup_database --output-dir /var/backups/quickstock --retain 30
+python manage.py restore_database --archive /var/backups/quickstock/quickstock-postgres-....sql.gz --confirm RESTORE
+```
+
+`restore_database` requires the literal token `--confirm RESTORE` and verifies the `.sha256` manifest before touching the database. Stop the web service before restoring. Store backups off the application host; a backup on the same disk does not survive host loss. Verify a restore at least monthly.
 
 If you need off-site backups, set `BACKUP_POST_HOOK` to an executable upload script. The backup script will pass the generated archive path as the first argument so the hook can copy it to S3, DigitalOcean Spaces, or another remote target.
 
