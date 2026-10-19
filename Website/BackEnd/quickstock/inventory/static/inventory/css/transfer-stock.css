@@ -1,0 +1,880 @@
+/* ==========================================================================
+   QuickStock JA POS - Stock Transfer Stylesheet
+   File: static/inventory/css/transfer-stock.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f1f5f9;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Status Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --warning-border: #fde68a;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger-border: #fecaca;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+    --shadow-dropdown: 0 16px 36px -6px rgba(15, 23, 42, 0.16),
+                       0 4px 12px -2px rgba(15, 23, 42, 0.08);
+}
+
+
+
+/* Replace '#main-nav' with the actual ID or class of your nav container */
+#main-nav {
+    display: flex;
+    justify-content: center; /* Centers items horizontally */
+    align-items: center;     /* Aligns items vertically */
+    gap: 2rem;               /* Adds clean spacing between links */
+    width: 100%;
+    padding: 0.75rem 0;
+}
+
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.04);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --warning-bg: rgba(180, 83, 9, 0.2);
+    --warning-text: #fbbf24;
+    --warning-border: rgba(251, 191, 36, 0.3);
+
+    --danger-bg: rgba(185, 28, 28, 0.2);
+    --danger-text: #f87171;
+    --danger-border: rgba(248, 113, 113, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.04);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --warning-bg: rgba(180, 83, 9, 0.2);
+        --warning-text: #fbbf24;
+        --warning-border: rgba(251, 191, 36, 0.3);
+
+        --danger-bg: rgba(185, 28, 28, 0.2);
+        --danger-text: #f87171;
+        --danger-border: rgba(248, 113, 113, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Shell
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-transfer-stock {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Nav Right Search Icon */
+.nav-search-right {
+    margin-left: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-search-right:hover {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    background-color: var(--primary-blue-soft);
+}
+
+/* Main Shell Container */
+.transfer-shell {
+    width: 100%;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Shared Micro Typography */
+.label-caps {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   2. Hero Banner & Top KPI Metrics
+   ========================================================================== */
+.transfer-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.transfer-hero-copy {
+    flex: 1 1 380px;
+    max-width: 580px;
+}
+
+.transfer-kicker {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(53, 120, 246, 0.2);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    margin: 0 0 0.75rem;
+}
+
+.transfer-hero-copy h1 {
+    font-size: clamp(1.6rem, 2.5vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0 0 0.45rem;
+}
+
+.transfer-subtitle {
+    font-size: 0.925rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.transfer-hero-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(135px, 1fr));
+    gap: 1rem;
+    flex: 1 1 440px;
+}
+
+.transfer-metric-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.transfer-metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+}
+
+.transfer-metric-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    margin: 0.35rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transfer-metric-note {
+    font-size: 0.75rem;
+    color: #cbd5e1;
+}
+
+/* ==========================================================================
+   3. Workbench Layout (Sidebar + Form Card)
+   ========================================================================== */
+.transfer-workbench {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 1.75rem;
+    align-items: start;
+}
+
+/* ==========================================================================
+   4. Left Sidebar: Source Intelligence Panel
+   ========================================================================== */
+.transfer-insight-panel {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    position: sticky;
+    top: 1.25rem;
+}
+
+.transfer-panel-eyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-blue);
+    margin-bottom: 0.2rem;
+}
+
+.transfer-insight-head h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+}
+
+.transfer-insight-head p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Location Stock Board */
+.transfer-stock-board {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem;
+}
+
+.transfer-board-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.85rem;
+    margin-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transfer-selected-item {
+    display: inline-block;
+    padding: 0.22rem 0.65rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background-color: var(--primary-blue-soft);
+    color: var(--primary-blue);
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transfer-stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    font-size: 0.875rem;
+}
+
+/* Supports dynamic rows injected by transfer_stock.js */
+.transfer-stock-list > div,
+.transfer-stock-row,
+.stock-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.8rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.transfer-empty-copy {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0.25rem 0;
+    text-align: center;
+}
+
+/* Ops Rules Mini Cards */
+.transfer-ops-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+}
+
+.transfer-ops-card {
+    padding: 1rem 1.15rem;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.transfer-ops-card strong {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-heading);
+}
+
+.transfer-ops-card small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+/* ==========================================================================
+   5. Right Column: Transfer Form Card & Alerts
+   ========================================================================== */
+.transfer-form-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2.25rem;
+    box-shadow: var(--shadow-card);
+}
+
+/* Flash Messages */
+.transfer-message-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-bottom: 1.5rem;
+}
+
+.transfer-message {
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.transfer-message.is-success {
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-text);
+}
+
+.transfer-message.is-error {
+    background-color: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger-text);
+}
+
+/* Transfer Confirmation Banner */
+.transfer-complete-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.15rem;
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1.75rem;
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
+    border-radius: var(--radius-lg);
+    color: var(--success-text);
+}
+
+.transfer-complete-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--success-text);
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.transfer-complete-copy .label-caps {
+    color: var(--success-text);
+    opacity: 0.85;
+}
+
+.transfer-complete-copy h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--success-text);
+    margin: 0.15rem 0 0.25rem;
+}
+
+.transfer-complete-copy p {
+    font-size: 0.9rem;
+    margin: 0 0 0.75rem;
+}
+
+.transfer-complete-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.transfer-complete-meta span {
+    background: rgba(255, 255, 255, 0.65);
+    color: #0f172a;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+}
+
+/* Form Header */
+.transfer-form-head {
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transfer-form-head h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.3rem;
+}
+
+.transfer-form-head p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================================================
+   6. Form Grid, Search Autocomplete & Inputs
+   ========================================================================== */
+.transfer-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.transfer-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.transfer-field-full {
+    grid-column: 1 / -1;
+}
+
+.transfer-field input,
+.transfer-field select {
+    width: 100%;
+    height: 46px;
+    padding: 0 0.95rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: var(--text-heading);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.transfer-field input::placeholder {
+    color: var(--text-muted);
+}
+
+.transfer-field input:focus,
+.transfer-field select:focus {
+    background-color: var(--bg-card);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3.5px var(--focus-ring);
+}
+
+.transfer-qty-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 1.1rem !important;
+    font-weight: 700;
+}
+
+/* Search Input + Autocomplete Dropdown */
+.transfer-search-shell {
+    position: relative;
+}
+
+.transfer-search-results {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-dropdown);
+    z-index: 60;
+    padding: 0.35rem;
+}
+
+.transfer-search-results:not(:empty).is-open,
+.transfer-search-shell:focus-within .transfer-search-results:not(:empty) {
+    display: block;
+}
+
+.transfer-search-results > *,
+.transfer-search-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.875rem;
+    color: var(--text-heading);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+}
+
+.transfer-search-results > *:hover,
+.transfer-search-option:hover,
+.transfer-search-option.is-active {
+    background-color: var(--primary-blue-soft);
+    color: var(--primary-blue);
+}
+
+/* Inline Validation Error Messages (Hidden until JS triggers them) */
+.error-msg {
+    grid-column: 1 / -1;
+    display: none;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger-text);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.error-msg.is-visible,
+.error-msg.active,
+.error-msg[style*="block"],
+.error-msg[style*="flex"] {
+    display: block;
+}
+
+/* ==========================================================================
+   7. Live Transfer Preview & Snapshot Cards
+   ========================================================================== */
+.transfer-live-preview {
+    grid-column: 1 / -1;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.35rem;
+    margin-top: 0.25rem;
+}
+
+.transfer-live-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.transfer-live-head strong {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.transfer-live-routes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.transfer-route-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.15rem;
+}
+
+.transfer-route-card strong {
+    display: block;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0.25rem 0 0.2rem;
+}
+
+.transfer-route-card p {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin: 0;
+}
+
+.transfer-live-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0.9rem 0 0;
+}
+
+/* 3-Column Transfer Snapshot */
+.transfer-snapshot {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.transfer-snapshot-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+}
+
+.transfer-snapshot-card strong {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   8. Form Actions (Execute & Abort Buttons)
+   ========================================================================== */
+.transfer-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-execute {
+    flex: 1 1 220px;
+    height: 48px;
+    padding: 0 1.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(53, 120, 246, 0.28);
+    transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-execute:hover:not(:disabled) {
+    background-color: var(--primary-blue-hover);
+    border-color: var(--primary-blue-hover);
+    box-shadow: 0 6px 18px rgba(53, 120, 246, 0.36);
+}
+
+.btn-execute:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn-execute:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-abort {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 1.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-abort:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background-color: var(--primary-blue-soft);
+}
+
+/* ==========================================================================
+   9. Footer & Responsive Breakpoints
+   ========================================================================== */
+footer {
+    text-align: center;
+    padding: 1.75rem 1rem 2.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+    .transfer-workbench {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-insight-panel {
+        position: static;
+        order: 2;
+    }
+
+    .transfer-form-card {
+        order: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .transfer-shell {
+        padding: 1rem 0.85rem 2.5rem;
+    }
+
+    .transfer-hero,
+    .transfer-form-card,
+    .transfer-insight-panel {
+        padding: 1.35rem 1.15rem;
+    }
+
+    .transfer-hero-metrics,
+    .transfer-form-grid,
+    .transfer-live-routes,
+    .transfer-snapshot {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-execute,
+    .btn-abort {
+        width: 100%;
+        flex: none;
+    }
+}

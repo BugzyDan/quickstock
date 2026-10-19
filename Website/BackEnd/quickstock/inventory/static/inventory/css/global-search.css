@@ -1,0 +1,585 @@
+    body.page-global-search,
+    body.page-global-search > header,
+    body.page-global-search > header .logo-area,
+    body.page-global-search > header .logo-img,
+    body.page-global-search > header .app-shell-logo,
+    body.page-global-search > header .logo-text-group,
+    body.page-global-search > header .logo-wordmark,
+    body.page-global-search > header .slogan,
+    body.page-global-search > header .app-user-info,
+    body.page-global-search > header .user-info,
+    body.page-global-search > header .app-system-live-pill,
+    body.page-global-search > header .system-live-pill,
+    body.page-global-search > header .app-user-menu-btn,
+    body.page-global-search > header .nav-toggle,
+    body.page-global-search #main-nav,
+    body.page-global-search header,
+body.page-global-search #main-nav,
+body.page-global-search #main-nav > a,
+body.page-global-search #main-nav > a:hover,
+    body.page-global-search header,
+    body.page-transfer-stock .nav-toggle,
+    body.page-support .nav-toggle {
+        display: inline-flex !important;
+        flex-direction: column;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2000;
+    }
+
+    body.page-dashboard #main-nav,
+    body.page-inventory #main-nav,
+    body.page-supplier-list #main-nav,
+    body.page-advanced-reports #main-nav,
+    body.page-global-search #main-nav,
+    body.page-global-search #main-nav.mobile-active,
+    body.page-global-search #main-nav > a.active,
+    body.page-global-search #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-global-search .nav-toggle,
+body.page-global-search .nav-toggle::before,
+    body.page-global-search #main-nav.mobile-active,
+body.page-global-search #main-nav,
+body.page-global-search #main-nav > a,
+body.page-global-search #main-nav > a:hover,
+    body.page-transfer-stock .nav-toggle,
+    body.page-support .nav-toggle {
+        display: inline-flex !important;
+        flex-direction: column;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2000;
+    }
+
+    body.page-dashboard #main-nav,
+    body.page-inventory #main-nav,
+    body.page-supplier-list #main-nav,
+    body.page-advanced-reports #main-nav,
+    body.page-global-search #main-nav,
+    body.page-global-search #main-nav.mobile-active,
+    body.page-global-search #main-nav > a.active,
+    body.page-global-search #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-global-search #main-nav,
+    body.page-global-search header,
+    body.page-global-search .app-user-info,
+    body.page-transfer-stock .nav-toggle,
+    body.page-support .nav-toggle {
+        width: 44px !important;
+        height: 40px !important;
+        border-radius: 10px !important;
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.24) !important;
+        z-index: 2100 !important;
+    }
+
+    body.page-dashboard .nav-toggle::before,
+    body.page-inventory .nav-toggle::before,
+    body.page-supplier-list .nav-toggle::before,
+    body.page-advanced-reports .nav-toggle::before,
+    body.page-global-search .nav-toggle::before,
+    body.page-global-search header,
+    body.page-global-search .logo-area,
+    body.page-global-search .logo-area img,
+    body.page-global-search .brand-text,
+    body.page-global-search .user-info,
+    body.page-global-search .system-live-pill,
+    body.page-global-search .user-dropdown-container,
+    body.page-global-search .user-dropdown-container .dropdown-menu,
+    body.page-global-search .nav-toggle,
+    body.page-transfer-stock .nav-toggle,
+    body.page-support .nav-toggle,
+    body.page-sales-quotation-list .nav-toggle,
+    body.page-sales-quotation-create .nav-toggle,
+    body.page-sales-quotation-detail .nav-toggle,
+    body.page-sales-invoice-list .nav-toggle,
+    body.page-sales-invoice-create .nav-toggle,
+    body.page-sales-invoice-detail .nav-toggle,
+    body.page-sales-invoice-payment .nav-toggle,
+    body.page-global-search .nav-toggle,
+body.page-global-search .global-search-wrap {
+            background: var(--pos-white);
+            border: 1px solid var(--pos-border);
+            border-radius: 14px;
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        body.page-global-search .global-search-form {
+            display: grid;
+            grid-template-columns: 1fr 170px auto;
+            gap: 10px;
+            align-items: center;
+        }
+        body.page-global-search .global-search-form input,
+body.page-global-search .global-search-form select {
+            width: 100%;
+            border: 1px solid var(--pos-border);
+            border-radius: 8px;
+            padding: 11px 12px;
+            font-size: 0.9rem;
+            background: #fff;
+            color: var(--text-main);
+        }
+        body.page-global-search .global-search-submit {
+            border: 0;
+            border-radius: 8px;
+            background: var(--primary-blue);
+            color: #fff;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            padding: 11px 18px;
+            cursor: pointer;
+        }
+        body.page-global-search .search-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        body.page-global-search .search-chip {
+            border: 1px solid var(--pos-border);
+            border-radius: 999px;
+            padding: 7px 11px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            background: #fff;
+        }
+        body.page-global-search .search-section {
+            margin-top: 16px;
+            border: 1px solid var(--pos-border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+        body.page-global-search .search-section h3 {
+            margin: 0;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            background: var(--surface-muted);
+            border-bottom: 1px solid var(--pos-border);
+        }
+        body.page-global-search .search-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        body.page-global-search .search-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 640px;
+        }
+        body.page-global-search .search-table th,
+body.page-global-search .search-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--pos-border);
+            font-size: 0.82rem;
+            text-align: left;
+            vertical-align: middle;
+        }
+        body.page-global-search .search-table th {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        body.page-global-search .search-table tr:last-child td {
+            border-bottom: 0;
+        }
+        body.page-global-search .search-action-link {
+            text-decoration: none;
+            color: var(--primary-blue);
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+        body.page-global-search .search-empty {
+            margin-top: 12px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 14px;
+        }
+        body.page-global-search .search-note {
+            margin-top: 12px;
+            color: #9a3412;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        @media (max-width: 860px) {
+body.page-global-search .global-search-form {
+                grid-template-columns: 1fr;
+            }
+            body.page-global-search .global-search-submit {
+body.page-global-search .business-search-shell {
+    width: min(1380px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 52px;
+}
+
+body.page-global-search .business-search-hero,
+body.page-global-search .business-search-surface,
+body.page-global-search .business-search-section,
+body.page-global-search .business-search-empty {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 20px 48px rgba(55, 65, 81, 0.08);
+}
+
+html.force-dark body.page-global-search .business-search-hero,
+html[data-theme-applied="dark"] body.page-global-search .business-search-hero,
+html.force-dark body.page-global-search .business-search-surface,
+html[data-theme-applied="dark"] body.page-global-search .business-search-surface,
+html.force-dark body.page-global-search .business-search-section,
+html[data-theme-applied="dark"] body.page-global-search .business-search-section,
+html.force-dark body.page-global-search .business-search-empty,
+html[data-theme-applied="dark"] body.page-global-search .business-search-empty {
+    background: rgba(15, 23, 42, 0.86);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.page-global-search .business-search-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 20px;
+    padding: 28px;
+    margin-bottom: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 26%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96));
+}
+
+body.page-global-search .business-search-kicker {
+    margin: 0 0 10px;
+    color: rgba(186, 230, 253, 0.92);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-hero h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 4vw, 3.3rem);
+    line-height: 0.96;
+}
+
+body.page-global-search .business-search-hero-copy p:last-child {
+    margin: 14px 0 0;
+    color: rgba(226, 232, 240, 0.92);
+    max-width: 64ch;
+}
+
+body.page-global-search .business-search-hero-meta {
+    display: grid;
+    gap: 12px;
+    align-content: center;
+}
+
+body.page-global-search .business-search-hero-chip {
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-surface {
+    padding: 22px;
+    margin-bottom: 18px;
+}
+
+body.page-global-search .business-search-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr) auto;
+    gap: 14px;
+    align-items: end;
+}
+
+body.page-global-search .business-search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+body.page-global-search .business-search-field span {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-field input,
+body.page-global-search .business-search-field select {
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(248, 250, 252, 0.94);
+}
+
+html.force-dark body.page-global-search .business-search-field input,
+html[data-theme-applied="dark"] body.page-global-search .business-search-field input,
+html.force-dark body.page-global-search .business-search-field select,
+html[data-theme-applied="dark"] body.page-global-search .business-search-field select {
+    background: rgba(55, 65, 81, 0.96);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+body.page-global-search .business-search-submit {
+    min-height: 48px;
+    border-radius: 14px;
+    padding: 0 20px;
+}
+
+body.page-global-search .business-search-summary {
+    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+}
+
+body.page-global-search .business-search-summary-total {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+body.page-global-search .business-search-summary-total span {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-summary-total strong {
+    font-size: 2rem;
+    color: var(--pos-dark);
+}
+
+body.page-global-search .business-search-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+body.page-global-search .business-search-summary-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.86);
+}
+
+body.page-global-search .business-search-summary-card span,
+body.page-global-search .business-search-summary-card small {
+    display: block;
+    color: var(--text-muted);
+}
+
+body.page-global-search .business-search-summary-card strong {
+    display: block;
+    margin: 6px 0 3px;
+    font-size: 1.5rem;
+    color: var(--pos-dark);
+}
+
+body.page-global-search .business-search-results {
+    display: grid;
+    gap: 18px;
+}
+
+body.page-global-search .business-search-section {
+    padding: 22px;
+}
+
+body.page-global-search .business-search-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+body.page-global-search .business-search-section-module {
+    margin: 0 0 6px;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-section-head h2 {
+    margin: 0;
+    font-size: 1.45rem;
+}
+
+body.page-global-search .business-search-section-head p {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+}
+
+body.page-global-search .business-search-section-count {
+    min-width: 52px;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-record-grid,
+.global-search-result-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+body.page-global-search .business-search-record,
+.global-search-record {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 164px;
+    padding: 16px;
+    border-radius: 18px;
+    text-decoration: none;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.9);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+body.page-global-search .business-search-record:hover,
+.global-search-record:hover {
+    transform: translateY(-2px);
+    border-color: rgba(37, 99, 235, 0.34);
+    box-shadow: 0 16px 34px rgba(55, 65, 81, 0.08);
+}
+
+html.force-dark body.page-global-search .business-search-record,
+html[data-theme-applied="dark"] body.page-global-search .business-search-record,
+html.force-dark .global-search-record,
+html[data-theme-applied="dark"] .global-search-record {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.page-global-search .business-search-record-head,
+.global-search-record-head,
+.global-search-result-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+body.page-global-search .business-search-record-head strong,
+.global-search-record-head strong {
+    color: var(--pos-dark);
+    font-size: 0.98rem;
+}
+
+body.page-global-search .business-search-record-head span,
+.global-search-record-head span {
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+body.page-global-search .business-search-record-subtitle,
+body.page-global-search .business-search-record-meta,
+body.page-global-search .business-search-record-detail,
+.global-search-record-subtitle,
+.global-search-record-meta,
+.global-search-record-detail,
+.global-search-section-copy {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+body.page-global-search .business-search-record-detail,
+.global-search-record-detail {
+    color: var(--pos-dark);
+    font-weight: 700;
+}
+
+body.page-global-search .business-search-record-action,
+.global-search-record-action {
+    margin-top: auto;
+    color: #2563eb;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+body.page-global-search .business-search-empty {
+    padding: 28px;
+}
+
+body.page-global-search .business-search-empty h2 {
+    margin-top: 0;
+}
+
+body.page-global-search .business-search-idea-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+body.page-global-search .business-search-idea-card {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.88);
+}
+
+body.page-global-search .business-search-idea-card strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+@media (max-width: 980px) {
+    body.page-global-search .business-search-hero,
+    body.page-global-search .business-search-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    body.page-global-search .business-search-shell {
+        width: calc(100vw - 20px);
+    }
+
+    body.page-global-search .business-search-hero,
+    body.page-global-search .business-search-surface,
+    body.page-global-search .business-search-section,
+    body.page-global-search .business-search-empty {
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    body.page-global-search .business-search-summary-grid,
+    body.page-global-search .business-search-record-grid,
+body.page-global-search .business-search-record:hover,
+body.page-global-search .business-search-record:focus-visible {

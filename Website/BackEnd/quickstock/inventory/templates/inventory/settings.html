@@ -239,10 +239,11 @@
                     <tr style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
                         <th>Staff Member</th>
                         <th>Branch</th>
-                        <th>Clock In</th>
-                        <th style="text-align: left; padding-left: 4px;">Clock Out</th>
+                        <th>Clocked In</th>
+                        <th style="text-align: left; padding-left: 4px;">Clocked Out</th>
                         <th>Live Sales (JMD)</th>
-                        <th style="text-align: right;">Status</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -257,9 +258,13 @@
                             </span>
                         </td>
                         <td style="font-size: 0.85rem;">{{ shift.location.name }}</td>
-                        
+
                         <td style="color: var(--text-muted); font-size: 0.85rem;">
-                            {{ shift.start_time|time:"g:i A" }}
+                            {% if shift.opened_at %}
+                                {{ shift.opened_at|time:"g:i A" }}
+                            {% else %}
+                                --
+                            {% endif %}
                         </td>
 
                         <td style="font-size: 0.85rem; text-align: left; padding-left: 4px; font-weight: {% if shift.is_closed %}700{% else %}400{% endif %}; color: {% if shift.is_closed %}var(--text-main){% else %}var(--text-muted){% endif %};">
@@ -280,7 +285,23 @@
                             {% if shift.is_closed %}
                                 <span style="font-size: 0.65rem; font-weight: 800; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Finished</span>
                             {% else %}
-                                <span style="font-size: 0.65rem; font-weight: 800; color: var(--success-green); border: 1px solid var(--success-green); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Active</span>
+                                <span style="font-size: 0.65rem; font-weight: 800; color: var(--success-green); border: 1px solid var(--success-green); padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Open</span>
+                            {% endif %}
+                        </td>
+
+                        <td style="text-align: right;">
+                            {% if shift.is_closed %}
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">--</span>
+                            {% else %}
+                                <form method="POST" action="{% url 'settings' %}" style="display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end;" onsubmit="return confirm('Clock out {{ shift.cashier_username|default:shift.cashier }} and close shift #{{ shift.id }} using the expected drawer total?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="clock_out_shift">
+                                    <input type="hidden" name="shift_id" value="{{ shift.id }}">
+                                    <input type="number" name="clock_out_cash" step="0.01" min="0" inputmode="decimal" placeholder="{{ shift.expected_cash|floatformat:2 }}" aria-label="Counted cash for {{ shift.cashier_username|default:shift.cashier }}" style="width: 84px; padding: 4px 6px; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                                    <button type="submit" style="background: none; border: 1px solid var(--primary-blue); color: var(--primary-blue); font-size: 0.65rem; font-weight: 800; cursor: pointer; text-transform: uppercase; padding: 4px 8px; border-radius: 4px;">
+                                        Clock Out
+                                    </button>
+                                </form>
                             {% endif %}
                         </td>
                     </tr>
@@ -302,6 +323,7 @@
                         <td style="text-align: right;">
                             <span style="font-size: 0.65rem; font-weight: 800; color: #b45309; border: 1px solid #f59e0b; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Unassigned</span>
                         </td>
+                        <td style="text-align: right;">--</td>
                     </tr>
                     {% endfor %}
                     {% for staff in assigned_idle_staff %}
@@ -315,12 +337,13 @@
                             </span>
                         </td>
                         <td style="font-size: 0.85rem;">{{ staff.default_location.name }}</td>
-                        <td style="color: var(--text-muted); font-size: 0.85rem;">Awaiting shift open</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">Not clocked in</td>
                         <td style="color: var(--text-muted); font-size: 0.85rem; text-align: left; padding-left: 4px;">--</td>
                         <td style="font-family: var(--mono-font); font-weight: 700; color: var(--text-muted);">$0.00</td>
                         <td style="text-align: right;">
                             <span style="font-size: 0.65rem; font-weight: 800; color: #1d4ed8; border: 1px solid #93c5fd; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Assigned</span>
                         </td>
+                        <td style="text-align: right;">--</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -1,0 +1,170 @@
+{% load static theme_tags %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clock Out | QuickStock JA</title>
+    {% include 'inventory/partials/cross_platform_head.html' %}
+    <link rel="stylesheet" href="{% static 'inventory/css/dashboard.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=clockout-styled-2">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/operations.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/operations-reconciliation.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/cash-reconciliation.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/cash-reconciliation.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
+</head>
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-dashboard">
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
+
+<nav id="main-nav">
+    <a href="{% url 'dashboard' %}"
+       class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    {% include 'inventory/partials/app_shell_nav.html' %}
+        {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="18"
+             height="18"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.5"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </a>
+</nav>
+
+<main class="recon-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="recon-flash {{ message.tags|default:'success' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="recon-hero">
+        <p class="ops-kicker">Register closeout</p>
+        <h1>Clock Out & Reconcile</h1>
+        {% if shift %}
+            <p class="ops-hero-copy">
+                Count the drawer and enter the total before you clock out. This closes
+                shift <strong>#{{ shift.id }}</strong> at
+                {{ shift.location.name|default:shift.location_name }}.
+            </p>
+            <div class="recon-shift-meta">
+                <span>Opened: {{ shift.opened_at|date:"M d, g:i A" }}</span>
+                <span>Cashier: {{ shift.cashier.username }}</span>
+            </div>
+        {% else %}
+            <p class="ops-hero-copy">You have no open shift. Logging out now.</p>
+        {% endif %}
+    </section>
+
+    {% if shift %}
+    <section class="recon-card">
+        <dl class="recon-shift-facts">
+            <div class="recon-fact">
+                <dt>Opening float</dt>
+                <dd>${{ shift.opening_cash|floatformat:2 }}</dd>
+            </div>
+            <div class="recon-fact">
+                <dt>Cash sales</dt>
+                <dd>${{ shift.total_sales|floatformat:2 }}</dd>
+            </div>
+            <div class="recon-fact">
+                <dt>Non-cash sales</dt>
+                <dd>${{ shift.non_cash_sales|floatformat:2 }}</dd>
+            </div>
+            <div class="recon-fact recon-fact-emphasis">
+                <dt>Expected in drawer</dt>
+                <dd>${{ expected_cash|floatformat:2 }}</dd>
+            </div>
+        </dl>
+
+        <form method="POST" class="recon-shift-closeout-form" id="reconcileForm">
+            {% csrf_token %}
+
+            <div class="recon-closeout-field">
+                <label for="countedCash">Counted cash</label>
+                <div class="recon-input-wrapper">
+                    <span class="recon-currency-symbol">$</span>
+                    <input
+                        id="countedCash"
+                        name="actual_cash"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="{{ expected_cash|floatformat:2 }}"
+                        required
+                        autofocus
+                    >
+                </div>
+                <small class="recon-field-hint">
+                    Expected {{ expected_cash|floatformat:2 }}. Any difference is recorded as a
+                    variance on the shift for your manager to review.
+                </small>
+                <div class="recon-variance-preview" id="variancePreview" hidden>
+                    <span class="recon-variance-label">Variance:</span>
+                    <span class="recon-variance-value" id="varianceValue">$0.00</span>
+                </div>
+            </div>
+
+            <div class="recon-closeout-actions">
+                <a href="{% url 'cash_register' %}" class="qs-btn qs-btn-secondary">Back To Register</a>
+                <button type="submit" class="qs-btn qs-btn-primary">Close Shift & Log Out</button>
+            </div>
+        </form>
+    </section>
+    {% else %}
+    <section class="recon-card recon-card--empty">
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="qs-btn qs-btn-primary">Log Out</button>
+        </form>
+    </section>
+    {% endif %}
+</main>
+
+<footer>
+    <div class="footer-meta">
+        <p>&copy; 2026 <strong>QUICKSTOCK</strong>. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+(function() {
+    const input = document.getElementById('countedCash');
+    const preview = document.getElementById('variancePreview');
+    const varianceEl = document.getElementById('varianceValue');
+    if (!input || !preview || !varianceEl) return;
+
+    const expected = parseFloat(input.placeholder) || 0;
+
+    function updateVariance() {
+        const counted = parseFloat(input.value) || 0;
+        const variance = counted - expected;
+        const absVariance = Math.abs(variance).toFixed(2);
+        const sign = variance >= 0 ? '+' : '';
+        
+        varianceEl.textContent = `${sign}$${absVariance}`;
+        varianceEl.className = 'recon-variance-value ' + (variance > 0 ? 'positive' : variance < 0 ? 'negative' : 'zero');
+        preview.hidden = false;
+    }
+
+    input.addEventListener('input', updateVariance);
+    input.addEventListener('focus', updateVariance);
+})();
+</script>
+</body>
+</html>

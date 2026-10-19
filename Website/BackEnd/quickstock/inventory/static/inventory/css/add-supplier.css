@@ -1,0 +1,445 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Supplier Registration & Edit Stylesheet
+   File: static/inventory/css/add-supplier.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Accent Colors */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    /* Semantic Feedback Colors */
+    --qs-success: #10b981;
+    --qs-success-bg: rgba(16, 185, 129, 0.12);
+    --qs-danger: #ef4444;
+    --qs-danger-bg: rgba(239, 68, 68, 0.12);
+    --qs-warning: #f59e0b;
+    --qs-warning-bg: rgba(245, 158, 11, 0.12);
+
+    /* Layout Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Shell & Hero Header
+   -------------------------------------------------------------------------- */
+.supplier-registration-shell {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.supplier-form-messages {
+    padding: 1rem 1.25rem;
+    background-color: var(--qs-primary-soft);
+    border: 1px solid var(--qs-primary);
+    border-radius: var(--qs-radius-md);
+    color: var(--qs-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.supplier-form-messages p {
+    margin: 0;
+}
+
+.supplier-origin-hero {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.supplier-origin-hero-copy {
+    max-width: 600px;
+}
+
+.supplier-origin-kicker {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: var(--qs-primary);
+    margin: 0 0 0.35rem 0;
+}
+
+.supplier-origin-hero h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+}
+
+.supplier-origin-hero p {
+    font-size: 0.9rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Routing Guide Widget */
+.supplier-origin-routing {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.25rem;
+}
+
+.supplier-routing-step {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.supplier-routing-marker {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    background-color: var(--qs-primary);
+}
+
+.supplier-routing-step-international .supplier-routing-marker {
+    background-color: var(--warning-amber);
+}
+
+.supplier-routing-step strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--qs-text-main);
+}
+
+.supplier-routing-step small {
+    font-size: 0.725rem;
+    color: var(--qs-text-muted);
+}
+
+.supplier-routing-divider {
+    height: 1px;
+    background-color: var(--qs-border);
+    margin: 0.25rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   3. Registration Form & Sections
+   -------------------------------------------------------------------------- */
+.supplier-registration-form {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2.25rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.supplier-form-error-summary {
+    background-color: var(--qs-danger-bg);
+    border: 1px solid var(--qs-danger);
+    color: var(--qs-danger);
+    padding: 1rem;
+    border-radius: var(--qs-radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.supplier-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--qs-border);
+}
+
+.supplier-form-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.supplier-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.supplier-section-index {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--qs-primary);
+    background-color: var(--qs-primary-soft);
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--qs-radius-sm);
+    line-height: 1;
+}
+
+.supplier-section-heading h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.2rem 0;
+}
+
+.supplier-section-heading p {
+    font-size: 0.825rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Supplier Origin Cards
+   -------------------------------------------------------------------------- */
+.supplier-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.supplier-type-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: var(--qs-radius-md);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-elevated);
+    cursor: pointer;
+    transition: var(--qs-transition);
+    position: relative;
+}
+
+.supplier-type-card:hover {
+    border-color: var(--qs-primary);
+}
+
+.supplier-type-card input[type="radio"] {
+    margin-top: 0.25rem;
+}
+
+.supplier-type-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.supplier-type-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+}
+
+.supplier-type-card-copy {
+    font-size: 0.775rem;
+    color: var(--qs-text-muted);
+    line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   5. Form Fields & Grid Layouts
+   -------------------------------------------------------------------------- */
+.supplier-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.supplier-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.supplier-field-wide {
+    grid-column: span 2;
+}
+
+.supplier-field label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--qs-text-muted);
+}
+
+.supplier-field input[type="text"],
+.supplier-field input[type="email"],
+.supplier-field input[type="tel"],
+.supplier-field select,
+.supplier-field textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--qs-transition);
+}
+
+.supplier-field input:focus,
+.supplier-field select:focus,
+.supplier-field textarea:focus {
+    border-color: var(--qs-primary);
+    box-shadow: 0 0 0 2px var(--qs-primary-soft);
+}
+
+.supplier-form-error {
+    font-size: 0.75rem;
+    color: var(--qs-danger);
+    font-weight: 600;
+    margin-top: 0.2rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Form Actions & Footer
+   -------------------------------------------------------------------------- */
+.supplier-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--qs-border);
+    flex-wrap: wrap;
+}
+
+.supplier-form-actions p {
+    font-size: 0.8rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+.supplier-form-actions div {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.supplier-action {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+    border: 1px solid transparent;
+}
+
+.supplier-action-secondary {
+    background-color: var(--qs-card-elevated);
+    border-color: var(--qs-border);
+    color: var(--qs-text-main);
+}
+
+.supplier-action-secondary:hover {
+    background-color: var(--qs-border);
+}
+
+.supplier-action-primary {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+}
+
+.supplier-action-primary:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------------------------
+   7. Responsive Media Queries
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .supplier-origin-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .supplier-type-options {
+        grid-template-columns: 1fr;
+    }
+
+    .supplier-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .supplier-field-wide {
+        grid-column: span 1;
+    }
+
+    .supplier-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .supplier-form-actions div {
+        flex-direction: column-reverse;
+    }
+
+    .supplier-action {
+        width: 100%;
+        text-align: center;
+    }
+}

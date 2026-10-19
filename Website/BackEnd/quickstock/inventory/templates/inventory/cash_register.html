@@ -29,8 +29,14 @@
     <script src="{% static 'inventory/js/session_guard.js' %}?v=session-guard-fix-2" defer></script>
     <script src="{% static 'inventory/js/loading_states.js' %}?v=loading-states-2" defer></script>
     <script src="{% static 'inventory/js/cash_register.js' %}?v=cash-register-complete-state-1" defer></script>
+    <script src="{% static 'inventory/js/cash_movement_panel.js' %}?v=drawer-movements-1" defer></script>
     {% include 'inventory/partials/cross_platform_head.html' %}
-</head>  
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/cash_register.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/cash_movement_panel.css' %}">
+</head>
 
 <body data-theme="{{ request.user.profile.theme|default:'system' }}" class="page-cash-register">
 <div
@@ -91,7 +97,15 @@
             <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Station</div>
             <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.85rem;">{{ request.user.username|upper }}</div>
         </div>
+        {% if active_shift %}
+            <button type="button" class="cash-drawer-shortcut cash-movement-trigger logout-link">↕ DRAWER MOVEMENTS</button>
+        {% else %}
+            <a href="{% url 'cash_reconciliation' %}" class="cash-drawer-shortcut">DRAWER</a>
+        {% endif %}
         <a href="{% url 'logout' %}" class="logout-link">LOGOUT</a>
+        {% if active_shift %}
+            <a href="{% url 'logout_with_clock_out' %}" class="logout-link cash-clock-out-link" title="Count the drawer and close your shift">CLOCK OUT</a>
+        {% endif %}
     </div>
 </header>
 
@@ -102,10 +116,11 @@
     {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
         <a href="{% url 'inventory' %}" class="cash-drawer-link">Inventory Control</a>
     {% endif %}
-    <a href="{% url 'supplier_list' %}" class="cash-drawer-link">Suppliers</a>
-    <a href="{% url 'sales_history' %}" class="cash-drawer-link">Sales History</a>
-    <a href="{% url 'sales' %}" class="cash-drawer-link">Cash Register</a>
-    
+    {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+
+    <a href="{% url 'sales' %}" class="cash-drawer-link{% if request.resolver_match.url_name == 'sales' %} active{% endif %}">Cash Register</a>
+
     <hr>
     <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
@@ -113,7 +128,55 @@
             Logout
         </button>
     </form>
+    {% if active_shift %}
+    <form action="{% url 'logout_with_clock_out' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="cash-drawer-logout cash-drawer-clock-out">
+            Clock Out
+        </button>
+    </form>
+    {% endif %}
 </nav>
+
+{% if active_shift %}
+    <div id="cashMovementOverlay" class="cash-movement-overlay" hidden></div>
+    <aside id="cashMovementPanel"
+           class="cash-movement-panel"
+           aria-label="Drawer money movements"
+           aria-hidden="true"
+           data-endpoint="{% url 'cash_shift_movement' active_shift.id %}">
+        <div class="cash-movement-panel-head">
+            <div>
+                <p class="cash-movement-eyebrow">Active drawer</p>
+                <h2>Money movement</h2>
+                <p>Record cash entering or leaving this drawer. Each entry is permanent and included in closeout.</p>
+            </div>
+            <button type="button" id="cashMovementClose" class="cash-movement-close" aria-label="Close drawer movements">×</button>
+        </div>
+        <form id="cashMovementForm" novalidate>
+            {% csrf_token %}
+            <input id="cashMovementDirection" type="hidden" value="out">
+            <div class="cash-movement-tabs" role="tablist" aria-label="Money direction">
+                <button type="button" class="cash-movement-tab" data-direction="out" role="tab" aria-selected="true">Cash out</button>
+                <button type="button" class="cash-movement-tab" data-direction="in" role="tab" aria-selected="false">Cash in</button>
+            </div>
+            <label for="cashMovementType">Movement type</label>
+            <select id="cashMovementType" name="movement_type">
+                <option value="cash_out">Paid out / safe drop</option>
+                <option value="refund">Cash refund</option>
+                <option value="cash_in">Float added / cash in</option>
+            </select>
+            <label for="cashMovementAmount">Amount (JMD)</label>
+            <input id="cashMovementAmount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+            <label for="cashMovementReason">Reason</label>
+            <textarea id="cashMovementReason" name="reason" rows="3" maxlength="1000" required placeholder="Why is money moving?"></textarea>
+            <label for="cashMovementReference">Reference <span>(optional)</span></label>
+            <input id="cashMovementReference" name="reference" type="text" maxlength="120" placeholder="Receipt, bag, or authorization number">
+            <p id="cashMovementError" class="cash-movement-error" role="alert" hidden></p>
+            <button id="cashMovementSubmit" class="cash-movement-submit" type="submit">Record movement</button>
+        </form>
+    </aside>
+{% endif %}
 
 
 

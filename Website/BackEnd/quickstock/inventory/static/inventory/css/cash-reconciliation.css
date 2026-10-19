@@ -1,0 +1,451 @@
+/* ==========================================================================
+   QuickStock JA - Cash Reconciliation Module Stylesheet
+   ========================================================================== */
+
+/* CSS Variables & Theme Defaults */
+:root {
+    --recon-bg: #f8fafc;
+    --recon-card-bg: #ffffff;
+    --recon-text: #0f172a;
+    --recon-text-muted: #64748b;
+    --recon-border: #e2e8f0;
+    --recon-border-focus: #3b82f6;
+    --recon-primary: #2563eb;
+    --recon-primary-hover: #1d4ed8;
+    --recon-success-bg: #dcfce7;
+    --recon-success-text: #166534;
+    --recon-danger-bg: #fee2e2;
+    --recon-danger-text: #991b1b;
+    --recon-table-stripe: #f8fafc;
+    --recon-table-hover: #f1f5f9;
+    --recon-input-bg: #ffffff;
+    --recon-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --recon-radius: 10px;
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] body.page-cash-reconciliation,
+body.force-dark.page-cash-reconciliation {
+    --recon-bg: #0f172a;
+    --recon-card-bg: #1e293b;
+    --recon-text: #f8fafc;
+    --recon-text-muted: #94a3b8;
+    --recon-border: #334155;
+    --recon-border-focus: #60a5fa;
+    --recon-primary: #3b82f6;
+    --recon-primary-hover: #60a5fa;
+    --recon-success-bg: #064e3b;
+    --recon-success-text: #a7f3d0;
+    --recon-danger-bg: #7f1d1d;
+    --recon-danger-text: #fecaca;
+    --recon-table-stripe: #1e293b;
+    --recon-table-hover: #273548;
+    --recon-input-bg: #0f172a;
+    --recon-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Page Base */
+body.page-cash-reconciliation {
+    background-color: var(--recon-bg);
+    color: var(--recon-text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.recon-main {
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    box-sizing: border-box;
+}
+
+/* Flash Messages */
+.recon-flash {
+    padding: 1rem 1.25rem;
+    border-radius: var(--recon-radius);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+.recon-flash.success {
+    background-color: var(--recon-success-bg);
+    color: var(--recon-success-text);
+}
+.recon-flash.error, .recon-flash.danger {
+    background-color: var(--recon-danger-bg);
+    color: var(--recon-danger-text);
+}
+
+/* Ops Hero Header Component */
+.ops-suite-hero {
+    background: var(--recon-card-bg);
+    border: 1px solid var(--recon-border);
+    border-radius: var(--recon-radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--recon-shadow);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+}
+.ops-hero-copy h1 {
+    font-size: 1.85rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--recon-text);
+}
+.ops-hero-copy p {
+    color: var(--recon-text-muted);
+    margin: 0 0 1rem 0;
+    max-width: 750px;
+    line-height: 1.5;
+}
+.ops-hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.ops-hero-tags span {
+    background: var(--recon-bg);
+    border: 1px solid var(--recon-border);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.ops-hero-status-grid {
+    display: flex;
+    gap: 1rem;
+}
+.ops-status-chip {
+    background: var(--recon-bg);
+    border: 1px solid var(--recon-border);
+    padding: 1rem;
+    border-radius: 8px;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.ops-status-chip span {
+    font-size: 0.75rem;
+    color: var(--recon-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ops-status-chip strong {
+    font-size: 1.1rem;
+    color: var(--recon-text);
+}
+.ops-status-chip small {
+    font-size: 0.75rem;
+    color: var(--recon-text-muted);
+}
+.ops-wizard-actions {
+    margin-top: 1rem;
+}
+.ops-wizard-next {
+    color: var(--recon-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.ops-wizard-next:hover {
+    text-decoration: underline;
+}
+
+/* Main Recon Card Container */
+.recon-card {
+    background: var(--recon-card-bg);
+    border: 1px solid var(--recon-border);
+    border-radius: var(--recon-radius);
+    padding: 2rem;
+    box-shadow: var(--recon-shadow);
+}
+.recon-head {
+    margin-bottom: 1.5rem;
+}
+.recon-head h2 {
+    font-size: 1.4rem;
+    margin: 0 0 0.25rem 0;
+}
+.recon-head p {
+    color: var(--recon-text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Toolbar & Date Filter */
+.recon-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--recon-border);
+    flex-wrap: wrap;
+}
+.recon-toolbar label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.recon-toolbar input[type="date"] {
+    background: var(--recon-input-bg);
+    color: var(--recon-text);
+    border: 1px solid var(--recon-border);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+.recon-toolbar button {
+    background: var(--recon-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.recon-toolbar button:hover {
+    background: var(--recon-primary-hover);
+}
+
+/* Shift Closeout Section */
+.recon-shift-closeout {
+    background: var(--recon-bg);
+    border: 1px solid var(--recon-border);
+    padding: 1.5rem;
+    border-radius: var(--recon-radius);
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.recon-shift-pill {
+    background: var(--recon-primary);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.recon-shift-closeout h3 {
+    margin: 0.5rem 0 0.2rem 0;
+    font-size: 1.15rem;
+}
+.recon-shift-closeout p {
+    margin: 0;
+    color: var(--recon-text-muted);
+    font-size: 0.9rem;
+}
+.recon-shift-closeout-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+.recon-closeout-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 200px;
+}
+.recon-closeout-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.recon-closeout-field input {
+    background: var(--recon-input-bg);
+    color: var(--recon-text);
+    border: 1px solid var(--recon-border);
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+.recon-closeout-submit {
+    background: var(--recon-primary);
+    color: white;
+    border: none;
+    padding: 0.65rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    height: fit-content;
+    transition: background 0.2s;
+}
+.recon-closeout-submit:hover {
+    background: var(--recon-primary-hover);
+}
+
+/* Grid Layout for Table & Aside Sidebar */
+.recon-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+    align-items: start;
+}
+@media (max-width: 1024px) {
+    .recon-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Denomination Table Styling */
+.recon-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--recon-border);
+    border-radius: var(--recon-radius);
+}
+.recon-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.95rem;
+}
+.recon-table th, 
+.recon-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--recon-border);
+}
+.recon-table th {
+    background: var(--recon-bg);
+    font-weight: 600;
+    color: var(--recon-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.recon-table tbody tr:nth-child(even) {
+    background-color: var(--recon-table-stripe);
+}
+.recon-table tbody tr:hover {
+    background-color: var(--recon-table-hover);
+}
+.recon-table tfoot td {
+    font-weight: 700;
+    background: var(--recon-bg);
+    border-bottom: none;
+}
+.recon-count-input {
+    width: 80px;
+    background: var(--recon-input-bg);
+    color: var(--recon-text);
+    border: 1px solid var(--recon-border);
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+/* Sidebar Summary Metric Container */
+.recon-summary {
+    background: var(--recon-bg);
+    border: 1px solid var(--recon-border);
+    border-radius: var(--recon-radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.recon-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.recon-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--recon-text-muted);
+}
+.recon-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--recon-text);
+}
+.recon-value.is-variance {
+    color: var(--recon-primary);
+}
+.recon-breakdown {
+    font-size: 0.85rem;
+    color: var(--recon-text-muted);
+    margin-top: 0.25qs;
+    line-height: 1.4;
+}
+.recon-card-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--recon-input-bg);
+    color: var(--recon-text);
+    border: 1px solid var(--recon-border);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+.recon-card-label {
+    display: block;
+    margin-top: 0.2rem;
+}
+
+/* Audit Status Badges */
+.recon-status-badge {
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.recon-status-badge.is-success {
+    background-color: var(--recon-success-bg);
+    color: var(--recon-success-text);
+}
+.recon-status-badge.is-danger {
+    background-color: var(--recon-danger-bg);
+    color: var(--recon-danger-text);
+}
+
+/* Action Buttons */
+.recon-actions {
+    margin-top: 0.5rem;
+}
+.qs-btn {
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+    box-sizing: border-box;
+}
+.qs-btn-primary {
+    background: var(--recon-primary);
+    color: white;
+}
+.qs-btn-primary:hover {
+    background: var(--recon-primary-hover);
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--recon-text-muted);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--recon-border);
+    margin-top: auto;
+}

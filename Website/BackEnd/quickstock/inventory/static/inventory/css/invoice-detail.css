@@ -1,0 +1,12 @@
+body.page-invoice-detail { font-family: 'Inter', sans-serif; background: #f1f2f6; padding: 40px; }
+        body.page-invoice-detail .receipt-card { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        body.page-invoice-detail .header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        body.page-invoice-detail .row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9rem; }
+        body.page-invoice-detail .label { color: #747d8c; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        body.page-invoice-detail .val { font-weight: 800; color: #1e272e; }
+        body.page-invoice-detail .badge { padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; }
+        body.page-invoice-detail .paid { background: #2ed573; color: white; }
+        body.page-invoice-detail .pending { background: #ffa502; color: white; }
+
+
+/* =====================================================

@@ -1,0 +1,548 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Supplier Financial Ledger Stylesheet
+   File: static/inventory/css/supplier-ledger.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Root Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Accent Colors */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    /* Semantic Feedback Colors */
+    --success-green: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --danger-red: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --warning-amber: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+
+    --soft-gray: #94a3b8;
+    --pos-dark: #1e293b;
+
+    /* Layout Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --soft-gray: #64748b;
+    --pos-dark: #f8fafc;
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Container Shell
+   -------------------------------------------------------------------------- */
+.ledger-container {
+    max-width: 1450px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Ledger Header & Actions
+   -------------------------------------------------------------------------- */
+.ledger-header-flex {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.vendor-name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.supplier-ledger-action-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background-color: var(--qs-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.btn-new:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+.plus-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.back-link {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.back-link:hover {
+    color: var(--qs-text-main);
+}
+
+/* --------------------------------------------------------------------------
+   4. Summary Stat Cards & Aging Grid
+   -------------------------------------------------------------------------- */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.stat-card {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.stat-label {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--qs-text-main);
+}
+
+/* Accounts Payable Aging Grid */
+.supplier-aging-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.supplier-aging-card {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    box-shadow: var(--qs-shadow);
+}
+
+.supplier-aging-card-active {
+    border-left: 4px solid var(--warning-amber);
+}
+
+.supplier-aging-card-critical {
+    border-left: 4px solid var(--danger-red);
+}
+
+.supplier-aging-card span {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+}
+
+.supplier-aging-card strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+}
+
+.supplier-aging-card small {
+    font-size: 0.725rem;
+    color: var(--qs-text-muted);
+}
+
+/* Utility Row & Statement Export */
+.supplier-ledger-utility-row {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.15rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.supplier-ledger-utility-row span {
+    display: block;
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+}
+
+.supplier-ledger-utility-row strong {
+    font-size: 0.95rem;
+    color: var(--qs-text-main);
+}
+
+.supplier-statement-link {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: var(--qs-primary);
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    padding: 0.5rem 1rem;
+    border-radius: var(--qs-radius-sm);
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.supplier-statement-link:hover {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+    border-color: var(--qs-primary);
+}
+
+/* --------------------------------------------------------------------------
+   5. Ledger Transaction Table & Columns
+   -------------------------------------------------------------------------- */
+.table-wrapper {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    box-shadow: var(--qs-shadow);
+    overflow-x: auto;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+.invoice-table th {
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-text-muted);
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+.invoice-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    vertical-align: top;
+}
+
+.invoice-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Column Width Constraints */
+.supplier-ledger-col-date { width: 110px; }
+.supplier-ledger-col-details { width: auto; }
+.supplier-ledger-col-debit { width: 110px; }
+.supplier-ledger-col-credit { width: 110px; }
+.supplier-ledger-col-balance { width: 120px; }
+.supplier-ledger-col-location { width: 130px; }
+.supplier-ledger-col-action { width: 160px; text-align: right; }
+
+/* Financial Values */
+.debit { font-weight: 700; color: var(--qs-text-main); }
+.credit { font-weight: 700; color: var(--success-green); }
+.balance-col { font-weight: 800; color: var(--pos-dark); }
+
+/* Status & Aging Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.status-paid { background-color: var(--success-bg); color: var(--success-green); }
+.status-pending { background-color: var(--warning-bg); color: var(--warning-amber); }
+.status-void { background-color: var(--danger-bg); color: var(--danger-red); }
+
+.supplier-aging-badge {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-text-muted);
+    margin-left: 0.35rem;
+}
+
+.supplier-aging-badge-warning { background-color: var(--warning-bg); color: var(--warning-amber); }
+.supplier-aging-badge-critical { background-color: var(--danger-bg); color: var(--danger-red); }
+
+.supplier-due-meta {
+    font-size: 0.725rem;
+    color: var(--qs-text-muted);
+    margin-top: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Manage Invoice Action Cell & Dropdown Panel
+   -------------------------------------------------------------------------- */
+.supplier-ledger-action-cell {
+    text-align: right;
+    position: relative;
+}
+
+.supplier-invoice-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.supplier-invoice-primary-action {
+    padding: 0.35rem 0.75rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--qs-text-main);
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.supplier-invoice-primary-action:hover {
+    background-color: var(--qs-border);
+}
+
+.supplier-invoice-manage-panel {
+    position: relative;
+}
+
+.supplier-invoice-manage-toggle {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
+    background-color: var(--qs-primary-soft);
+    border: 1px solid var(--qs-primary);
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--qs-primary);
+    user-select: none;
+    transition: var(--qs-transition);
+}
+
+.supplier-invoice-manage-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.supplier-invoice-manage-toggle:hover {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+}
+
+/* Action Dropdown Content Box */
+.supplier-invoice-action-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    width: 280px;
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border-strong);
+    border-radius: var(--qs-radius-md);
+    box-shadow: var(--qs-shadow-lg);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    z-index: 100;
+    text-align: left;
+}
+
+.supplier-invoice-action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--qs-border);
+}
+
+.supplier-invoice-action-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.supplier-invoice-action-group h3 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+/* Ledger Panel Forms */
+.supplier-ledger-panel-form {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.supplier-ledger-panel-form-stacked {
+    flex-direction: column;
+}
+
+.payment-input {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.payment-input:focus {
+    border-color: var(--qs-primary);
+    box-shadow: 0 0 0 2px var(--qs-primary-soft);
+}
+
+.pay-btn.compact {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: var(--qs-radius-sm);
+    border: none;
+    cursor: pointer;
+    background-color: var(--success-green);
+    color: #ffffff;
+    white-space: nowrap;
+    transition: var(--qs-transition);
+}
+
+.pay-btn.compact:hover {
+    opacity: 0.9;
+}
+
+.supplier-action-neutral { background-color: var(--soft-gray) !important; color: #ffffff; }
+.supplier-action-danger { background-color: var(--danger-red) !important; color: #ffffff; }
+.supplier-action-credit { background-color: var(--warning-amber) !important; color: #ffffff; }
+.supplier-action-refund { background-color: var(--qs-primary) !important; color: #ffffff; }
+
+.supplier-invoice-action-empty {
+    font-size: 0.75rem;
+    color: var(--qs-text-muted);
+    font-style: italic;
+    margin: 0;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   7. Responsive Mobile Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 992px) {
+    .ledger-header-flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .supplier-ledger-action-row {
+        justify-content: space-between;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .supplier-aging-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .supplier-invoice-action-panel {
+        right: auto;
+        left: 0;
+        width: 260px;
+    }
+}
+
+@media (max-width: 640px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .supplier-aging-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .supplier-ledger-utility-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

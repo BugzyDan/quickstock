@@ -4,11 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deliveries & Collections | QuickStock JA</title>
+    <title>Deliveries &amp; Collections | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/operations-suite.css' %}">
+    <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
-<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-deliveries">
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-deliveries page-operations-suite">
     {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
 
     <nav id="main-nav">
@@ -26,13 +29,13 @@
     <main class="ops-wrap">
         <section class="ops-hero ops-suite-hero">
             <div class="ops-hero-copy">
-                <p class="ops-hero-kicker">Field movement</p>
-                <h1>Deliveries & Collections</h1>
+                
+                <h1>Deliveries &amp; Collections</h1>
                 <p>Track later pickups, same-time collections, and paid goods still held at {{ collection_location_name }} for {{ report_date }}.</p>
                 <div class="ops-hero-tags">
-                    <span>{{ delivered_total_quantity }} units picked up after hold</span>
-                    <span>{{ collected_total_quantity }} units collected same time</span>
-                    <span>{{ remaining_total_quantity }} units remaining in store</span>
+                    <span>{{ delivered_total_quantity }} unit{{ delivered_total_quantity|pluralize }} picked up after hold</span>
+                    <span>{{ collected_total_quantity }} unit{{ collected_total_quantity|pluralize }} collected same time</span>
+                    <span>{{ remaining_total_quantity }} unit{{ remaining_total_quantity|pluralize }} remaining in store</span>
                 </div>
                 {% if is_closeout_wizard %}
                     <div class="ops-wizard-actions">
@@ -54,6 +57,15 @@
             </div>
         </section>
 
+        <nav class="ops-progress-rail" aria-label="Closeout workflow">
+            <div class="ops-progress-label"><span>Closeout path</span><strong>Step 3 of 3: confirm the handoffs</strong></div>
+            <ol>
+                <li class="is-complete"><a href="{% url 'daily_summary' %}"><b>1</b><span>Summary<small>Review activity</small></span></a></li>
+                <li class="is-complete"><a href="{% url 'cash_reconciliation' %}"><b>2</b><span>Reconcile<small>Count the drawer</small></span></a></li>
+                <li class="is-current"><a href="{% url 'deliveries_collections' %}" aria-current="step"><b>3</b><span>Deliveries<small>Confirm handoffs</small></span></a></li>
+            </ol>
+        </nav>
+
         <form method="get" action="{% url 'deliveries_collections' %}" class="ops-suite-toolbar ops-suite-toolbar-inline">
             {% if is_closeout_wizard %}
                 <input type="hidden" name="closeout" value="1">
@@ -65,7 +77,7 @@
 
         <section class="ops-grid">
             <div class="ops-card ops-card-primary">
-                <h3>Delivered From Uncollected</h3>
+                <h3>Delivered From Uncollected <small>({{ delivered_total_quantity }})</small></h3>
                 <p class="desc">Paid items held in store and picked up on the selected day.</p>
                 <div class="ops-card-list">
                     {% for group in delivered_today_grouped %}
@@ -85,7 +97,7 @@
             </div>
 
             <div class="ops-card">
-                <h3>Collected Same Time</h3>
+                <h3>Collected Same Time <small>({{ collected_total_quantity }})</small></h3>
                 <p class="desc">Items the customer paid for and picked up immediately.</p>
                 <div class="ops-card-list">
                     {% for group in collected_by_client_grouped %}
@@ -105,8 +117,25 @@
             </div>
 
             <div class="ops-card">
-                <h3>Remaining In Store</h3>
-                <p class="desc">Fully paid items deliberately held for later customer pickup.</p>
+                <h3>Remaining In Store <small>({{ remaining_total_quantity }})</small></h3>
+                <p class="desc">Fully paid items deliberately held for later customer pickup. Stays listed until marked picked up.</p>
+
+                {% if awaiting_collection_grouped %}
+                    <div class="ops-card-list">
+                        {% for group in awaiting_collection_grouped %}
+                            <div class="ops-category-group">
+                                <h4>{{ group.category }}</h4>
+                                {% for row in group.items %}
+                                    <div class="data-row">
+                                        <span>{{ row.name }}{% if row.customers %}<small class="ops-item-customers">Customer: {{ row.customers|join:", " }}</small>{% endif %}</span>
+                                        <strong>{{ row.quantity }}</strong>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 <div class="ops-collection-order-list">
                     {% for order in remaining_in_store_orders %}
                         <article class="ops-collection-order">
@@ -134,7 +163,7 @@
                             </div>
                         </article>
                     {% empty %}
-                        <p class="desc">No fully paid customer items are waiting in store.</p>
+                        <p class="desc">No fully paid customer items are waiting in store. Items recorded as "collected now" appear under Collected Same Time instead.</p>
                     {% endfor %}
                 </div>
             </div>

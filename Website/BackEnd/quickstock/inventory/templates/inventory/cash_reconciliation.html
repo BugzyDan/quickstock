@@ -3,12 +3,14 @@
 <html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cash Reconciliation | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/operations-suite.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script></head>
-<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-cash-reconciliation page-operations-reconciliation">
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-cash-reconciliation page-operations-reconciliation page-operations-suite">
 {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=True %}
 
 <nav id="main-nav">
@@ -63,6 +65,15 @@
             </div>
         </div>
     </section>
+
+    <nav class="ops-progress-rail" aria-label="Closeout workflow">
+        <div class="ops-progress-label"><span>Closeout path</span><strong>Step 2 of 3: account for every tender</strong></div>
+        <ol>
+            <li class="is-complete"><a href="{% url 'daily_summary' %}"><b>1</b><span>Summary<small>Review activity</small></span></a></li>
+            <li class="is-current"><a href="{% url 'cash_reconciliation' %}" aria-current="step"><b>2</b><span>Reconcile<small>Count the drawer</small></span></a></li>
+            <li><a href="{% url 'deliveries_collections' %}"><b>3</b><span>Deliveries<small>Confirm handoffs</small></span></a></li>
+        </ol>
+    </nav>
 
     <section class="recon-card">
         <div class="recon-head">

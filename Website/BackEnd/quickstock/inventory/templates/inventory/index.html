@@ -11,6 +11,7 @@
 
     <title>QuickStock JA | Inventory Simplified</title>
     {% include 'inventory/partials/cross_platform_head.html' %}
+    <link rel="stylesheet" href="{% static 'inventory/css/index.css' %}?v=index-cards-operator-fix-1">
 
     
 </head>
@@ -56,9 +57,19 @@
 <nav id="main-nav">
     <ul>
         {% if request.user.is_authenticated %}
+            <li class="index-mobile-nav-only index-mobile-operator-meta">
+                <span class="index-mobile-operator-badge"><span class="operator-badge-dot" aria-hidden="true"></span> Operator: <strong class="index-operator-name">{{ request.user.username }}</strong></span>
+            </li>
             <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
             <li><a href="{% url 'support' %}">Help & Support</a></li>
             <li class="index-mobile-nav-only"><a href="{% url 'profile' %}">Profile</a></li>
+            <li class="index-mobile-nav-only"><a href="{% url 'settings' %}">Settings</a></li>
+            <li class="index-mobile-nav-only">
+                <form action="{% url 'logout' %}" method="post" class="index-mobile-logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="index-mobile-logout-button">Logout</button>
+                </form>
+            </li>
         {% else %}
             <li><a href="{% url 'about' %}">About Us</a></li>
             <li class="index-mobile-nav-only"><a href="{% url 'login' %}">Login</a></li>
@@ -89,7 +100,7 @@
                         <span class="index-status-label">What You Get</span>
                         <span class="index-status-role">14-Day Trial</span>
                     </div>
-                    <h3>Launch faster with less spreadsheet chaos.</h3>
+                    <h3 style="color: aliceblue;">Launch faster with less spreadsheet chaos.</h3>
                     <p>Track stock, log sales, manage branches, and keep cleaner tax-ready records from day one.</p>
                     <div class="index-status-metrics">
                         <div>
@@ -288,40 +299,7 @@
     <section class="section index-gct-section">
         <div class="index-gct-preview" aria-label="GCT Summary Report preview">
             <div class="index-gct-report">
-                <div class="index-gct-report-head">
-                    <div>
-                        <span class="index-gct-label">Tax Report Preview</span>
-                        <h4>GCT Summary Report</h4>
-                    </div>
-                    <div class="index-gct-meta">
-                        <span>Period: Jun 2026</span>
-                        <span>Location: Kingston HQ</span>
-                    </div>
-                </div>
-                <div class="index-gct-report-grid">
-                    <div class="index-gct-metric index-gct-metric-primary">
-                        <span>Taxable Sales</span>
-                        <strong>J$2,840,500</strong>
-                    </div>
-                    <div class="index-gct-metric">
-                        <span>GCT Collected</span>
-                        <strong>J$426,075</strong>
-                    </div>
-                    <div class="index-gct-metric">
-                        <span>Zero-Rated / Exempt</span>
-                        <strong>J$312,800</strong>
-                    </div>
-                    <div class="index-gct-metric">
-                        <span>Exports</span>
-                        <strong>J$148,200</strong>
-                    </div>
-                </div>
-                <div class="index-gct-table" role="presentation">
-                    <div><span>Standard-rated sales</span><strong>J$2,840,500</strong></div>
-                    <div><span>Calculated GCT at 15%</span><strong>J$426,075</strong></div>
-                    <div><span>Adjustments / voids</span><strong>J$18,400</strong></div>
-                    <div><span>Prepared for filing</span><strong>CSV / Excel</strong></div>
-                </div>
+                
             </div>
         </div>
     </section>

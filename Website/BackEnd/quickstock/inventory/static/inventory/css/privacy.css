@@ -1,0 +1,187 @@
+body.page-privacy /* Body and Container Layout */
+     {
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        color: #1a1a1b;
+        line-height: 1.65;
+    }
+
+    body.page-privacy  header {
+        display: flex;
+        align-items: center;
+        padding: 10px 36px;
+        min-height: 72px;
+        box-sizing: border-box;
+    }
+
+    body.page-privacy  .logo-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+    }
+
+    body.page-privacy  .logo {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 12px;
+        flex: 0 0 auto;
+    }
+
+    body.page-privacy  .logo-link span {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #3b82f6;
+    }
+
+    body.page-privacy .main-text {
+        max-width: 720px; /* Optimal line length for legal reading */
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    body.page-privacy /* Headings */
+    h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+        color: #000000;
+    }
+
+    body.page-privacy h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 0.75rem;
+        color: #111827;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 4px;
+    }
+
+    body.page-privacy /* Paragraphs and Lists */
+    p {
+        margin-bottom: 1.25rem;
+        font-size: 1.05rem;
+    }
+
+    body.page-privacy ul {
+        margin-bottom: 1.5rem;
+        padding-left: 0;
+        list-style: none;
+    }
+
+    body.page-privacy li {
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+    }
+
+    body.page-privacy /* Emphasis and Metadata */
+    .last-updated {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    body.page-privacy strong {
+        color: #000000;
+        font-weight: 600;
+    }
+
+    body.page-privacy em {
+        font-style: italic;
+        color: #374151;
+    }
+
+    body.page-privacy /* Links (Emails/Support) */
+    a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    body.page-privacy a:hover {
+        text-decoration: underline;
+    }
+
+    html.force-dark .page-privacy,
+html[data-theme-applied="dark"] .page-privacy {
+        background: #0f172a;
+        color: #f8fafc;
+    }
+
+    html.force-dark .page-privacy h2,
+html.force-dark .page-privacy h3,
+html.force-dark .page-privacy strong,
+html[data-theme-applied="dark"] .page-privacy h2,
+html[data-theme-applied="dark"] .page-privacy h3,
+html[data-theme-applied="dark"] .page-privacy strong {
+        color: #f8fafc;
+    }
+
+    html.force-dark .page-privacy p,
+html.force-dark .page-privacy li,
+html.force-dark .page-privacy .last-updated,
+html.force-dark .page-privacy em,
+html[data-theme-applied="dark"] .page-privacy p,
+html[data-theme-applied="dark"] .page-privacy li,
+html[data-theme-applied="dark"] .page-privacy .last-updated,
+html[data-theme-applied="dark"] .page-privacy em {
+        color: #cbd5e1;
+    }
+
+    html.force-dark .page-privacy h3,
+html[data-theme-applied="dark"] .page-privacy h3 {
+        border-bottom-color: #334155;
+    }
+
+    html.force-dark .page-privacy header,
+html[data-theme-applied="dark"] .page-privacy header {
+        background: #0f172a;
+        border-bottom: 2px solid #3b82f6;
+    }
+
+    @media (max-width: 768px) {
+body.page-privacy  header {
+            padding: 10px 16px;
+            min-height: 68px;
+        }
+
+        body.page-privacy  .logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+        }
+
+        body.page-privacy  .logo-link {
+            gap: 10px;
+        }
+
+        body.page-privacy  .logo-link span {
+            font-size: 0.95rem;
+        }
+
+        body.page-privacy .main-text {
+            margin: 28px auto;
+            padding: 0 16px;
+        }
+
+        body.page-privacy h2 {
+            font-size: 1.75rem;
+        }
+
+        body.page-privacy h3 {
+            font-size: 1.1rem;
+        }
+
+        body.page-privacy p,
+body.page-privacy li {
+body.page-privacy .main-text,
+html.force-dark body.page-privacy .main-text,
+html[data-theme-applied="dark"] body.page-privacy .main-text,
+body.page-privacy,
+body.page-privacy .page-wrapper,

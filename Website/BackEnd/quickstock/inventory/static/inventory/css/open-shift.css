@@ -1,0 +1,853 @@
+First, fix the typo in the Bootstrap JS `<script>` tag at the bottom of your HTML—change `.min.min.js` to `.min.js` so Bootstrap's scripts don't fail with a 404 error:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+```
+
+---
+
+### Complete `open-shift.css` Stylesheet
+
+Save the following CSS into **`static/inventory/css/open-shift.css`**.
+
+Because this template loads **Bootstrap 5** alongside your custom `app_shell_primary_nav.html` partial, Bootstrap's global reset will otherwise strip the styling from your navigation bar and links. This stylesheet protects the primary nav bar, centers the **Open Register** card cleanly on the dark QuickStock canvas, styles the calculator badge and float input, and includes dark-mode support:
+
+```css
+/* =====================================================
+   PAGE: OPEN REGISTER / OPEN SHIFT (open-shift.css)
+===================================================== */
+body.page-open-shift {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #0f172a 0%, #1c313a 55%, #172554 100%);
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* =====================================================
+   1. PROTECT APP SHELL HEADER & PRIMARY NAV FROM BOOTSTRAP
+===================================================== */
+body.page-open-shift > header,
+body.page-open-shift header.app-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    min-height: 88px;
+    padding: 14px clamp(18px, 3vw, 36px);
+    background: linear-gradient(135deg, #0f172a 0%, #172554 62%, #0f3b4a 100%);
+    border-bottom: 3px solid #3b82f6;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+}
+
+body.page-open-shift > header img,
+body.page-open-shift .app-shell-logo,
+body.page-open-shift .logo-img {
+    width: 58px !important;
+    height: 58px !important;
+    max-width: 58px !important;
+    max-height: 58px !important;
+    flex: 0 0 58px !important;
+    border-radius: 14px !important;
+    object-fit: contain !important;
+}
+
+body.page-open-shift #main-nav,
+body.page-open-shift nav.primary-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    min-height: 54px;
+    padding: 0 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #dbe4ee;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+body.page-open-shift #main-nav > a,
+body.page-open-shift #main-nav button,
+body.page-open-shift .sales-nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 54px;
+    padding: 0 16px;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+body.page-open-shift #main-nav button::after,
+body.page-open-shift .sales-nav-trigger::after {
+    content: "▾";
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+body.page-open-shift #main-nav > a:hover,
+body.page-open-shift #main-nav > a.active,
+body.page-open-shift #main-nav button:hover {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+body.page-open-shift #main-nav > div,
+body.page-open-shift #main-nav .sales-nav-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+body.page-open-shift #main-nav > div > div,
+body.page-open-shift #main-nav button + div,
+body.page-open-shift #main-nav .sales-nav-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    padding: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+    flex-direction: column;
+    gap: 2px;
+    z-index: 1300;
+}
+
+body.page-open-shift #main-nav > div:hover > div,
+body.page-open-shift #main-nav > div:focus-within > div,
+body.page-open-shift #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-open-shift #main-nav button[aria-expanded="true"] + div {
+    display: flex;
+}
+
+body.page-open-shift #main-nav > div a,
+body.page-open-shift #main-nav .sales-nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+body.page-open-shift #main-nav > div a:hover,
+body.page-open-shift #main-nav .sales-nav-menu a:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* =====================================================
+   2. MAIN CONTAINER & REGISTER CARD
+===================================================== */
+body.page-open-shift > .container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 44px;
+    padding-bottom: 44px;
+}
+
+/* Widen slightly on medium screens so p-5 doesn't feel cramped */
+@media (min-width: 768px) {
+    body.page-open-shift .col-md-5 {
+        width: 100%;
+        max-width: 480px;
+    }
+}
+
+body.page-open-shift .register-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 26px 60px rgba(2, 8, 23, 0.42);
+}
+
+/* Top Accent Bar */
+body.page-open-shift .register-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #10b981 0%, #2563eb 55%, #38bdf8 100%);
+}
+
+/* Calculator Header Icon */
+body.page-open-shift .card-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 18px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.14);
+}
+
+body.page-open-shift .register-card h2 {
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em;
+}
+
+/* Location Pill Badge */
+body.page-open-shift .location-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+body.page-open-shift .location-badge i {
+    color: #2563eb;
+}
+
+/* =====================================================
+   3. STARTING CASH (FLOAT) INPUT GROUP
+===================================================== */
+body.page-open-shift .form-label {
+    letter-spacing: 0.08em;
+    color: #475569 !important;
+    margin-bottom: 8px;
+}
+
+body.page-open-shift .input-group-lg {
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+body.page-open-shift .input-group-lg > .input-group-text {
+    padding: 0 18px;
+    border-radius: 16px 0 0 16px;
+    background: #f0fdf4;
+    border: 2px solid #cbd5e1;
+    border-right: 0;
+    color: #15803d !important;
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
+body.page-open-shift .input-group-lg > .form-control {
+    min-height: 60px;
+    padding: 12px 18px;
+    border-radius: 0 16px 16px 0;
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 900 !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+body.page-open-shift .input-group-lg > .form-control::placeholder {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+body.page-open-shift .input-group-lg:focus-within > .input-group-text {
+    border-color: #2563eb;
+    background: #ecfdf5;
+}
+
+body.page-open-shift .input-group-lg > .form-control:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+body.page-open-shift .form-text {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* =====================================================
+   4. SUBMIT ("OPEN SHIFT") & BACK BUTTONS
+===================================================== */
+body.page-open-shift .btn-primary-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 12px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: 1px solid #1d4ed8;
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body.page-open-shift .btn-primary-custom:hover,
+body.page-open-shift .btn-primary-custom:focus-visible {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    border-color: #1e40af;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.36);
+}
+
+body.page-open-shift .btn-link {
+    font-weight: 700;
+    color: #64748b !important;
+    transition: color 0.15s ease;
+}
+
+body.page-open-shift .btn-link:hover {
+    color: #0f172a !important;
+}
+
+/* =====================================================
+   5. SECURE POS SESSION FOOTER CAPTION
+===================================================== */
+body.page-open-shift .col-md-5 > .text-center.mt-4 p {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #cbd5e1 !important;
+    font-size: 0.82rem;
+    backdrop-filter: blur(6px);
+}
+
+body.page-open-shift .col-md-5 > .text-center.mt-4 strong {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+body.page-open-shift .col-md-5 > .text-center.mt-4 i {
+    color: #34d399;
+}
+
+/* =====================================================
+   6. DARK MODE & MOBILE RESPONSIVENESS
+===================================================== */
+html.force-dark body.page-open-shift .register-card,
+html[data-theme-applied="dark"] body.page-open-shift .register-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+html.force-dark body.page-open-shift .register-card h2,
+html[data-theme-applied="dark"] body.page-open-shift .register-card h2 {
+    color: #f8fafc;
+}
+
+html.force-dark body.page-open-shift .location-badge,
+html[data-theme-applied="dark"] body.page-open-shift .location-badge {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html.force-dark body.page-open-shift .input-group-lg > .input-group-text,
+html[data-theme-applied="dark"] body.page-open-shift .input-group-lg > .input-group-text {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: #475569;
+    color: #4ade80 !important;
+}
+
+html.force-dark body.page-open-shift .input-group-lg > .form-control,
+html[data-theme-applied="dark"] body.page-open-shift .input-group-lg > .form-control {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f8fafc;
+}
+
+@media (max-width: 576px) {
+    body.page-open-shift > .container {
+        padding: 24px 16px;
+    }
+
+    body.page-open-shift .register-card .card-body.p-5 {
+        padding: 28px 22px !important;
+    }
+
+    body.page-open-shift .card-header-icon {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+```First, fix the typo in the Bootstrap JS `<script>` tag at the bottom of your HTML—change `.min.min.js` to `.min.js` so Bootstrap's scripts don't fail with a 404 error:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+```
+
+---
+
+### Complete `open-shift.css` Stylesheet
+
+Save the following CSS into **`static/inventory/css/open-shift.css`**.
+
+Because this template loads **Bootstrap 5** alongside your custom `app_shell_primary_nav.html` partial, Bootstrap's global reset will otherwise strip the styling from your navigation bar and links. This stylesheet protects the primary nav bar, centers the **Open Register** card cleanly on the dark QuickStock canvas, styles the calculator badge and float input, and includes dark-mode support:
+
+```css
+/* =====================================================
+   PAGE: OPEN REGISTER / OPEN SHIFT (open-shift.css)
+===================================================== */
+body.page-open-shift {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #0f172a 0%, #1c313a 55%, #172554 100%);
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* =====================================================
+   1. PROTECT APP SHELL HEADER & PRIMARY NAV FROM BOOTSTRAP
+===================================================== */
+body.page-open-shift > header,
+body.page-open-shift header.app-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    min-height: 88px;
+    padding: 14px clamp(18px, 3vw, 36px);
+    background: linear-gradient(135deg, #0f172a 0%, #172554 62%, #0f3b4a 100%);
+    border-bottom: 3px solid #3b82f6;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+}
+
+body.page-open-shift > header img,
+body.page-open-shift .app-shell-logo,
+body.page-open-shift .logo-img {
+    width: 58px !important;
+    height: 58px !important;
+    max-width: 58px !important;
+    max-height: 58px !important;
+    flex: 0 0 58px !important;
+    border-radius: 14px !important;
+    object-fit: contain !important;
+}
+
+body.page-open-shift #main-nav,
+body.page-open-shift nav.primary-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    min-height: 54px;
+    padding: 0 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #dbe4ee;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+body.page-open-shift #main-nav > a,
+body.page-open-shift #main-nav button,
+body.page-open-shift .sales-nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 54px;
+    padding: 0 16px;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+body.page-open-shift #main-nav button::after,
+body.page-open-shift .sales-nav-trigger::after {
+    content: "▾";
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+body.page-open-shift #main-nav > a:hover,
+body.page-open-shift #main-nav > a.active,
+body.page-open-shift #main-nav button:hover {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+body.page-open-shift #main-nav > div,
+body.page-open-shift #main-nav .sales-nav-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+body.page-open-shift #main-nav > div > div,
+body.page-open-shift #main-nav button + div,
+body.page-open-shift #main-nav .sales-nav-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    padding: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+    flex-direction: column;
+    gap: 2px;
+    z-index: 1300;
+}
+
+body.page-open-shift #main-nav > div:hover > div,
+body.page-open-shift #main-nav > div:focus-within > div,
+body.page-open-shift #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-open-shift #main-nav button[aria-expanded="true"] + div {
+    display: flex;
+}
+
+body.page-open-shift #main-nav > div a,
+body.page-open-shift #main-nav .sales-nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+body.page-open-shift #main-nav > div a:hover,
+body.page-open-shift #main-nav .sales-nav-menu a:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* =====================================================
+   2. MAIN CONTAINER & REGISTER CARD
+===================================================== */
+body.page-open-shift > .container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 44px;
+    padding-bottom: 44px;
+}
+
+/* Widen slightly on medium screens so p-5 doesn't feel cramped */
+@media (min-width: 768px) {
+    body.page-open-shift .col-md-5 {
+        width: 100%;
+        max-width: 480px;
+    }
+}
+
+body.page-open-shift .register-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 26px 60px rgba(2, 8, 23, 0.42);
+}
+
+/* Top Accent Bar */
+body.page-open-shift .register-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #10b981 0%, #2563eb 55%, #38bdf8 100%);
+}
+
+/* Calculator Header Icon */
+body.page-open-shift .card-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 18px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.14);
+}
+
+body.page-open-shift .register-card h2 {
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em;
+}
+
+/* Location Pill Badge */
+body.page-open-shift .location-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+body.page-open-shift .location-badge i {
+    color: #2563eb;
+}
+
+/* =====================================================
+   3. STARTING CASH (FLOAT) INPUT GROUP
+===================================================== */
+body.page-open-shift .form-label {
+    letter-spacing: 0.08em;
+    color: #475569 !important;
+    margin-bottom: 8px;
+}
+
+body.page-open-shift .input-group-lg {
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+body.page-open-shift .input-group-lg > .input-group-text {
+    padding: 0 18px;
+    border-radius: 16px 0 0 16px;
+    background: #f0fdf4;
+    border: 2px solid #cbd5e1;
+    border-right: 0;
+    color: #15803d !important;
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
+body.page-open-shift .input-group-lg > .form-control {
+    min-height: 60px;
+    padding: 12px 18px;
+    border-radius: 0 16px 16px 0;
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 900 !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+body.page-open-shift .input-group-lg > .form-control::placeholder {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+body.page-open-shift .input-group-lg:focus-within > .input-group-text {
+    border-color: #2563eb;
+    background: #ecfdf5;
+}
+
+body.page-open-shift .input-group-lg > .form-control:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+body.page-open-shift .form-text {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* =====================================================
+   4. SUBMIT ("OPEN SHIFT") & BACK BUTTONS
+===================================================== */
+body.page-open-shift .btn-primary-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 12px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: 1px solid #1d4ed8;
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body.page-open-shift .btn-primary-custom:hover,
+body.page-open-shift .btn-primary-custom:focus-visible {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    border-color: #1e40af;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.36);
+}
+
+body.page-open-shift .btn-link {
+    font-weight: 700;
+    color: #64748b !important;
+    transition: color 0.15s ease;
+}
+
+body.page-open-shift .btn-link:hover {
+    color: #0f172a !important;
+}
+
+/* =====================================================
+   5. SECURE POS SESSION FOOTER CAPTION
+===================================================== */
+body.page-open-shift .col-md-5 > .text-center.mt-4 p {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #cbd5e1 !important;
+    font-size: 0.82rem;
+    backdrop-filter: blur(6px);
+}
+
+body.page-open-shift .col-md-5 > .text-center.mt-4 strong {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+body.page-open-shift .col-md-5 > .text-center.mt-4 i {
+    color: #34d399;
+}
+
+/* =====================================================
+   6. DARK MODE & MOBILE RESPONSIVENESS
+===================================================== */
+html.force-dark body.page-open-shift .register-card,
+html[data-theme-applied="dark"] body.page-open-shift .register-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+html.force-dark body.page-open-shift .register-card h2,
+html[data-theme-applied="dark"] body.page-open-shift .register-card h2 {
+    color: #f8fafc;
+}
+
+html.force-dark body.page-open-shift .location-badge,
+html[data-theme-applied="dark"] body.page-open-shift .location-badge {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html.force-dark body.page-open-shift .input-group-lg > .input-group-text,
+html[data-theme-applied="dark"] body.page-open-shift .input-group-lg > .input-group-text {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: #475569;
+    color: #4ade80 !important;
+}
+
+html.force-dark body.page-open-shift .input-group-lg > .form-control,
+html[data-theme-applied="dark"] body.page-open-shift .input-group-lg > .form-control {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f8fafc;
+}
+
+@media (max-width: 576px) {
+    body.page-open-shift > .container {
+        padding: 24px 16px;
+    }
+
+    body.page-open-shift .register-card .card-body.p-5 {
+        padding: 28px 22px !important;
+    }
+
+    body.page-open-shift .card-header-icon {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+```

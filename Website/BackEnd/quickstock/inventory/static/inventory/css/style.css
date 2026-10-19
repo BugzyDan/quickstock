@@ -43236,6 +43236,15 @@ html[data-theme-applied="dark"] body:is(.page-sales-invoice-detail, .page-sales-
     }
 }
 
+/* Desktop pricing alignment: keep the two-plan set optically centred beneath
+   the page header while giving it a little more breathing room on the left. */
+@media (min-width: 901px) {
+    body.page-pricing .pricing-grid {
+        position: relative;
+        left: 18px;
+    }
+}
+
 
 @media print {
     .sales-document-email-action,

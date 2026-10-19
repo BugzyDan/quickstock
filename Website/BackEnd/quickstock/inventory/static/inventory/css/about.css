@@ -1,0 +1,372 @@
+/* ==========================================================================
+   QuickStock JA POS - About Page Stylesheet
+   File: static/inventory/css/about.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces & Typography */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f8fafc;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --warning-border: #fde68a;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger-border: #fecaca;
+
+    --info-bg: #eff6ff;
+    --info-text: #1d4ed8;
+    --info-border: #bfdbfe;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.03);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --warning-bg: rgba(180, 83, 9, 0.2);
+    --warning-text: #fbbf24;
+    --warning-border: rgba(251, 191, 36, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.03);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --warning-bg: rgba(180, 83, 9, 0.2);
+        --warning-text: #fbbf24;
+        --warning-border: rgba(251, 191, 36, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Shell
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-about {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+.about-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem 4rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* ==========================================================================
+   2. Hero Banner (.hero-banner)
+   ========================================================================== */
+.hero-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.version-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(53, 120, 246, 0.2);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+}
+
+.hero-banner h1 {
+    font-size: clamp(1.85rem, 3vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin: 0 0 0.5rem;
+}
+
+.hero-banner p {
+    font-size: 1.025rem;
+    color: #cbd5e1;
+    max-width: 640px;
+    margin: 0;
+}
+
+/* ==========================================================================
+   3. Content Grid & Glass Cards
+   ========================================================================== */
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.glass-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.glass-card h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.glass-card p {
+    font-size: 0.95rem;
+    color: var(--text-body);
+    margin: 0;
+}
+
+/* ==========================================================================
+   4. Specs Box & Operational Integrity
+   ========================================================================== */
+.specs-box {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.specs-box h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-blue);
+    margin: 0 0 0.5rem;
+}
+
+.spec-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.88rem;
+}
+
+.spec-line:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.spec-line span {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.spec-line strong {
+    color: var(--text-heading);
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   5. Lead Systems Architect Section (.architect-section)
+   ========================================================================== */
+.architect-section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2.25rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.architect-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--bg-elevated);
+    border: 2px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem;
+    flex-shrink: 0;
+}
+
+.architect-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.role-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-blue);
+}
+
+.architect-info h2 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0;
+}
+
+.architect-info p {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+}
+
+.contact-pill {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-body);
+    width: fit-content;
+}
+
+.contact-pill strong {
+    color: var(--text-heading);
+}
+
+/* ==========================================================================
+   6. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-container {
+        padding: 1rem 0.85rem 3rem;
+    }
+
+    .hero-banner {
+        padding: 2rem 1.25rem;
+    }
+
+    .architect-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1.25rem;
+    }
+
+    .contact-pill {
+        width: 100%;
+        text-align: left;
+    }
+}

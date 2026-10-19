@@ -1,0 +1,187 @@
+body.page-terms /* Body and Container Layout */
+     {
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        color: #1a1a1b;
+        line-height: 1.65;
+    }
+
+    body.page-terms  header {
+        display: flex;
+        align-items: center;
+        padding: 10px 36px;
+        min-height: 72px;
+        box-sizing: border-box;
+    }
+
+    body.page-terms  .logo-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+    }
+
+    body.page-terms  .logo {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 12px;
+        flex: 0 0 auto;
+    }
+
+    body.page-terms  .logo-link span {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #3b82f6;
+    }
+
+    body.page-terms .main-text {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    body.page-terms /* Headings */
+    h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+        color: #000000;
+    }
+
+    body.page-terms h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 0.75rem;
+        color: #111827;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 4px;
+    }
+
+    body.page-terms /* Paragraphs and Lists */
+    p {
+        margin-bottom: 1.25rem;
+        font-size: 1.05rem;
+    }
+
+    body.page-terms ul {
+        margin-bottom: 1.5rem;
+        padding-left: 0;
+        list-style: none;
+    }
+
+    body.page-terms li {
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+    }
+
+    body.page-terms /* Emphasis and Metadata */
+    .last-updated {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    body.page-terms strong {
+        color: #000000;
+        font-weight: 600;
+    }
+
+    body.page-terms em {
+        font-style: italic;
+        color: #374151;
+    }
+
+    body.page-terms /* Links (Emails/Support) */
+    a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    body.page-terms a:hover {
+        text-decoration: underline;
+    }
+
+    html.force-dark .page-terms,
+html[data-theme-applied="dark"] .page-terms {
+        background: #0f172a;
+        color: #f8fafc;
+    }
+
+    html.force-dark .page-terms h2,
+html.force-dark .page-terms h3,
+html.force-dark .page-terms strong,
+html[data-theme-applied="dark"] .page-terms h2,
+html[data-theme-applied="dark"] .page-terms h3,
+html[data-theme-applied="dark"] .page-terms strong {
+        color: #f8fafc;
+    }
+
+    html.force-dark .page-terms p,
+html.force-dark .page-terms li,
+html.force-dark .page-terms .last-updated,
+html.force-dark .page-terms em,
+html[data-theme-applied="dark"] .page-terms p,
+html[data-theme-applied="dark"] .page-terms li,
+html[data-theme-applied="dark"] .page-terms .last-updated,
+html[data-theme-applied="dark"] .page-terms em {
+        color: #cbd5e1;
+    }
+
+    html.force-dark .page-terms h3,
+html[data-theme-applied="dark"] .page-terms h3 {
+        border-bottom-color: #334155;
+    }
+
+    html.force-dark .page-terms header,
+html[data-theme-applied="dark"] .page-terms header {
+        background: #0f172a;
+        border-bottom: 2px solid #3b82f6;
+    }
+
+    @media (max-width: 768px) {
+body.page-terms  header {
+            padding: 10px 16px;
+            min-height: 68px;
+        }
+
+        body.page-terms  .logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+        }
+
+        body.page-terms  .logo-link {
+            gap: 10px;
+        }
+
+        body.page-terms  .logo-link span {
+            font-size: 0.95rem;
+        }
+
+        body.page-terms .main-text {
+            margin: 28px auto;
+            padding: 0 16px;
+        }
+
+        body.page-terms h2 {
+            font-size: 1.75rem;
+        }
+
+        body.page-terms h3 {
+            font-size: 1.1rem;
+        }
+
+        body.page-terms p,
+body.page-terms li {
+body.page-terms .main-text,
+html.force-dark body.page-terms .main-text,
+html[data-theme-applied="dark"] body.page-terms .main-text,
+body.page-terms,
+body.page-terms .page-wrapper,

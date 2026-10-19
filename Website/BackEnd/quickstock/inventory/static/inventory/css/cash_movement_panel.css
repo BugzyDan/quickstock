@@ -1,0 +1,78 @@
+body.page-cash-register #main-nav .cash-movement-trigger {
+    appearance: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    padding: 18px 0;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+body.page-cash-register #main-nav .cash-movement-trigger:hover,
+body.page-cash-register #main-nav .cash-movement-trigger:focus-visible { color: var(--primary-blue); }
+
+body.page-cash-register .cash-drawer-shortcut.cash-movement-trigger {
+    appearance: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.cash-movement-overlay {
+    background: rgb(15 23 42 / .55);
+    inset: 0;
+    position: fixed;
+    z-index: 20000 !important;
+}
+
+.cash-movement-panel {
+    background: #fff;
+    box-shadow: -20px 0 50px rgb(15 23 42 / .22);
+    box-sizing: border-box;
+    color: #172033;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 28px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transform: translateX(105%);
+    transition: transform .2s ease;
+    width: min(100%, 430px);
+    z-index: 20001 !important;
+}
+
+.cash-movement-panel.is-open { transform: translateX(0); }
+.cash-movement-panel-head { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 24px; }
+.cash-movement-panel h2 { font-size: 1.35rem; margin: 3px 0 8px; }
+.cash-movement-panel p { color: #64748b; font-size: .9rem; line-height: 1.45; margin: 0; }
+.cash-movement-eyebrow { color: #0b72d9 !important; font-size: .7rem !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.cash-movement-close { background: #f1f5f9; border: 0; border-radius: 999px; color: #334155; cursor: pointer; font-size: 1.5rem; height: 36px; line-height: 1; width: 36px; }
+.cash-movement-panel form { display: grid; gap: 8px; }
+.cash-movement-panel label { color: #334155; font-size: .78rem; font-weight: 800; margin-top: 8px; }
+.cash-movement-panel label span { color: #64748b; font-weight: 500; }
+.cash-movement-panel input, .cash-movement-panel select, .cash-movement-panel textarea { border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; color: #172033; font: inherit; padding: 11px 12px; width: 100%; }
+.cash-movement-panel textarea { resize: vertical; }
+.cash-movement-tabs { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-bottom: 4px; }
+.cash-movement-tab { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; color: #475569; cursor: pointer; font-weight: 800; padding: 10px; }
+.cash-movement-tab.is-active { background: #e0f2fe; border-color: #0b72d9; color: #075aa9; }
+.cash-movement-error { color: #b91c1c !important; font-weight: 700; margin-top: 8px !important; }
+.cash-movement-submit { background: #0b72d9; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 800; margin-top: 12px; padding: 12px; }
+.cash-movement-submit:disabled { cursor: wait; opacity: .65; }
+body.cash-movement-open { overflow: hidden; }
+
+@media (max-width: 760px) {
+    body.page-cash-register #main-nav .cash-movement-trigger {
+        color: #e0f7fa !important;
+        font-size: .8rem;
+        padding: 12px 10px;
+    }
+    .cash-movement-panel { padding: 22px 18px; }
+}

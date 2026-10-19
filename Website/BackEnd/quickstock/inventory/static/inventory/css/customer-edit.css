@@ -1,0 +1,581 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Edit Customer Stylesheet
+   File: static/inventory/css/edit_customer.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Primary Accent */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    /* Semantic Feedback Colors */
+    --qs-success: #16a34a;
+    --qs-success-bg: #f0fdf4;
+    --qs-danger: #dc2626;
+    --qs-danger-bg: #fef2f2;
+    --qs-danger-border: #fecaca;
+
+    /* Layout Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-danger: #f87171;
+    --qs-danger-bg: rgba(220, 38, 38, 0.15);
+    --qs-danger-border: rgba(239, 68, 68, 0.3);
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Layout Shell & Containers
+   -------------------------------------------------------------------------- */
+.customer-edit-shell {
+    max-width: 1350px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Alerts */
+.customer-edit-alert {
+    padding: 1rem 1.25rem;
+    background-color: var(--qs-danger-bg);
+    border: 1px solid var(--qs-danger-border);
+    border-radius: var(--qs-radius-md);
+    color: var(--qs-danger);
+    font-size: 0.875rem;
+}
+
+.customer-edit-alert strong {
+    display: block;
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+}
+
+.customer-edit-alert p {
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   3. Hero Banner Header
+   -------------------------------------------------------------------------- */
+.customer-edit-hero {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.customer-edit-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--qs-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.customer-edit-breadcrumbs a {
+    color: var(--qs-text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--qs-transition);
+}
+
+.customer-edit-breadcrumbs a:hover {
+    color: var(--qs-primary);
+}
+
+.customer-edit-kicker {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: var(--qs-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.customer-edit-hero h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+}
+
+.customer-edit-subtitle {
+    font-size: 0.9rem;
+    color: var(--qs-text-muted);
+    margin: 0 0 1.25rem 0;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+.customer-edit-chip-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.customer-edit-chip {
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Stats Container */
+.customer-edit-hero-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.customer-edit-stat {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1rem 1.25rem;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.customer-edit-stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+}
+
+.customer-edit-stat strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.customer-edit-stat small {
+    font-size: 0.75rem;
+    color: var(--qs-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   4. Layout Grid (Form Panel vs Note Rail)
+   -------------------------------------------------------------------------- */
+.customer-edit-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.edit-form-panel {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+}
+
+/* Section Headings */
+.customer-edit-section-head {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--qs-border);
+}
+
+.customer-edit-section-head-compact {
+    margin-bottom: 1rem;
+}
+
+.customer-edit-section-kicker {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--qs-primary);
+    margin: 0 0 0.15rem 0;
+}
+
+.customer-edit-section-head h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.35rem 0;
+}
+
+.customer-edit-section-head p {
+    font-size: 0.85rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+    line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   5. Form Controls & Inputs
+   -------------------------------------------------------------------------- */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.form-group label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--qs-text-main);
+}
+
+.field-hint {
+    font-size: 0.75rem;
+    color: var(--qs-text-muted);
+    margin: 0 0 0.15rem 0;
+    line-height: 1.35;
+}
+
+/* Field Controls styling */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--qs-transition);
+}
+
+.form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--qs-primary);
+    box-shadow: 0 0 0 2px var(--qs-primary-soft);
+}
+
+/* Error rendering */
+.errorlist {
+    margin: 0.25rem 0 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--qs-danger);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* GCT Tax Toggle Checkbox */
+.customer-tax-toggle {
+    justify-content: flex-start;
+}
+
+.customer-checkbox-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-sm);
+    cursor: pointer;
+    margin-top: 0.15rem;
+}
+
+.customer-checkbox-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.customer-checkbox-row span {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: var(--qs-text-main);
+}
+
+/* --------------------------------------------------------------------------
+   6. Note Composer & Action Buttons
+   -------------------------------------------------------------------------- */
+.customer-note-composer {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.customer-note-composer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.customer-note-composer-badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    background-color: var(--qs-primary-soft);
+    color: var(--qs-primary);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+
+.customer-note-composer-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-post-note {
+    padding: 0.55rem 1rem;
+    border-radius: var(--qs-radius-sm);
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-primary);
+    color: var(--qs-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.btn-post-note:hover {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+}
+
+.customer-note-composer-actions span {
+    font-size: 0.75rem;
+    color: var(--qs-text-muted);
+}
+
+/* Primary Form Actions */
+.customer-edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--qs-border);
+}
+
+.btn-save {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--qs-radius-sm);
+    background-color: var(--qs-primary);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.btn-save:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+.btn-cancel {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--qs-radius-sm);
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.btn-cancel:hover {
+    background-color: var(--qs-border);
+}
+
+/* --------------------------------------------------------------------------
+   7. Side Rail Notes Timeline
+   -------------------------------------------------------------------------- */
+.customer-note-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.customer-note-card {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--qs-shadow);
+}
+
+.customer-note-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.customer-note-entry {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.customer-note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.customer-note-meta strong {
+    color: var(--qs-text-main);
+}
+
+.customer-note-meta span {
+    color: var(--qs-text-muted);
+}
+
+.customer-note-entry p {
+    font-size: 0.825rem;
+    color: var(--qs-text-main);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.customer-note-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px dashed var(--qs-border-strong);
+    border-radius: var(--qs-radius-md);
+}
+
+.customer-note-empty strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--qs-text-main);
+    margin-bottom: 0.25rem;
+}
+
+.customer-note-empty p {
+    font-size: 0.8rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   8. Footer & Mobile Responsiveness
+   -------------------------------------------------------------------------- */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 992px) {
+    .customer-edit-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .customer-edit-hero {
+        flex-direction: column;
+    }
+
+    .customer-edit-hero-meta {
+        width: 100%;
+    }
+
+    .customer-edit-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .customer-edit-actions button,
+    .customer-edit-actions a {
+        text-align: center;
+        width: 100%;
+    }
+}   

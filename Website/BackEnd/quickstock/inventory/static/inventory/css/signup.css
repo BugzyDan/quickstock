@@ -1,0 +1,337 @@
+/* ==========================================================================
+   QuickStock JA - Signup Stylesheet (Matching Login Theme)
+   File: static/inventory/css/signup.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --focus-ring: rgba(53, 120, 246, 0.22);
+
+    --bg-dark-navy: #0f172a;
+    --bg-deep-blue: #162544;
+    --bg-royal-glow: #1d3668;
+
+    --card-bg: #ffffff;
+    --input-bg: #f4f7fa;
+    --input-border: #e2e8f0;
+
+    --text-heading: #0f172a;
+    --text-label: #334155;
+    --text-muted: #64748b;
+    --text-placeholder: #94a3b8;
+
+    --radius-card: 20px;
+    --radius-input: 10px;
+}
+
+/* 1. Reset & Box Sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Deep Navy Gradient Background */
+body.auth-body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-dark-navy);
+    background-image: 
+        radial-gradient(circle at 85% 85%, var(--bg-royal-glow) 0%, transparent 55%),
+        linear-gradient(135deg, #0b1120 0%, var(--bg-dark-navy) 45%, var(--bg-deep-blue) 100%);
+    background-attachment: fixed;
+    color: var(--text-label);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 3. Centered Auth Wrapper */
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+    margin: auto;
+    padding: 2rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 4. Circular White-Bordered Logo Badge */
+.auth-brand {
+    margin-bottom: 1.35rem;
+    text-align: center;
+}
+
+.auth-brand a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    padding: 3px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-brand a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.auth-logo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 5. White Rounded Auth Card */
+.auth-card {
+    width: 100%;
+    background-color: var(--card-bg);
+    border-radius: var(--radius-card);
+    padding: 2.35rem 2.15rem 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+}
+
+/* 6. Heading & Subtitle */
+.auth-intro {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.auth-intro h2 {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.35rem;
+}
+
+.auth-intro p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* 7. Django Flash Messages */
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.message {
+    padding: 0.7rem 0.9rem;
+    border-radius: var(--radius-input);
+    font-size: 0.825rem;
+    font-weight: 500;
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.message.error,
+.message.danger {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.message.success {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+
+.message.warning {
+    background-color: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+/* 8. Form Fields & Labels */
+.form-group {
+    margin-bottom: 1.15rem;
+}
+
+.form-group > label:not(.checkbox-label) {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-label);
+    margin-bottom: 0.45rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 0.78rem 1rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--text-heading);
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-input);
+    outline: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-group input::placeholder {
+    color: var(--text-placeholder);
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    background-color: #ffffff;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Optional: Keep browser autofill consistent with the screenshot's soft yellow or clean slate */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:focus {
+    border-radius: var(--radius-input);
+    -webkit-text-fill-color: var(--text-heading);
+}
+
+/* 9. Terms & Privacy Checkbox */
+.checkbox-group {
+    margin-top: 1.15rem;
+    margin-bottom: 1.4rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1.45;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.15rem;
+    accent-color: var(--primary-blue);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checkbox-label a {
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.checkbox-label a:hover {
+    text-decoration: underline;
+}
+
+/* 10. Vibrant Blue Submit Button */
+.btn-primary {
+    width: 100%;
+    padding: 0.82rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue) !important;
+    border: 1px solid var(--primary-blue) !important;
+    border-radius: var(--radius-input);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(53, 120, 246, 0.28);
+    transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-blue-hover) !important;
+    border-color: var(--primary-blue-hover) !important;
+    box-shadow: 0 6px 16px rgba(53, 120, 246, 0.38);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* 11. Card Footer ("Already have an account? Sign in") */
+.auth-footer {
+    margin-top: 1.35rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid #f1f5f9;
+    text-align: center;
+    font-size: 0.825rem;
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 0.25rem;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* 12. Page Footer (Readable on Dark Navy Background) */
+.auth-page-footer {
+    text-align: center;
+    padding: 1rem 1rem 1.75rem;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-page-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.35rem;
+    margin-bottom: 0.4rem;
+}
+
+.auth-page-footer-links a {
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.auth-page-footer-links a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* 13. Responsive Adjustments */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .auth-card {
+        padding: 1.85rem 1.35rem 1.65rem;
+    }
+
+    .auth-brand a {
+        width: 72px;
+        height: 72px;
+    }
+}

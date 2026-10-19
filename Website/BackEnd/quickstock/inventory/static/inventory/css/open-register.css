@@ -1,0 +1,172 @@
+/* ==========================================================================
+   QuickStock JA POS - Open Register Page Stylesheet
+   ========================================================================== */
+
+:root {
+  --bg-app: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --border-color: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --brand-primary: #2563eb;
+  --brand-primary-hover: #1d4ed8;
+  --brand-light: #eff6ff;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  --transition-fast: 0.2s ease;
+}
+
+[data-theme="dark"],
+.force-dark {
+  --bg-app: #0f172a;
+  --bg-card: #1e293b;
+  --bg-subtle: #334155;
+  --border-color: #334155;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --brand-light: rgba(37, 99, 235, 0.15);
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Base Layout --- */
+body.page-open-register {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 1.5rem;
+}
+
+.register-container {
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+}
+
+/* --- Register Card Surface --- */
+.card-register {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  overflow: hidden;
+}
+
+.card-register h2 {
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* --- Hero Icon Circle --- */
+.icon-circle {
+  width: 72px;
+  height: 72px;
+  background-color: var(--brand-light);
+  color: var(--brand-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem auto;
+  font-size: 2rem;
+}
+
+/* --- Location Badge Tag --- */
+.location-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+}
+
+.location-tag i {
+  color: var(--brand-primary);
+}
+
+/* --- Inputs & Currency Symbols --- */
+.ls-1 {
+  letter-spacing: 0.05em;
+  color: var(--text-muted) !important;
+}
+
+.input-group-text {
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--border-color) !important;
+  color: #10b981 !important; /* Green currency accent */
+  font-weight: 800;
+  border-top-left-radius: var(--radius-sm) !important;
+  border-bottom-left-radius: var(--radius-sm) !important;
+}
+
+.form-control {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-top-right-radius: var(--radius-sm) !important;
+  border-bottom-right-radius: var(--radius-sm) !important;
+  font-size: 1.25rem;
+}
+
+.form-control:focus {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.form-text {
+  color: var(--text-muted) !important;
+}
+
+/* --- Action Buttons --- */
+.btn-start {
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.btn-start:hover {
+  background-color: var(--brand-primary-hover) !important;
+  border-color: var(--brand-primary-hover) !important;
+}
+
+.btn-link {
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+  transition: color var(--transition-fast);
+}
+
+.btn-link:hover {
+  color: var(--text-primary) !important;
+}
+
+/* --- Page Footer --- */
+footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.825rem;
+}

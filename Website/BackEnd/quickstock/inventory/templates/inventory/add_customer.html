@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickStock JA | Add Customer</title>
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 </head>
 <body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-add-customer">

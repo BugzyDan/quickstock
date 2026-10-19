@@ -1,21 +1,24 @@
 {% load static theme_tags %}
-
 <!DOCTYPE html>
 <html lang="en" data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %}{% if request.user.profile.theme == 'dark' %} class="force-dark"{% endif %}>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Overview | QuickStock JA POS</title>
+    <title>Inventory Control | QuickStock JA POS</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
-    <script src="{% static 'inventory/js/theme.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}?v=inventory-table-refine-2">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/inventory.css' %}?v=inventory-table-refine-2">
+    <link rel="stylesheet" href="{% static 'inventory/css/inventory-overview.css' %}">
 </head>
 
-<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-inventory page-inventory-overview">
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-inventory">
 
 {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
+
 <nav id="main-nav">
     <a href="{% url 'dashboard' %}"
        class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">

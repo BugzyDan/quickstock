@@ -1,0 +1,381 @@
+/* ==========================================================================
+   QUICKSTOCK JA - System Configuration & Settings Stylesheet
+   File: static/inventory/css/settings.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Primary Accent */
+    --accent-blue: #0b72d9;
+    --accent-blue-hover: #0958a8;
+    --accent-blue-soft: rgba(11, 114, 217, 0.1);
+
+    /* Semantic Feedback Colors */
+    --success-green: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --danger-red: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --warning-amber: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+
+    --mono-font: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Layout Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-radius-xl: 18px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --accent-blue: #38bdf8;
+    --accent-blue-hover: #0ea5e9;
+    --accent-blue-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Container Shell & Cards
+   -------------------------------------------------------------------------- */
+body {
+    background-color: var(--qs-bg);
+    color: var(--qs-text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.settings-card {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-xl);
+    padding: 2.25rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.settings-card h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.5rem 0;
+}
+
+.settings-card h3 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 1.25rem 0 0.75rem 0;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--qs-border);
+    margin: 1.5rem 0;
+}
+
+/* Messages / Flash Notifications */
+.messages {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.messages li {
+    padding: 0.85rem 1rem;
+    border-radius: var(--qs-radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    background-color: var(--accent-blue-soft);
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.messages li.error, .messages li.danger {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-red);
+    color: var(--danger-red);
+}
+
+.messages li.success {
+    background-color: var(--success-bg);
+    border-color: var(--success-green);
+    color: var(--success-green);
+}
+
+/* --------------------------------------------------------------------------
+   3. Info Rows & Form Preferences
+   -------------------------------------------------------------------------- */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--qs-border);
+    font-size: 0.9rem;
+}
+
+.info-row strong {
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.preference-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.preference-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--qs-text-muted);
+}
+
+.preference-group input[type="text"],
+.preference-group input[type="email"],
+.preference-group input[type="url"],
+.preference-group input[type="number"],
+.preference-group select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: var(--qs-transition);
+}
+
+.preference-group input:focus,
+.preference-group select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px var(--accent-blue-soft);
+}
+
+.readonly-input {
+    background-color: var(--qs-card-elevated) !important;
+    color: var(--qs-text-muted) !important;
+    cursor: not-allowed;
+}
+
+/* Logo Preview Section */
+.brand-logo-current {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1rem;
+}
+
+.brand-logo-current-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.brand-logo-current-row img {
+    max-height: 50px;
+    max-width: 150px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #fff;
+    padding: 4px;
+    border: 1px solid var(--qs-border);
+}
+
+.brand-logo-remove-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--qs-text-main);
+    cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   4. Buttons & Action Elements
+   -------------------------------------------------------------------------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+    border: 1px solid transparent;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    border-color: var(--accent-blue);
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-blue-hover);
+}
+
+.btn-secondary {
+    background-color: var(--qs-card-elevated);
+    border-color: var(--qs-border);
+    color: var(--qs-text-main);
+}
+
+.btn-secondary:hover {
+    background-color: var(--qs-border);
+}
+
+/* --------------------------------------------------------------------------
+   5. Staff Management & Grids
+   -------------------------------------------------------------------------- */
+.staff-create-form {
+    background-color: var(--qs-card-elevated);
+    padding: 1.5rem;
+    border-radius: var(--qs-radius-lg);
+    border: 1px solid var(--qs-border);
+    margin-top: 1rem;
+}
+
+.staff-create-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+.staff-table th {
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-text-muted);
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+.staff-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    vertical-align: middle;
+}
+
+.staff-table tr:last-child td {
+    border-bottom: none;
+}
+
+.role-badge-select, .form-select-sm {
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* System Logistics Grids */
+.system-logistics-grid, .tax-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Footer Styles
+   -------------------------------------------------------------------------- */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+    margin-top: auto;
+}
+
+/* --------------------------------------------------------------------------
+   7. Responsive Media Queries
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    main {
+        padding: 0 1rem;
+        margin: 1rem auto;
+    }
+
+    .settings-card {
+        padding: 1.25rem;
+    }
+
+    .staff-create-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-logo-current-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

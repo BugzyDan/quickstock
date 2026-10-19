@@ -1,0 +1,322 @@
+/* Shared app navigation: keep the command bar visible and prevent its items
+   from changing width or wrapping as page content scrolls. */
+@media (min-width: 901px) {
+    body.page-dashboard {
+        --qs-steady-nav-offset: 0px;
+    }
+
+    body.page-dashboard #main-nav {
+        position: sticky !important;
+        top: var(--qs-steady-nav-offset) !important;
+        z-index: 3600 !important;
+        flex-wrap: nowrap !important;
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+
+    body.page-dashboard #main-nav > a,
+    body.page-dashboard #main-nav > .sales-nav-item,
+    body.page-dashboard #main-nav .sales-nav-trigger,
+    body.page-dashboard #main-nav .nav-search-trigger {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+/* The navigation becomes a fixed drawer on small screens; keep that behavior
+   intact rather than making the desktop sticky rule compete with it. */
+@media (max-width: 900px) {
+    body.page-dashboard #main-nav {
+        position: fixed !important;
+    }
+}
+
+/*
+ * Shared mobile operations shell
+ *
+ * The app-shell header is used by authenticated pages throughout QuickStock.
+ * Keep the public homepage out of this contract: it has its own navigation
+ * treatment.  These rules intentionally live after the page styles so one
+ * compact, dependable phone header wins over legacy per-page variations.
+ */
+@media (max-width: 900px) {
+    body:not(.page-index) {
+        --qs-mobile-shell-height: 224px;
+    }
+
+    body:not(.page-index) header.app-shell-header,
+    body:not(.page-index) .page-wrapper > header.app-shell-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1200 !important;
+        min-height: var(--qs-mobile-shell-height) !important;
+        padding: 12px 12px 14px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        gap: 12px !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+        background: linear-gradient(112deg, #111f49 0%, #142a5d 52%, #1479cf 145%) !important;
+        border: 0 !important;
+        border-bottom: 3px solid #1684df !important;
+        border-radius: 0 0 22px 0 !important;
+        box-shadow: 0 12px 28px rgba(10, 24, 66, 0.22) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-header-primary,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-header-primary {
+        min-height: 97px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        padding: 0 0 12px !important;
+        border-bottom: 1px solid rgba(167, 204, 239, 0.18) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-brand,
+    body:not(.page-index) header.app-shell-header .logo-area,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-brand,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-area {
+        width: auto !important;
+        max-width: calc(100% - 70px) !important;
+        min-height: 0 !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        justify-content: flex-start !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-logo,
+    body:not(.page-index) header.app-shell-header .logo-img,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-logo,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-img {
+        width: 94px !important;
+        height: 94px !important;
+        max-width: 94px !important;
+        max-height: 94px !important;
+        flex: 0 0 94px !important;
+        object-fit: cover !important;
+        border-radius: 15px !important;
+        box-shadow: 0 8px 18px rgba(3, 12, 38, 0.24) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .logo-text-group,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-text-group {
+        min-width: 0 !important;
+        text-align: left !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .logo-wordmark,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-wordmark {
+        display: block !important;
+        font-size: clamp(1.02rem, 4.3vw, 1.22rem) !important;
+        font-weight: 800 !important;
+        line-height: 1.05 !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .slogan,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .slogan {
+        display: inline-flex !important;
+        width: max-content !important;
+        margin: 7px 0 0 !important;
+        padding: 4px 9px !important;
+        color: #f8fbff !important;
+        background: rgba(255, 255, 255, 0.16) !important;
+        border: 1px solid rgba(230, 243, 255, 0.18) !important;
+        border-radius: 4px !important;
+        font-size: 0.58rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.65px !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-shell-header-actions,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-header-actions {
+        position: static !important;
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: center !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .nav-toggle,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .nav-toggle {
+        position: static !important;
+        width: 68px !important;
+        height: 60px !important;
+        display: inline-flex !important;
+        flex: 0 0 68px !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        padding: 0 !important;
+        background: #e8f0f6 !important;
+        border: 0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 12px rgba(3, 14, 42, 0.15) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .nav-toggle span,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .nav-toggle span {
+        width: 25px !important;
+        height: 2px !important;
+        display: block !important;
+        margin: 0 !important;
+        border-radius: 2px !important;
+        background: #111f38 !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-user-info,
+    body:not(.page-index) header.app-shell-header .app-shell-operator-row,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-user-info,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-operator-row {
+        width: 100% !important;
+        min-height: 70px !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, .92fr) minmax(0, 1fr) !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-system-live-pill,
+    body:not(.page-index) header.app-shell-header .system-live-pill,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-system-live-pill,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .system-live-pill {
+        min-height: 70px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 9px !important;
+        padding: 0 12px !important;
+        color: #6ff2b5 !important;
+        background: rgba(8, 48, 72, 0.74) !important;
+        border: 1px solid rgba(36, 222, 143, 0.52) !important;
+        border-radius: 12px !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-system-live-pill .pill-text,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-system-live-pill .pill-text {
+        color: #78efba !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.2px !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .user-dropdown-container,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .user-dropdown-container {
+        min-width: 0 !important;
+        position: relative !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-user-menu-btn,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-user-menu-btn {
+        width: 100% !important;
+        max-width: none !important;
+        min-height: 70px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 7px !important;
+        padding: 9px 12px !important;
+        color: #f5faff !important;
+        background: linear-gradient(115deg, rgba(49, 85, 143, 0.78), rgba(32, 145, 190, 0.8)) !important;
+        border: 1px solid rgba(170, 213, 246, 0.26) !important;
+        border-radius: 12px !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta {
+        min-width: 0 !important;
+        text-align: left !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta .label,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta .label {
+        color: #9cb7d8 !important;
+        font-size: 0.6rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.4px !important;
+        text-transform: uppercase !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-meta .name,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-meta .name {
+        overflow: hidden !important;
+        color: #ffffff !important;
+        font-size: 0.84rem !important;
+        font-weight: 800 !important;
+        line-height: 1.2 !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .app-plan-badge,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-plan-badge {
+        padding: 3px 7px !important;
+        color: #75f0bd !important;
+        background: rgba(4, 87, 80, 0.62) !important;
+        border: 1px solid #20dca1 !important;
+        border-radius: 6px !important;
+        font-size: 0.62rem !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+    }
+
+    body:not(.page-index) header.app-shell-header .operator-avatar,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .operator-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        flex: 0 0 36px !important;
+        display: grid !important;
+        place-items: center !important;
+        color: #ffffff !important;
+        background: #2863e8 !important;
+        border: 1px solid rgba(167, 212, 255, 0.32) !important;
+        border-radius: 9px !important;
+        font-size: 0.9rem !important;
+        font-weight: 800 !important;
+    }
+
+    body:not(.page-index) #main-nav {
+        position: fixed !important;
+        top: var(--qs-mobile-nav-top, var(--qs-mobile-shell-height)) !important;
+        z-index: 1150 !important;
+    }
+
+    /* The register's existing nav toggle opens its real mobile drawer.  This
+       page alone receives a visible command-chip label, per POS workflow. */
+    body.page-cash-register .nav-toggle::after {
+        content: "DRAWER";
+        display: block;
+        margin-top: 4px;
+        color: #111f38;
+        font-size: 0.52rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        line-height: 1;
+    }
+}
+
+@media (max-width: 360px) {
+    body:not(.page-index) header.app-shell-header .app-shell-logo,
+    body:not(.page-index) header.app-shell-header .logo-img,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .app-shell-logo,
+    body:not(.page-index) .page-wrapper > header.app-shell-header .logo-img {
+        width: 76px !important;
+        height: 76px !important;
+        max-width: 76px !important;
+        max-height: 76px !important;
+        flex-basis: 76px !important;
+    }
+}

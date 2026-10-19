@@ -1,0 +1,637 @@
+/* ==========================================================================
+   QuickStock JA POS - Locations & Nodes Ledger Stylesheet
+   File: static/inventory/css/locations.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces & Typography */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f8fafc;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --warning-border: #fde68a;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger-border: #fecaca;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.03);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --warning-bg: rgba(180, 83, 9, 0.2);
+    --warning-text: #fbbf24;
+    --warning-border: rgba(251, 191, 36, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.03);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --warning-bg: rgba(180, 83, 9, 0.2);
+        --warning-text: #fbbf24;
+        --warning-border: rgba(251, 191, 36, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Shell
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-locations {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+.content-container.locations-shell {
+    width: 100%;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Django Messages */
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.alert {
+    padding: 0.85rem 1.15rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.alert-success {
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-text);
+}
+
+.alert-error,
+.alert-danger {
+    background-color: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger-text);
+}
+
+/* ==========================================================================
+   2. Hero Banner (.locations-hero)
+   ========================================================================== */
+.locations-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.locations-hero-copy {
+    flex: 1 1 440px;
+    max-width: 660px;
+}
+
+.locations-kicker {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(53, 120, 246, 0.2);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    margin: 0 0 0.75rem;
+}
+
+.locations-hero-copy h1 {
+    font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0 0 0.45rem;
+}
+
+.locations-hero-copy > p {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+}
+
+.locations-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.locations-chip-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+}
+
+.locations-chip-row span::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #60a5fa;
+}
+
+.locations-hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.85rem;
+    flex: 0 1 260px;
+}
+
+.btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 46px;
+    padding: 0 1.5rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(53, 120, 246, 0.35);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.btn-primary-action:hover {
+    background-color: var(--primary-blue-hover);
+    border-color: var(--primary-blue-hover);
+}
+
+.btn-primary-action.status-locked {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.locations-hero-note {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.78rem;
+    color: #cbd5e1;
+}
+
+.locations-hero-note strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   3. Ledger Summary Strip (.ledger-summary-strip)
+   ========================================================================== */
+.ledger-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.15rem;
+}
+
+.summary-box {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-box-primary {
+    border-top: 4px solid var(--primary-blue);
+}
+
+.summary-box label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.summary-box span {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    line-height: 1.2;
+}
+
+.summary-box .text-neon {
+    color: #16a34a;
+}
+
+.summary-box small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   4. Nodes Grid & Branch Cards (.nodes-grid)
+   ========================================================================== */
+.nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.5rem;
+}
+
+.node-ledger-entry {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.node-ledger-entry::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+}
+
+.entry-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.serial-no {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+.location-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    background-color: var(--primary-blue-soft);
+    color: var(--primary-blue);
+}
+
+.location-type.is-warehouse {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.entry-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.node-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.node-address {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Meta Grid (Country, Role, Capacity) */
+.location-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.meta-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.1rem;
+}
+
+.location-meta-grid strong {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    white-space: nowrap;
+}
+
+/* Inline Capacity Update Form */
+.location-capacity-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.location-capacity-form label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.location-capacity-form > div {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.location-capacity-form input[type="number"] {
+    flex: 1;
+    height: 40px;
+    padding: 0 0.85rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.location-capacity-form input[type="number"]:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    background-color: var(--bg-card);
+}
+
+.location-capacity-form button[type="submit"] {
+    height: 40px;
+    padding: 0 1rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.location-capacity-form button[type="submit"]:hover {
+    background-color: var(--primary-blue-hover);
+}
+
+/* Card Actions */
+.location-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+}
+
+.location-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    background-color: var(--primary-blue-soft);
+    border: 1px solid rgba(53, 120, 246, 0.25);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.location-card-action:hover {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+}
+
+.location-card-action-muted {
+    background-color: var(--bg-elevated);
+    color: var(--text-heading);
+    border-color: var(--border-strong);
+}
+
+.location-card-action-muted:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background-color: var(--primary-blue-soft);
+}
+
+.location-foot {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.location-foot-status {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Empty State Card */
+.empty-state-card {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background-color: var(--bg-card);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-xl);
+    color: var(--text-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   5. Footer & Responsive Breakpoints
+   ========================================================================== */
+.brand-footer {
+    text-align: center;
+    padding: 1.75rem 1rem 2.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+    .ledger-summary-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .content-container.locations-shell {
+        padding: 1rem 0.85rem 2.5rem;
+    }
+
+    .locations-hero {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .locations-hero-actions {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .ledger-summary-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .nodes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .location-meta-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}

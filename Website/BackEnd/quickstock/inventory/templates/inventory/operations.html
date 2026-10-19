@@ -8,11 +8,13 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
+    <link rel="stylesheet" href="{% static 'inventory/css/operations-suite.css' %}">
     <script src="{% static 'inventory/js/theme.js' %}"></script>
 
 </head>
 
-<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-center">
+<body data-theme="{{ request.user.profile.theme|default:'system' }}"{% if request.user.profile.theme != 'system' %} data-theme-applied="{{ request.user.profile.theme }}"{% endif %} class="page-operations page-operations-center page-operations-suite">
 
     {% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True %}
 
@@ -44,7 +46,7 @@
     <main class="ops-wrap">
         <section class="ops-hero ops-suite-hero">
             <div class="ops-hero-copy">
-                <p class="ops-hero-kicker">Operations hub</p>
+                
                 <h1>Operations Center</h1>
                 <p>Run closeout, balance the drawer, and track delivery movement from one coordinated workspace.</p>
                 <div class="ops-hero-tags">
@@ -71,17 +73,14 @@
             </div>
         </section>
 
-        <section class="ops-sequence" aria-label="Recommended operations sequence">
-            <div class="ops-sequence-copy">
-                <span>Recommended order</span>
-                <strong>Close the day with fewer loose ends.</strong>
-            </div>
-            <div class="ops-sequence-steps">
-                <span>1. Summary</span>
-                <span>2. Reconcile</span>
-                <span>3. Follow up</span>
-            </div>
-        </section>
+        <nav class="ops-progress-rail" aria-label="Closeout workflow">
+            <div class="ops-progress-label"><span>Closeout path</span><strong>Start with the day’s record</strong></div>
+            <ol>
+                <li class="is-current"><a href="{{ start_closeout_url }}" aria-current="step"><b>1</b><span>Summary<small>Review activity</small></span></a></li>
+                <li><a href="{{ balance_drawer_url }}"><b>2</b><span>Cash Register & Reconcile<small>Count the drawer</small></span></a></li>
+                <li><a href="{{ deliveries_closeout_url }}"><b>3</b><span>Deliveries<small>Confirm handoffs</small></span></a></li>
+            </ol>
+        </nav>
 
         <section class="ops-grid">
             <article class="ops-card ops-card-primary">
@@ -108,15 +107,17 @@
                     <span class="ops-card-eyebrow">Audit drawer</span>
                 </div>
                 <span class="ops-live-badge ops-live-badge-{{ reconciliation_status_tone }}">{{ reconciliation_status }}</span>
-                <h3>Cash Reconciliation</h3>
-                <p class="desc">Compare expected vs actual cash and track variance resolution workflow.</p>
+                <h3>Cash Register & Drawer Balancing</h3>
+                <p class="desc">Manage cash register operations, compare expected vs actual cash, and track variance resolution workflow.</p>
                 <ul class="ops-card-points">
+                    <li>Access current shift details and register activity.</li>
                     <li>Edit counted cash and machine totals.</li>
                     <li>Resolve variance before reporting close.</li>
                 </ul>
                 <div class="ops-card-footer">
                     <span class="ops-card-meta">Drawer control</span>
-                    <a href="{{ balance_drawer_url }}" class="ops-card-action">Open Reconciliation <span aria-hidden="true">-&gt;</span></a>
+                    <a href="{{ balance_drawer_url }}" class="ops-card-action">Open Cash & Reconcile <span aria-hidden="true">-&gt;</span></a>
+                    <a href="{{ close_cash_register_url }}" class="ops-card-action ops-card-action-secondary">Close Cash Register <span aria-hidden="true">-&gt;</span></a>
                 </div>
             </article>
 

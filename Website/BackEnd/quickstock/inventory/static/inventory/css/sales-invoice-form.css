@@ -1,0 +1,514 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Sales Invoice Form / Workspace Stylesheet
+   File: static/inventory/css/sales-invoice-form.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Theme Variables & Design Tokens
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg-main: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand & Action Palette */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    --qs-emerald: #10b981;
+    --qs-emerald-hover: #059669;
+
+    --qs-slate: #334155;
+    --qs-slate-hover: #1e293b;
+
+    /* Semantic Alerts */
+    --danger-red: #ef4444;
+    --danger-red-hover: #dc2626;
+    --danger-bg: #fef2f2;
+
+    /* Design Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg-main: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-emerald: #34d399;
+    --qs-emerald-hover: #10b981;
+
+    --qs-slate: #64748b;
+    --qs-slate-hover: #475569;
+
+    --danger-red: #f87171;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Layout Shell & Hero
+   -------------------------------------------------------------------------- */
+.sales-document-main {
+    max-width: 1350px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.qs-alert {
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--qs-radius-md);
+    background-color: var(--qs-primary-soft);
+    border: 1px solid var(--qs-primary);
+    color: var(--qs-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.sales-document-hero {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.ops-hero-copy {
+    max-width: 650px;
+}
+
+.ops-kicker {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--qs-primary);
+    margin: 0 0 0.35rem 0;
+}
+
+.sales-page-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+}
+
+.sales-page-subtitle {
+    font-size: 0.95rem;
+    color: var(--qs-text-muted);
+    margin: 0 0 1.25rem 0;
+}
+
+.ops-chip-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ops-chip {
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.sales-document-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Button Variants */
+.qs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+    border: 1px solid transparent;
+}
+
+.qs-btn-secondary {
+    background-color: var(--qs-card-elevated);
+    border-color: var(--qs-border);
+    color: var(--qs-text-main);
+}
+
+.qs-btn-secondary:hover {
+    background-color: var(--qs-border);
+}
+
+.qs-btn-primary {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+}
+
+.qs-btn-primary:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+.qs-btn-slate {
+    background-color: var(--qs-slate);
+    border-color: var(--qs-slate);
+    color: #ffffff;
+}
+
+.qs-btn-slate:hover {
+    background-color: var(--qs-slate-hover);
+}
+
+.qs-btn-emerald {
+    background-color: var(--qs-emerald);
+    border-color: var(--qs-emerald);
+    color: #ffffff;
+}
+
+.qs-btn-emerald:hover {
+    background-color: var(--qs-emerald-hover);
+}
+
+/* --------------------------------------------------------------------------
+   3. Mode Selection Toggle Bar
+   -------------------------------------------------------------------------- */
+.mode-selection-bar {
+    display: flex;
+    gap: 0.5rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    padding: 0.35rem;
+    border-radius: var(--qs-radius-md);
+    margin-bottom: 0.5rem;
+}
+
+.qs-btn-toggle {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: var(--qs-radius-sm);
+    border: none;
+    background-color: transparent;
+    color: var(--qs-text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.qs-btn-toggle.active {
+    background-color: var(--qs-card-bg);
+    color: var(--qs-primary);
+    box-shadow: var(--qs-shadow);
+}
+
+/* --------------------------------------------------------------------------
+   4. Grid & Card Container Layout
+   -------------------------------------------------------------------------- */
+.sales-detail-grid-premium {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.sales-card-premium {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--qs-shadow);
+}
+
+/* Form Controls */
+.settings-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.settings-form-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--qs-text-muted);
+}
+
+.settings-form-group input[type="text"],
+.settings-form-group input[type="number"],
+.settings-form-group input[type="date"],
+.settings-form-group select,
+.settings-form-group textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--qs-transition);
+}
+
+.settings-form-group input:focus,
+.settings-form-group select:focus,
+.settings-form-group textarea:focus {
+    border-color: var(--qs-primary);
+    box-shadow: 0 0 0 2px var(--qs-primary-soft);
+}
+
+/* --------------------------------------------------------------------------
+   5. Interactive Line Items Table
+   -------------------------------------------------------------------------- */
+.sales-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+}
+
+.sales-table-premium {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.sales-table-premium th {
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-text-muted);
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    text-transform: uppercase;
+    font-size: 0.725rem;
+    letter-spacing: 0.05em;
+}
+
+.sales-table-premium td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    vertical-align: middle;
+}
+
+.sales-table-premium tr:last-child td {
+    border-bottom: none;
+}
+
+/* Line Item Input Controls */
+.invoice-line-item,
+.invoice-line-stock,
+.invoice-line-qty,
+.invoice-line-price {
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--qs-transition);
+}
+
+.invoice-line-item {
+    width: 100%;
+}
+
+.invoice-line-stock {
+    width: 100%;
+    background-color: var(--qs-card-elevated);
+    border-color: var(--qs-border);
+}
+
+.invoice-line-qty,
+.invoice-line-price {
+    width: 100%;
+}
+
+.btn-line-add {
+    margin-top: 0.85rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--qs-radius-sm);
+    background-color: var(--qs-primary-soft);
+    color: var(--qs-primary);
+    border: 1px dashed var(--qs-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.btn-line-add:hover {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+    border-style: solid;
+}
+
+.table-action-remove {
+    background-color: transparent;
+    color: var(--danger-red);
+    border: 1px solid var(--danger-red);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.table-action-remove:hover {
+    background-color: var(--danger-red);
+    color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   6. Live Side-Rail Metrics & Summary Rows
+   -------------------------------------------------------------------------- */
+.summary-row-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--qs-border);
+}
+
+.summary-row-premium:last-of-type {
+    border-bottom: none;
+    padding-top: 0.85rem;
+    font-size: 1.1rem;
+}
+
+.summary-row-premium span {
+    color: var(--qs-text-muted);
+}
+
+.summary-row-premium strong {
+    color: var(--qs-text-main);
+    font-weight: 800;
+}
+
+/* --------------------------------------------------------------------------
+   7. Submit Panel & Payment Field Integration
+   -------------------------------------------------------------------------- */
+.sales-invoice-submit-panel {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 1.5rem 1.75rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.sales-invoice-next-step-field {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sales-invoice-next-step-field label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--qs-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.sales-invoice-next-step-field select {
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.sales-invoice-submit-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* --------------------------------------------------------------------------
+   8. Footer & Responsive Media Queries
+   -------------------------------------------------------------------------- */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 992px) {
+    .sales-detail-grid-premium {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-document-hero {
+        flex-direction: column;
+    }
+
+    .sales-invoice-submit-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sales-invoice-next-step-field {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sales-invoice-submit-actions {
+        flex-direction: column;
+    }
+
+    .sales-invoice-submit-actions .qs-btn {
+        width: 100%;
+    }
+}

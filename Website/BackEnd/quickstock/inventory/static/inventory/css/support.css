@@ -1,0 +1,434 @@
+/* ==========================================================================
+   QuickStock JA POS - Support Center & Diagnostics Stylesheet
+   File: static/inventory/css/support.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces & Typography */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f8fafc;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Status Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --info-bg: #eff6ff;
+    --info-text: #1d4ed8;
+    --info-border: #bfdbfe;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.03);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.03);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Wrapper
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-support {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.support-dashboard-shell {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem 4rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
+/* ==========================================================================
+   2. Support Hero Banner (.support-hero)
+   ========================================================================== */
+.support-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.support-hero h2 {
+    font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0 0 0.35rem;
+}
+
+.support-hero-copy {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    margin: 0;
+}
+
+.support-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    background-color: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #4ade80;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   3. Support Cards & Accordion (.support-card)
+   ========================================================================== */
+.support-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.support-card h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.support-card h4 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.support-intro {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+}
+
+/* Accordion items */
+.support-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.accordion-item {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.accordion-item:hover {
+    border-color: var(--primary-blue);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.accordion-header span {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--primary-blue);
+    transition: transform 0.2s ease;
+}
+
+.accordion-header[aria-expanded="true"] span {
+    transform: rotate(45deg);
+}
+
+.accordion-content {
+    display: none;
+    padding: 0 1.25rem 1.15rem;
+    font-size: 0.9rem;
+    color: var(--text-body);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+}
+
+.accordion-item.is-open .accordion-content,
+.accordion-content:not([hidden]) {
+    display: block;
+}
+
+.accordion-content p {
+    margin: 0.75rem 0 0;
+}
+
+.accordion-content a {
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.accordion-content a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   4. Support Form (.support-form)
+   ========================================================================== */
+.support-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.support-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.support-field label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-heading);
+}
+
+.support-field input,
+.support-field textarea {
+    width: 100%;
+    padding: 0.75rem 0.95rem;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: var(--text-heading);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.support-field input[readonly] {
+    background-color: var(--bg-elevated);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.support-field input:focus,
+.support-field textarea:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3.5px var(--focus-ring);
+    background-color: var(--bg-card);
+}
+
+.support-field textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.support-submit {
+    height: 46px;
+    width: 100%;
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(53, 120, 246, 0.3);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.support-submit:hover {
+    background-color: var(--primary-blue-hover);
+}
+
+.support-submit:active {
+    transform: translateY(1px);
+}
+
+/* ==========================================================================
+   5. Diagnostic Terminal Bundle (.support-diagnostics)
+   ========================================================================== */
+.support-diagnostics {
+    background-color: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+
+.log-terminal {
+    background-color: #0b1120;
+    color: #38bdf8;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    padding: 1.15rem;
+    border-radius: var(--radius-md);
+    border: 1px solid #1e293b;
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.log-terminal div {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.support-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================================================
+   6. Footer & Responsive Breakpoints
+   ========================================================================== */
+footer {
+    text-align: center;
+    padding: 2rem 1rem 2.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .support-dashboard-shell {
+        padding: 1rem 0.85rem 3rem;
+    }
+
+    .support-hero,
+    .support-card {
+        padding: 1.5rem 1.25rem;
+    }
+}

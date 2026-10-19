@@ -1,0 +1,14 @@
+{% comment %}
+Primary app navigation shell - mirrors the dashboard header + #main-nav structure
+so every internal page shares the same desktop/mobile navigation experience.
+Usage: include inventory/partials/app_shell_primary_nav.html
+{% endcomment %}
+{% include 'inventory/partials/app_shell_header.html' with show_nav_toggle=True hide_starter_banner=hide_starter_banner logout_only_operator_menu=logout_only_operator_menu hide_plan_badge=hide_plan_badge %}
+<nav id="main-nav">
+  <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+  {% include 'inventory/partials/app_shell_nav.html' %}
+    {% include 'inventory/partials/advanced_analysis_nav_link.html' %}
+  <a href="{% url 'global_search' %}" class="nav-search-trigger" title="Search" aria-label="Search the business">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+  </a>
+</nav>

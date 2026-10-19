@@ -1,0 +1,152 @@
+.page-pricing {
+.page-pricing {
+body.page-pricing  .pricing-header {
+            background: #081a45;
+            border-bottom: 2px solid #3b82f6;
+            min-height: 76px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        body.page-pricing  .pricing-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        body.page-pricing  .pricing-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+            flex: 0 0 auto;
+        }
+
+        body.page-pricing  .pricing-brand .logo-wordmark {
+            font-size: 2rem;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            text-shadow: none;
+        }
+
+        body.page-pricing  .pricing-brand .logo-ja {
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.page-pricing  .pricing-header-actions {
+            display: inline-flex;
+            gap: 10px;
+        }
+
+        body.page-pricing  .pricing-header-actions .btn-edit {
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        body.page-pricing  .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(280px, 380px));
+            justify-content: center;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+body.page-pricing  .pricing-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+}
+
+        @media (max-width: 768px) {
+body.page-pricing  .pricing-header {
+                padding: 12px 14px;
+                min-height: 70px;
+            }
+
+            body.page-pricing  .pricing-logo {
+                width: 36px;
+                height: 36px;
+                border-radius: 9px;
+            }
+
+            body.page-pricing  .pricing-brand .logo-wordmark {
+                font-size: 1.55rem;
+            }
+
+            body.page-pricing  .pricing-header-actions .btn-edit {
+                padding: 8px 12px !important;
+                font-size: 0.68rem !important;
+            }
+
+            body.page-pricing  .pricing-container {
+                padding: 30px 14px 44px;
+            }
+
+            body.page-pricing  .pricing-container h1 {
+                font-size: 2.05rem;
+                letter-spacing: -0.05em;
+                margin-bottom: 22px;
+            }
+
+            body.page-pricing  .pricing-card {
+                width: 100%;
+                padding: 24px 18px;
+                border-radius: 20px;
+            }
+
+            body.page-pricing  .price {
+                font-size: 2.5rem;
+                margin: 14px 0;
+            }
+
+            body.page-pricing  .pricing-card ul {
+                margin: 18px 0;
+            }
+
+            body.page-pricing  .pricing-card li {
+                padding: 9px 0;
+                font-size: 0.9rem;
+            }
+
+            body.page-pricing  .btn-upgrade {
+body.page-pricing .pricing-header-actions,
+    background:
+        radial-gradient(circle at top left, rgba(148, 163, 184, 0.14), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(100, 116, 139, 0.12), transparent 28%),
+        linear-gradient(180deg, #f3f5f8 0%, #f8fafc 52%, #eef2f6 100%);
+}
+
+body.page-index,
+body.page-pricing,
+body.page-pricing .pricing-container,
+body.page-pricing h1,
+    font-family: var(--qs-mono-font);
+    letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+    body {
+        background-size: auto, auto, 22px 22px, 22px 22px, auto;
+    }
+
+    body:is(.page-about, .page-pricing, .page-support, .page-terms, .page-privacy, .page-status) .page-wrapper,
+    body.page-pricing .pricing-container {
+body.page-pricing .pricing-plan-note {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+body.page-pricing .pricing-offline-note {
+    margin: -5px 0 15px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+body.page-pricing .btn-upgrade.is-current-plan {

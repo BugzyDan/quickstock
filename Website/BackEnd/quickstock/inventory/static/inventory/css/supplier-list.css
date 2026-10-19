@@ -1,0 +1,759 @@
+/* ==========================================================================
+   QuickStock JA POS - Supplier Directory Stylesheet
+   File: static/inventory/css/supplier-list.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces & Typography */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f8fafc;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Status Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --warning-border: #fde68a;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger-border: #fecaca;
+
+    --info-bg: #eff6ff;
+    --info-text: #1d4ed8;
+    --info-border: #bfdbfe;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.03);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --warning-bg: rgba(180, 83, 9, 0.2);
+    --warning-text: #fbbf24;
+    --warning-border: rgba(251, 191, 36, 0.3);
+
+    --danger-bg: rgba(185, 28, 28, 0.2);
+    --danger-text: #f87171;
+    --danger-border: rgba(248, 113, 113, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.03);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --warning-bg: rgba(180, 83, 9, 0.2);
+        --warning-text: #fbbf24;
+        --warning-border: rgba(251, 191, 36, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Shell
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-supplier-list {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+.ops-shell.supplier-directory-shell {
+    width: 100%;
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Django Form Messages */
+.supplier-form-messages {
+    padding: 0.85rem 1.15rem;
+    background-color: var(--info-bg);
+    border: 1px solid var(--info-border);
+    border-radius: var(--radius-md);
+    color: var(--info-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   2. Hero Banner (.ops-hero.ops-hero-suppliers)
+   ========================================================================== */
+.ops-hero-suppliers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.ops-hero-copy {
+    flex: 1 1 440px;
+    max-width: 680px;
+}
+
+.ops-kicker {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(53, 120, 246, 0.2);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    margin: 0 0 0.75rem;
+}
+
+.supplier-directory-title {
+    font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0 0 0.45rem;
+}
+
+.ops-hero-copy > p {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+}
+
+.ops-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ops-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+}
+
+.ops-chip::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #60a5fa;
+}
+
+/* Register New Supplier Button */
+.ops-actions {
+    display: flex;
+    align-items: center;
+}
+
+.ops-primary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    padding: 0 1.5rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(53, 120, 246, 0.35);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.ops-primary-link:hover {
+    background-color: var(--primary-blue-hover);
+    border-color: var(--primary-blue-hover);
+}
+
+/* ==========================================================================
+   3. Origin Tabs (.supplier-origin-tabs)
+   ========================================================================== */
+.supplier-origin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.25rem;
+}
+
+.supplier-origin-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1.15rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-bottom: none;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-body);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.supplier-origin-tab:hover {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.supplier-origin-tab.is-active {
+    background-color: var(--bg-card);
+    border-color: var(--primary-blue);
+    border-top: 3px solid var(--primary-blue);
+    color: var(--primary-blue);
+    font-weight: 700;
+}
+
+.supplier-origin-tab strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-heading);
+}
+
+.supplier-origin-tab.is-active strong {
+    background-color: var(--primary-blue-soft);
+    border-color: rgba(53, 120, 246, 0.3);
+    color: var(--primary-blue);
+}
+
+/* ==========================================================================
+   4. Filter Toolbar (.supplier-filters.ops-toolbar)
+   ========================================================================== */
+.supplier-filters.ops-toolbar-inline {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem 1.5rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.supplier-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.supplier-filter-search {
+    flex: 1 1 240px;
+}
+
+.supplier-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.supplier-filter-form input[type="search"],
+.supplier-filter-form select {
+    height: 42px;
+    padding: 0 0.9rem;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: var(--text-heading);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+    width: 100%;
+}
+
+.supplier-filter-form input[type="search"]:focus,
+.supplier-filter-form select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    background-color: var(--bg-card);
+}
+
+.supplier-apply-filter {
+    height: 42px;
+    padding: 0 1.35rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.supplier-apply-filter:hover {
+    background-color: var(--primary-blue-hover);
+}
+
+.supplier-result-count {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+}
+
+.supplier-result-count strong {
+    color: var(--text-heading);
+}
+
+/* Export Bar */
+.supplier-export-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+}
+
+.supplier-export-bar span {
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+}
+
+.supplier-export-bar div {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.supplier-export-bar a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.supplier-export-bar a:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.supplier-clear-link {
+    color: var(--danger-text) !important;
+    background-color: var(--danger-bg) !important;
+    border-color: var(--danger-border) !important;
+}
+
+/* ==========================================================================
+   5. Supplier Table Container (.supplier-directory-table-wrap)
+   ========================================================================== */
+.supplier-directory-table-wrap {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.supplier-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.supplier-table thead th {
+    padding: 1rem 1.25rem;
+    background-color: var(--bg-elevated);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.sort-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.sort-link:hover,
+.sort-active {
+    color: var(--primary-blue);
+}
+
+.supplier-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.12s ease;
+}
+
+.supplier-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.supplier-table tbody tr:hover {
+    background-color: var(--bg-hover);
+}
+
+.supplier-table td {
+    padding: 1.1rem 1.25rem;
+    vertical-align: middle;
+    color: var(--text-body);
+}
+
+.supplier-company-name {
+    font-weight: 800;
+    color: var(--text-heading);
+}
+
+/* Type Badges (Local vs International) */
+.supplier-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+}
+
+.supplier-type-badge-local {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+}
+
+.supplier-type-badge-international {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+}
+
+.supplier-location-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.supplier-location-copy span {
+    font-size: 0.84rem;
+}
+
+.supplier-location-copy strong {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.supplier-contact-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.supplier-contact-copy strong {
+    font-size: 0.86rem;
+    color: var(--text-heading);
+}
+
+.supplier-contact-copy span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.supplier-table .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--text-heading);
+}
+
+/* Actions */
+.supplier-actions-heading,
+.action-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.supplier-action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+}
+
+.supplier-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.supplier-action-ledger {
+    background-color: var(--primary-blue-soft);
+    color: var(--primary-blue);
+    border: 1px solid rgba(53, 120, 246, 0.25);
+}
+
+.supplier-action-ledger:hover {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+}
+
+.supplier-action-edit {
+    background-color: var(--bg-elevated);
+    color: var(--text-heading);
+    border: 1px solid var(--border-strong);
+}
+
+.supplier-action-edit:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.supplier-delete-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.supplier-action-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-sm);
+    color: var(--danger-text);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.supplier-action-delete:hover {
+    background-color: var(--danger-bg);
+}
+
+/* Empty State */
+.supplier-directory-empty {
+    text-align: center;
+    padding: 3.5rem 1.5rem !important;
+    color: var(--text-muted);
+}
+
+.supplier-directory-empty strong {
+    display: block;
+    font-size: 1.05rem;
+    color: var(--text-heading);
+    margin-bottom: 0.3rem;
+}
+
+.supplier-directory-empty span {
+    display: block;
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   6. Pagination & Footer
+   ========================================================================== */
+.supplier-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-card);
+}
+
+.supplier-pagination a {
+    padding: 0.45rem 0.9rem;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.supplier-pagination a:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+footer {
+    text-align: center;
+    padding: 1.75rem 1rem 2.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   7. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 768px) {
+    .ops-shell.supplier-directory-shell {
+        padding: 1rem 0.85rem 2.5rem;
+    }
+
+    .ops-hero-suppliers {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .supplier-filters.ops-toolbar-inline {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+    }
+
+    .supplier-filter-form {
+        flex-direction: column;
+    }
+
+    .supplier-origin-tabs {
+        overflow-x: auto;
+    }
+}

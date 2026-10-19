@@ -1,0 +1,955 @@
+/* ==========================================================================
+   QuickStock JA POS - Advanced Analytics & Reports Stylesheet
+   File: static/inventory/css/advanced-reports.css
+   ========================================================================== */
+
+:root {
+    --primary-blue: #3578f6;
+    --primary-blue-hover: #2563eb;
+    --primary-blue-soft: rgba(53, 120, 246, 0.12);
+    --focus-ring: rgba(53, 120, 246, 0.25);
+
+    /* Light Mode Surfaces & Typography */
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-input: #f8fafc;
+    --bg-hover: #f8fafc;
+
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Hero Navy Gradient */
+    --hero-bg-start: #0b1120;
+    --hero-bg-mid: #0f172a;
+    --hero-bg-end: #162544;
+    --hero-glow: #1d3668;
+
+    /* Semantic Status Colors */
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --success-border: #bbf7d0;
+
+    --warning-bg: #fef3c7;
+    --warning-text: #b45309;
+    --warning-border: #fde68a;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger-border: #fecaca;
+
+    --info-bg: #eff6ff;
+    --info-text: #1d4ed8;
+    --info-border: #bfdbfe;
+
+    /* Radii & Shadows */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-card: 0 12px 32px -8px rgba(15, 23, 42, 0.08),
+                   0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   ========================================================================== */
+html.force-dark,
+html[data-theme="dark"],
+html[data-theme-applied="dark"],
+body[data-theme="dark"],
+body[data-theme-applied="dark"] {
+    --bg-page: #090d16;
+    --bg-card: #111827;
+    --bg-elevated: #1e293b;
+    --bg-input: #0f172a;
+    --bg-hover: rgba(255, 255, 255, 0.03);
+
+    --text-heading: #f8fafc;
+    --text-body: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --border-color: #1e293b;
+    --border-strong: #334155;
+
+    --success-bg: rgba(21, 128, 61, 0.2);
+    --success-text: #4ade80;
+    --success-border: rgba(74, 222, 128, 0.3);
+
+    --warning-bg: rgba(180, 83, 9, 0.2);
+    --warning-text: #fbbf24;
+    --warning-border: rgba(251, 191, 36, 0.3);
+
+    --danger-bg: rgba(185, 28, 28, 0.2);
+    --danger-text: #f87171;
+    --danger-border: rgba(248, 113, 113, 0.3);
+
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme="system"]:not([data-theme-applied="light"]),
+    body[data-theme="system"]:not([data-theme-applied="light"]) {
+        --bg-page: #090d16;
+        --bg-card: #111827;
+        --bg-elevated: #1e293b;
+        --bg-input: #0f172a;
+        --bg-hover: rgba(255, 255, 255, 0.03);
+
+        --text-heading: #f8fafc;
+        --text-body: #cbd5e1;
+        --text-muted: #94a3b8;
+
+        --border-color: #1e293b;
+        --border-strong: #334155;
+
+        --success-bg: rgba(21, 128, 61, 0.2);
+        --success-text: #4ade80;
+        --success-border: rgba(74, 222, 128, 0.3);
+
+        --warning-bg: rgba(180, 83, 9, 0.2);
+        --warning-text: #fbbf24;
+        --warning-border: rgba(251, 191, 36, 0.3);
+
+        --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ==========================================================================
+   1. Base Reset & Page Shell
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body.page-advanced-reports {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+main {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* ==========================================================================
+   2. Hero Banner (.analytics-hero)
+   ========================================================================== */
+.analytics-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.25rem;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 88% 20%, var(--hero-glow) 0%, transparent 55%),
+                linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-mid) 50%, var(--hero-bg-end) 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-card);
+}
+
+.analytics-hero-copy {
+    flex: 1 1 440px;
+    max-width: 720px;
+}
+
+.analytics-eyebrow {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(53, 120, 246, 0.2);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    margin: 0 0 0.75rem;
+}
+
+.analytics-hero h2 {
+    font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0 0 0.45rem;
+}
+
+.analytics-hero p {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.analytics-hero-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    flex: 0 1 280px;
+}
+
+.analytics-meta-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.analytics-meta-card-accent {
+    background: rgba(53, 120, 246, 0.18);
+    border-color: rgba(53, 120, 246, 0.35);
+}
+
+.analytics-meta-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #93c5fd;
+}
+
+.analytics-meta-card strong {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   3. Insight Strip (.analytics-insight-strip)
+   ========================================================================== */
+.analytics-insight-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.analytics-insight-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.35rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border-top: 4px solid var(--primary-blue);
+}
+
+.analytics-insight-card-green { border-top-color: var(--success-text); }
+.analytics-insight-card-sand  { border-top-color: var(--warning-text); }
+
+.analytics-insight-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.analytics-insight-card strong {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-heading);
+}
+
+.analytics-insight-card p {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================================================
+   4. KPI Grid (.analytics-kpi-grid)
+   ========================================================================== */
+.analytics-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.report-card.analytics-kpi-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.analytics-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.analytics-kpi-value {
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.analytics-kpi-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================================================
+   5. Analytics Sections & Primary Grid
+   ========================================================================== */
+.analytics-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.analytics-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.analytics-section-label {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-blue);
+    margin-bottom: 0.2rem;
+}
+
+.analytics-section-heading h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+/* Period Pills */
+.analytics-period-pills {
+    display: inline-flex;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 0.25rem;
+    gap: 0.2rem;
+}
+
+.btn-filter {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-body);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-filter:hover {
+    color: var(--primary-blue);
+}
+
+.btn-filter.is-active {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(53, 120, 246, 0.25);
+}
+
+/* Primary Report Grid (Chart + Export/Restock Side Column) */
+.report-grid.analytics-primary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.report-card.analytics-chart-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.analytics-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.analytics-card-head h4 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0 0 0.2rem;
+}
+
+.analytics-card-head p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.chart-container.analytics-chart-container {
+    position: relative;
+    height: 340px;
+    width: 100%;
+}
+
+.analytics-side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Export Center Card */
+.analytics-export-card,
+.analytics-restock-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.analytics-export-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.btn-export {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.15s ease;
+}
+
+.btn-export-inventory { background-color: #0d9488; border-color: #0d9488; }
+.btn-export-suppliers  { background-color: #475569; border-color: #475569; }
+
+.btn-export:hover {
+    filter: brightness(0.92);
+}
+
+.analytics-card-footnote {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: right;
+    margin: 0;
+}
+
+/* Restock Priority Widget */
+.restock-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.restock-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.restock-item-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+
+.restock-item-name {
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.restock-item-qty {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 800;
+    color: var(--danger-text);
+}
+
+.restock-meter {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-elevated);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.restock-meter-fill {
+    height: 100%;
+    background-color: var(--danger-text);
+    border-radius: 999px;
+}
+
+/* ==========================================================================
+   6. Dual Grid (Cashier Performance + Asset Valuation)
+   ========================================================================== */
+.analytics-dual-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.analytics-dual-grid .report-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.analytics-cashier-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.analytics-cashier-chart {
+    height: 200px;
+    width: 100%;
+}
+
+.analytics-table-summary {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.analytics-table-summary strong {
+    color: var(--text-heading);
+}
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.analytics-table th {
+    padding: 0.6rem 0.75rem;
+    background-color: var(--bg-elevated);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.analytics-table td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-body);
+}
+
+.analytics-table-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 800;
+    color: var(--text-heading);
+    text-align: right;
+}
+
+.analytics-table th:last-child {
+    text-align: right;
+}
+
+/* Asset Valuation Card */
+.analytics-valuation-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-valuation-mark {
+    position: absolute;
+    right: -15px;
+    bottom: -30px;
+    font-size: 11rem;
+    font-weight: 900;
+    color: var(--border-color);
+    opacity: 0.35;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.analytics-section-label-success {
+    color: var(--success-text);
+}
+
+.analytics-valuation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-top: auto;
+}
+
+.analytics-valuation-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    color: var(--text-body);
+}
+
+.analytics-valuation-row strong {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-heading);
+}
+
+.analytics-valuation-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.25rem 0;
+}
+
+.analytics-valuation-row-emphasis {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--success-text);
+}
+
+.analytics-valuation-row-emphasis strong {
+    color: var(--success-text);
+    font-size: 1.35rem;
+}
+
+/* ==========================================================================
+   7. Supplier Ledger & Accounts Payable Pulse Section
+   ========================================================================== */
+.supplier-ledger-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.analytics-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.analytics-filter-form label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.analytics-filter-form select {
+    height: 40px;
+    padding: 0 0.85rem;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: var(--text-heading);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    outline: none;
+}
+
+.analytics-ledger-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.supplier-pulse-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.supplier-pulse-top h3 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0 0 0.25rem;
+}
+
+.supplier-pulse-top p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.supplier-pulse-liability {
+    background-color: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.supplier-pulse-liability span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--danger-text);
+}
+
+.supplier-pulse-liability strong {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--danger-text);
+}
+
+.supplier-pulse-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.15rem;
+}
+
+.analytics-mini-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.analytics-mini-card span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.analytics-mini-card strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-heading);
+}
+
+.analytics-mini-card-success strong { color: var(--success-text); }
+.analytics-danger-value             { color: var(--danger-text) !important; }
+
+/* Pulse Chart Card */
+.supplier-pulse-chart-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.supplier-pulse-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.supplier-pulse-legend h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin: 0;
+}
+
+.analytics-legend-list {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.analytics-legend-list span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-swatch-debt    { background-color: #ef4444; }
+.legend-swatch-paid    { background-color: #10b981; }
+.legend-swatch-balance { background-color: #3578f6; }
+
+.supplier-pulse-chart {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* Ledger Footer */
+.analytics-ledger-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.supplier-global-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.supplier-global-header h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0;
+}
+
+.supplier-global-header span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.supplier-global-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+/* Empty States & Footer */
+.analytics-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2rem;
+}
+
+.analytics-empty-state-compact {
+    padding: 1rem;
+    font-size: 0.85rem;
+}
+
+footer {
+    text-align: center;
+    padding: 1.75rem 1rem 2.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   8. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 1200px) {
+    .analytics-kpi-grid,
+    .supplier-global-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .report-grid.analytics-primary-grid,
+    .analytics-dual-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-insight-strip,
+    .supplier-pulse-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1rem 0.85rem 2.5rem;
+    }
+
+    .analytics-hero {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .analytics-kpi-grid,
+    .supplier-global-grid {
+        grid-template-columns: 1fr;
+    }
+}

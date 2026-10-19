@@ -1,0 +1,2396 @@
+    /* =====================================================
+    PAGE: INDEX - HEADER + NAV (single source of truth)
+    ===================================================== */
+    body.page-index {
+        --idx-header-h: var(--qs-index-header-height, 112px);
+        --idx-bg: linear-gradient(135deg, #0f172a 0%, #172554 62%, #0f3b4a 100%);
+        --idx-border: rgba(148, 163, 184, 0.26);
+    }
+
+    /* ---------- Header ---------- */
+    html body.page-index .page-wrapper > header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1100 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 16px !important;
+        min-height: 112px !important;
+        padding: 18px clamp(18px, 3vw, 40px) !important;
+        margin: 0 !important;
+        background: var(--idx-bg) !important;
+        border-bottom: 3px solid var(--primary-blue, #3b82f6) !important;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24) !important;
+    }
+
+    body.page-index .logo-link {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        margin: 0;
+        text-decoration: none;
+    }
+
+    body.page-index .logo-link img.logo {
+        width: 72px;
+        height: 72px;
+        flex: 0 0 72px;
+        object-fit: contain;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: transparent;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    body.page-index .logo-link:hover img.logo {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
+    }
+
+    body.page-index .logo-text-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
+        line-height: 1.1;
+    }
+
+    body.page-index .logo-wordmark {
+        display: inline-flex;
+        align-items: baseline;
+        font-size: 1.74rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    body.page-index .logo-wordmark .logo-quick,
+    body.page-index .logo-wordmark .logo-stock,
+    body.page-index .logo-wordmark .logo-ja {
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    body.page-index .logo-wordmark .logo-quick {
+        background-image: linear-gradient(180deg, #f6fff9 0%, #b9f4d8 16%, #27c080 50%, #106f49 82%, #effff4 100%);
+    }
+    body.page-index .logo-wordmark .logo-stock {
+        background-image: linear-gradient(180deg, #fafdff 0%, #c5e3ff 16%, #4b98ff 48%, #1f61da 82%, #eef5ff 100%);
+    }
+    body.page-index .logo-wordmark .logo-ja {
+        margin-left: 4px;
+        font-style: italic;
+        background-image: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 34%, #94a3b8 68%, #e2e8f0 100%);
+    }
+
+    body.page-index .slogan {
+        margin: 0;
+        padding: 4px 9px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        line-height: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+        transform: scale(1.2);
+        transform-origin: left center;
+    }
+
+    /* ---------- Header actions ---------- */
+    body.page-index .header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-left: auto;
+    }
+
+    body.page-index .user-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    body.page-index .user-info > a:not(.btn-add) {
+        color: #e5edf7;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    body.page-index .user-info .btn-add,
+    body.page-index .index-start-link {
+        padding: 10px 20px;
+        border-radius: 10px;
+        background: var(--primary-blue, #2563eb);
+        color: #ffffff;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    body.page-index .index-desktop-operator {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    body.page-index .index-desktop-operator-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 16px;
+        border: 1px solid var(--idx-border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e2e8f0;
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+    }
+
+    body.page-index .operator-badge-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.65);
+    }
+
+    body.page-index .index-operator-name {
+        color: #60a5fa;
+        font-weight: 700;
+    }
+
+    body.page-index .index-header-utility-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 0 16px;
+        border: 1px solid var(--idx-border);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+        color: #f8fafc;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    body.page-index .index-header-utility-link:hover,
+    body.page-index .index-header-utility-link:focus-visible {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        outline: none;
+    }
+
+    body.page-index .index-logout-form {
+        display: inline-flex;
+        margin: 0;
+        padding: 0;
+    }
+
+    body.page-index .index-logout-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 0 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.14);
+        color: #fca5a5;
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    body.page-index .index-logout-button:hover,
+    body.page-index .index-logout-button:focus-visible {
+        background: rgba(239, 68, 68, 0.28);
+        border-color: rgba(239, 68, 68, 0.6);
+        color: #ffffff;
+        outline: none;
+    }
+
+    body.page-index .nav-toggle {
+        display: none;
+    }
+
+    /* ---------- Nav (desktop) ---------- */
+    html body.page-index #main-nav {
+        position: sticky !important;
+        top: var(--idx-header-h) !important;
+        z-index: 1050 !important;
+        display: flex !important;
+        justify-content: center;
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 24px;
+        background: #ffffff !important;
+        border-bottom: 1px solid #dbe4ee !important;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    body.page-index #main-nav ul {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    body.page-index #main-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 52px;
+        padding: 0 16px;
+        border-radius: 0;
+        color: #0f172a;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+        text-transform: uppercase;
+    }
+
+    body.page-index #main-nav a:hover,
+    body.page-index #main-nav a:focus-visible {
+        color: var(--primary-blue, #2563eb);
+        outline: none;
+    }
+
+    body.page-index .index-mobile-nav-only {
+        display: none;
+    }
+
+    /* ---------- Dark mode ---------- */
+    html.force-dark body.page-index #main-nav,
+    html[data-theme-applied="dark"] body.page-index #main-nav {
+        background: #111827 !important;
+        border-bottom-color: #334155 !important;
+    }
+    html.force-dark body.page-index #main-nav a,
+    html[data-theme-applied="dark"] body.page-index #main-nav a {
+        color: #cbd5e1;
+    }
+
+    /* ---------- Mobile ---------- */
+    @media (max-width: 768px) {
+        html body.page-index .page-wrapper > header {
+            min-height: 84px !important;
+            padding: 12px 14px !important;
+            border-radius: 0 0 16px 16px !important;
+        }
+
+        body.page-index .logo-link { gap: 10px; flex: 1 1 auto; }
+        body.page-index .logo-link img.logo {
+            width: 52px;
+            height: 52px;
+            flex-basis: 52px;
+            border-radius: 12px;
+        }
+        body.page-index .logo-wordmark { font-size: 1.2rem; }
+        body.page-index .slogan { padding: 3px 6px; font-size: 0.52rem; letter-spacing: 1.2px; }
+
+        /* signed-in utilities live in the drawer on mobile */
+        body.page-index .user-info,
+        body.page-index .index-signed-in-actions { display: none !important; }
+
+        body.page-index .nav-toggle {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 46px;
+            padding: 0;
+            border: 1px solid var(--idx-border);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.78);
+            cursor: pointer;
+        }
+        body.page-index .nav-toggle span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            border-radius: 999px;
+            background: #ffffff;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        body.page-index .nav-toggle span + span { margin-top: 5px; }
+        body.page-index .nav-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        body.page-index .nav-toggle.is-open span:nth-child(2) { opacity: 0; }
+        body.page-index .nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        html body.page-index #main-nav {
+            display: none !important;
+            width: auto !important;
+            margin: 8px 12px 0 !important;
+            padding: 10px !important;
+            border: 1px solid #dbe4ee !important;
+            border-radius: 14px;
+            box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16) !important;
+        }
+        html body.page-index #main-nav.mobile-active { display: block !important; }
+
+        body.page-index #main-nav ul {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+        }
+        body.page-index #main-nav a {
+            justify-content: center;
+            width: 100%;
+            min-height: 44px;
+            border-radius: 10px;
+        }
+        body.page-index #main-nav.mobile-active .index-mobile-nav-only { display: list-item; }
+        body.page-index #main-nav .index-mobile-nav-only .btn-add {
+            background: var(--primary-blue, #2563eb);
+            color: #ffffff;
+        }
+    }
+
+    @media (max-width: 390px) {
+        body.page-index .logo-link img.logo { width: 46px; height: 46px; flex-basis: 46px; }
+        body.page-index .logo-wordmark { font-size: 1.05rem; }
+        body.page-index .slogan { font-size: 0.48rem; letter-spacing: 1px; }
+    }
+    /* =====================================================
+   PAGE: INDEX - BODY, HERO, PRICING, DEMO & FAQ
+   (Single Source of Truth — Pairs with Header + Nav)
+===================================================== */
+
+/* ---------- Page Canvas & Shell ---------- */
+body.page-index {
+    background: #1c313a;
+    overflow-x: hidden;
+}
+
+body.page-index .page-wrapper {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(13, 148, 136, 0.1), transparent 28%),
+        linear-gradient(180deg, #eff5ff 0%, #f8fbff 52%, #eef6f5 100%);
+}
+
+body.page-index .main-text {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding-inline: 24px;
+}
+
+body.page-index footer {
+    margin: 0 !important;
+    background: #1c313a !important;
+    border-top-color: #1c313a !important;
+}
+
+/* ---------- Hero Section & Workspace Status Card ---------- */
+body.page-index .hero-section {
+    margin: 22px 0 42px;
+}
+
+body.page-index .main-text > .hero-section {
+    margin-top: 38px;
+}
+
+body.page-index .index-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+    gap: 28px;
+    align-items: stretch;
+}
+
+body.page-index .index-hero-copy,
+body.page-index .index-hero-panel,
+body.page-index .index-status-card,
+body.page-index .index-plan-summary,
+body.page-index .current-plan-box {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    box-shadow: 0 20px 45px rgba(55, 65, 81, 0.08);
+}
+
+body.page-index .index-hero-copy {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.17), transparent 38%),
+        linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef5ff 100%);
+    border-radius: 30px;
+    padding: 38px;
+}
+
+body.page-index .index-hero-kicker,
+body.page-index .index-hero-lead {
+    max-width: 700px;
+    margin: 24px 0 0;
+    font-size: 1.08rem;
+    line-height: 1.8;
+    color: #475569;
+}
+
+body.page-index .index-proof-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 24px 0 0;
+}
+
+body.page-index .index-proof-strip span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.04);
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+body.page-index .index-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+body.page-index .index-secondary-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 20px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.page-index .index-hero-panel {
+    display: flex;
+}
+
+/* Logo-inspired workspace card palette */
+body.page-index .index-status-card {
+    width: 100%;
+    background: linear-gradient(160deg, #182734 0%, #1d4d47 58%, #1b7180 100%);
+    border: 1px solid rgba(26, 167, 173, 0.2);
+    box-shadow: 0 24px 52px rgba(20, 32, 51, 0.18);
+    color: #f8fafc;
+    border-radius: 30px;
+    padding: 28px;
+}
+
+body.page-index .index-status-card-guest {
+    background: linear-gradient(160deg, #24313d 0%, #29544d 56%, #2a6c78 100%);
+}
+
+body.page-index .index-status-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+body.page-index .index-status-label,
+body.page-index .index-status-role,
+body.page-index .index-plan-summary-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.page-index .index-status-label {
+    color: #9fe5d2;
+}
+
+body.page-index .index-status-role {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(236, 247, 244, 0.14);
+    border: 1px solid rgba(207, 217, 222, 0.2);
+    color: #edf5f6;
+}
+
+body.page-index .index-status-card h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #ffffff;
+}
+
+body.page-index .index-status-card p {
+    margin: 14px 0 0;
+    color: rgba(236, 247, 244, 0.84);
+    line-height: 1.7;
+}
+
+body.page-index .index-status-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+}
+
+body.page-index .index-status-metrics div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    min-height: 108px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(159, 229, 210, 0.14);
+    text-align: center;
+}
+
+body.page-index .index-status-metrics span {
+    display: block;
+    margin-bottom: 10px;
+    color: #9fe5d2;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+body.page-index .index-status-metrics strong {
+    color: #ffffff;
+    font-size: 1.65rem;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+}
+
+body.page-index .index-status-metric-status {
+    align-items: center;
+}
+
+body.page-index .index-status-value-status {
+    width: min(100%, 12ch);
+    max-width: 100%;
+    font-size: clamp(0.92rem, 2.6vw, 0.98rem);
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-wrap: balance;
+}
+
+body.page-index .index-panel-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+body.page-index .index-panel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 14px;
+    background: rgba(236, 247, 244, 0.1);
+    border: 1px solid rgba(207, 217, 222, 0.2);
+    color: #f8fafc;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+body.page-index .index-panel-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(191, 219, 254, 0.32);
+    transform: translateY(-1px);
+}
+
+body.page-index .index-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+}
+
+body.page-index .index-quick-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    color: #f8fafc;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* ---------- Content Sections (base styles — without these the
+   sections render with no background, spacing or text color and
+   look transparent/invisible against the page) ---------- */
+body.page-index .section {
+    margin: 46px 0;
+    color: #0f172a;
+}
+
+/* Global style.css sets body color to a light gray (#e5e7eb) for dark UI —
+   reset headings/body text on the index page so they are visible on the
+   light page background */
+body.page-index .main-text h2,
+body.page-index .main-text h3,
+body.page-index .main-text h4 {
+    color: #0f172a;
+}
+
+body.page-index .main-text p,
+body.page-index .main-text li,
+body.page-index .main-text td,
+body.page-index .main-text summary {
+    color: #334155;
+}
+
+body.page-index .main-text th {
+    color: #ffffff;
+}
+
+body.page-index .hero-section h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(2rem, 4.4vw, 3rem);
+    font-weight: 850;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+}
+
+body.page-index .hero-section h2 span {
+    background: linear-gradient(90deg, #1d4ed8 0%, #0d9488 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #1d4ed8;
+}
+
+body.page-index .section-title {
+    margin: 12px 0 0;
+    color: #0f172a;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+body.page-index .section-subtitle {
+    max-width: 720px;
+    margin: 10px 0 0;
+    color: #64748b;
+    font-size: 1.02rem;
+    line-height: 1.65;
+}
+
+body.page-index .section-title + .section-subtitle + *,
+body.page-index .section .table-wrapper,
+body.page-index .section .grid-2,
+body.page-index .section .grid-3,
+body.page-index .section .demo-wrap,
+body.page-index .section .logo-row {
+    margin-top: 26px;
+}
+
+body.page-index .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.24);
+    color: #1d4ed8;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+body.page-index .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+body.page-index .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+body.page-index .cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 32px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+    color: #ffffff;
+}
+
+body.page-index .cta h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+body.page-index .cta p {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+body.page-index .cta .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 50px;
+    padding: 0 24px;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+body.page-index .security-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #334155;
+    line-height: 1.9;
+}
+
+body.page-index .demo-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.8fr);
+    gap: 22px;
+    align-items: stretch;
+}
+
+body.page-index .table-wrapper {
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+body.page-index .index-gct-preview {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+body.page-index .index-gct-report {
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 20px;
+    padding: 24px 26px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+body.page-index .index-gct-report-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+body.page-index .index-gct-label {
+    display: block;
+    color: #1d4ed8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+body.page-index .index-gct-report h4 {
+    margin: 4px 0 0;
+    color: #0f172a;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+body.page-index .index-gct-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+body.page-index .gct-summary-table th,
+body.page-index .gct-summary-table td {
+    text-align: left;
+}
+
+body.page-index .gct-summary-table .text-right {
+    text-align: right;
+}
+
+body.page-index .gct-subtotal td,
+body.page-index .gct-total td {
+    font-weight: 700;
+}
+
+/* ---------- Pricing, Plans & Currency Toggle ---------- */
+body.page-index .pro-badge {
+    background: linear-gradient(90deg, #1f7a4f 0%, #20b8b5 45%, #2f7df6 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(31, 122, 79, 0.22);
+}
+
+body.page-index .pro-badge.is-current-plan {
+    background: #4a5568;
+}
+
+body.page-index .btn-upgrade.is-current-plan {
+    background: #059669;
+}
+
+body.page-index .index-upgrade-alert-link {
+    color: #007bff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.page-index .index-inline-demo-link {
+    display: inline-block;
+    margin-top: 12px;
+}
+
+body.page-index .index-pricing-intro {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    align-items: flex-end;
+    margin: 18px 0 22px;
+    padding-bottom: 34px;
+    text-align: center;
+}
+
+body.page-index .index-pricing-intro h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+body.page-index .index-pricing-intro > div > p {
+    max-width: 700px;
+    margin: 10px auto 18px;
+    color: #64748b;
+}
+
+body.page-index .index-plan-summary {
+    min-width: 286px;
+    padding: 26px 24px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    text-align: center;
+}
+
+body.page-index .index-plan-summary strong {
+    display: block;
+    margin-top: 14px;
+    color: #0f172a;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+body.page-index .index-plan-summary-meta {
+    display: block;
+    margin-top: 14px;
+    color: #64748b;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+body.page-index .index-plan-caption,
+body.page-index .index-plan-footnote,
+body.page-index .index-plan-billing-note {
+    color: #64748b;
+}
+
+body.page-index .index-plan-billing-note {
+    margin: -8px 0 14px;
+    font-size: 0.92rem;
+    color: #334155;
+    font-weight: 700;
+}
+
+body.page-index .index-plan-footnote {
+    margin: -5px 0 15px;
+    font-size: 0.85rem;
+}
+
+body.page-index .index-currency-clarity {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 18px 20px 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+body.page-index .index-currency-toggle {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 330px);
+    gap: 3px;
+    margin: 0 auto 14px;
+    padding: 3px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 12px;
+    background: #eef3f8;
+}
+
+body.page-index .index-currency-toggle button {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+body.page-index .index-currency-toggle button:hover {
+    color: #172033;
+}
+
+body.page-index .index-currency-toggle button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.32);
+    outline-offset: 3px;
+}
+
+body.page-index .index-currency-toggle button.is-active {
+    color: #0f172a;
+    background: #ffffff;
+    box-shadow:
+        0 3px 9px rgba(15, 23, 42, 0.1),
+        0 1px 2px rgba(55, 65, 81, 0.08);
+}
+
+body.page-index .index-currency-rates {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+body.page-index .index-currency-rates > span {
+    min-height: 46px;
+    padding: 9px 12px;
+    border: 1px solid rgba(37, 99, 235, 0.09);
+    border-radius: 12px;
+    background: #f1f6ff;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+body.page-index .index-currency-rates strong {
+    color: #0f172a;
+    font-size: 1.04rem;
+    font-weight: 850;
+}
+
+body.page-index .index-currency-clarity small {
+    display: block;
+    max-width: 560px;
+    margin: 10px auto 0;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+body.page-index .logo-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+body.page-index .logo-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+body.page-index .price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+}
+
+body.page-index .price .price-amount {
+    color: inherit;
+    font: inherit;
+}
+
+body.page-index .price .price-period,
+body.page-index .index-price-period {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+body.page-index [data-yearly-price] {
+    color: #172033;
+    font-weight: 800;
+}
+
+/* ---------- Demo Section ---------- */
+body.page-index .demo-frame {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 22px 46px rgba(15, 23, 42, 0.16);
+}
+
+body.page-index .demo-screen {
+    position: relative;
+    overflow: hidden;
+    min-height: 240px;
+}
+
+body.page-index .demo-screen::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 14px;
+    background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.16), transparent 42%),
+        repeating-linear-gradient(0deg, rgba(226, 232, 240, 0.08) 0 1px, transparent 1px 32px),
+        repeating-linear-gradient(90deg, rgba(226, 232, 240, 0.07) 0 1px, transparent 1px 78px);
+}
+
+body.page-index .demo-video {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    border-radius: 18px;
+    background: #0b1220;
+}
+
+body.page-index .demo-unavailable {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 220px;
+    padding: 26px;
+    text-align: center;
+}
+
+body.page-index .demo-unavailable p {
+    margin: 4px 0 0;
+    color: #f8fafc;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+body.page-index .demo-unavailable span {
+    max-width: 420px;
+    color: #a8b5c7;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+body.page-index .demo-unavailable code {
+    color: #dbeafe;
+    font-size: 0.9em;
+}
+
+body.page-index .play-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.78;
+    filter: grayscale(0.2);
+}
+
+body.page-index .demo-frame.is-unavailable .play-btn {
+    background: #64748b;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+}
+
+/* ---------- Feature Cards (grid-3) ---------- */
+body.page-index .card {
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+body.page-index .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+    border-color: rgba(37, 99, 235, 0.3);
+}
+
+body.page-index .card h4 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+body.page-index .card .muted {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Highlight the offline sync card */
+body.page-index .index-offline-proof-card {
+    border-color: rgba(37, 99, 235, 0.4);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+body.page-index .index-offline-proof-card:hover {
+    border-color: #2563eb;
+    box-shadow: 0 16px 36px rgba(37, 99, 235, 0.18);
+}
+
+/* ---------- FAQ Accordion ---------- */
+body.page-index .faq {
+    max-width: 920px;
+}
+
+body.page-index .faq details {
+    overflow: hidden;
+    padding: 0;
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+body.page-index .faq details[open] {
+    border-color: rgba(37, 99, 235, 0.32);
+    box-shadow: 0 18px 36px rgba(55, 65, 81, 0.08);
+}
+
+body.page-index .faq summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 18px;
+    min-height: 58px;
+    padding: 16px 18px;
+    color: #172033;
+    cursor: pointer;
+}
+
+body.page-index .faq summary:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.28);
+    outline-offset: -3px;
+    border-radius: 14px;
+}
+
+body.page-index .faq summary::after {
+    float: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+body.page-index .faq details[open] summary::after {
+    content: "–";
+    color: #ffffff;
+    background: #2563eb;
+}
+
+body.page-index .faq details > p {
+    margin: 0;
+    padding: 0 18px 18px;
+    color: #475569;
+    line-height: 1.65;
+}
+
+@supports selector(::details-content) {
+    body.page-index .faq details::details-content {
+        block-size: 0;
+        overflow: hidden;
+        transition: block-size 220ms ease, content-visibility 220ms ease allow-discrete;
+    }
+
+    body.page-index .faq details[open]::details-content {
+        block-size: auto;
+    }
+}
+
+/* ---------- Desktop Body Refinements (min-width: 769px) ---------- */
+@media (min-width: 769px) {
+    body.page-index .index-plan-billing-note {
+        display: block;
+        text-align: center;
+        font-size: 0.98rem;
+        color: #334155;
+        font-weight: 700;
+        margin: 0 0 8px;
+    }
+
+    body.page-index .index-plan-billing-toggle {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 6px;
+    }
+
+    body.page-index .index-plan-billing-toggle .billing-currency {
+        background: rgba(255, 255, 255, 0.9);
+        color: #0f172a;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 800;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    body.page-index .index-plan-summary .price-inline {
+        display: inline-block;
+        font-weight: 900;
+        color: #0f172a;
+        font-size: 1.05rem;
+        margin-left: 6px;
+    }
+
+    body.page-index .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+}
+
+/* ---------- Mobile Body Layout (max-width: 768px) ---------- */
+@media (max-width: 768px) {
+    body.page-index .main-text {
+        padding: 28px 16px 48px;
+    }
+
+    body.page-index .main-text > .hero-section,
+    body.page-index .hero-section {
+        margin: 28px 0 34px;
+    }
+
+    body.page-index .hero-section h2 {
+        font-size: 2rem;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+    }
+
+    body.page-index .hero-section p {
+        font-size: 1rem;
+        margin-top: 16px;
+        max-width: 100%;
+        padding: 0 4px;
+    }
+
+    body.page-index .index-hero-grid,
+    body.page-index .pricing-grid,
+    body.page-index .grid-3,
+    body.page-index .grid-2,
+    body.page-index .demo-wrap,
+    body.page-index .index-status-metrics,
+    body.page-index .index-quick-actions,
+    body.page-index .index-hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    body.page-index .index-hero-copy,
+    body.page-index .index-status-card,
+    body.page-index .index-plan-summary {
+        padding: 22px 18px;
+        border-radius: 22px;
+    }
+
+    body.page-index .pricing-grid {
+        gap: 18px;
+        margin: 28px 0;
+    }
+
+    body.page-index .pricing-card {
+        width: 100%;
+        max-width: none;
+        padding: 28px 18px;
+        border-radius: 20px;
+        box-sizing: border-box;
+    }
+
+    body.page-index .price {
+        font-size: 2.1rem;
+        margin: 16px 0;
+    }
+
+    body.page-index .pricing-card ul {
+        margin: 18px 0;
+    }
+
+    body.page-index .pricing-card li {
+        font-size: 0.92rem;
+        align-items: flex-start;
+    }
+
+    body.page-index .current-plan-box {
+        display: block;
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 16px;
+        box-sizing: border-box;
+        margin-top: 18px;
+        text-align: left;
+    }
+
+    body.page-index .index-pricing-intro {
+        flex-direction: column;
+        align-items: center;
+        padding: 38px 16px 28px;
+    }
+
+    body.page-index .index-pricing-intro h3 {
+        font-size: clamp(1.85rem, 8vw, 2.25rem);
+    }
+
+    body.page-index .index-pricing-intro > div > p {
+        margin: 13px auto 16px;
+    }
+
+    body.page-index .index-currency-clarity {
+        max-width: 430px;
+        padding: 15px 14px 14px;
+        border-radius: 14px;
+    }
+
+    body.page-index .index-currency-toggle {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        max-width: 310px;
+        margin-bottom: 12px;
+    }
+
+    body.page-index .index-currency-toggle button {
+        min-width: 0;
+        min-height: 35px;
+        padding: 0 8px;
+        font-size: 0.68rem;
+    }
+
+    body.page-index .index-currency-rates {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    body.page-index .index-currency-rates > span {
+        display: grid;
+        align-content: center;
+        gap: 2px;
+        min-height: 58px;
+        padding: 8px;
+        font-size: 0.76rem;
+        line-height: 1.25;
+    }
+
+    body.page-index .index-currency-rates strong {
+        display: block;
+        margin-left: 0;
+        font-size: 1.03rem;
+        line-height: 1.1;
+    }
+
+    body.page-index .index-currency-clarity small {
+        margin-top: 9px;
+        font-size: 0.78rem;
+    }
+
+    body.page-index .logo-row {
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    body.page-index .logo-pill {
+        min-height: 34px;
+        padding: 0 11px;
+        border-radius: 9px;
+        font-size: 0.8rem;
+    }
+
+    body.page-index .section {
+        max-width: 100%;
+        margin-top: 52px;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    body.page-index .section-title {
+        font-size: 1.5rem;
+        line-height: 1.15;
+    }
+
+    body.page-index .section-subtitle {
+        font-size: 0.96rem;
+        margin-bottom: 18px;
+    }
+
+    body.page-index .card {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    body.page-index .demo-frame {
+        min-height: 190px;
+        padding: 12px;
+        border-radius: 18px;
+    }
+
+    body.page-index .demo-screen,
+    body.page-index .demo-video {
+        min-height: 210px;
+        border-radius: 14px;
+    }
+
+    body.page-index .demo-unavailable {
+        min-height: 190px;
+        padding: 22px 18px;
+    }
+
+    body.page-index .table-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-width: 100vw;
+        margin-inline: 0;
+    }
+
+    body.page-index .compare-table {
+        display: table;
+        width: max-content;
+        min-width: 100%;
+        max-width: none;
+        overflow: visible;
+        white-space: nowrap;
+        border-radius: 16px;
+    }
+
+    body.page-index .compare-table th,
+    body.page-index .compare-table td {
+        padding: 10px 12px;
+        font-size: 0.86rem;
+    }
+
+    body.page-index .faq summary {
+        min-height: 56px;
+        padding: 15px 16px;
+        font-size: 0.96rem;
+    }
+
+    body.page-index .faq details > p {
+        padding: 0 16px 16px;
+        font-size: 0.95rem;
+    }
+
+    body.page-index .cta {
+        padding: 20px;
+        border-radius: 20px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.page-index .cta h3 {
+        font-size: 1.25rem;
+    }
+
+    body.page-index .cta .btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    body.page-index footer {
+        padding: 18px 14px !important;
+        font-size: 0.82rem !important;
+    }
+}
+
+@media (max-width: 360px) {
+    body.page-index .index-currency-toggle button {
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+    }
+
+    body.page-index .index-currency-rates > span {
+        font-size: 0.7rem;
+    }
+
+    body.page-index .index-currency-rates strong {
+        font-size: 0.95rem;
+    }
+}
+
+/* ---------- Dark Mode (Body & Content) ---------- */
+html.force-dark body.page-index,
+html[data-theme-applied="dark"] body.page-index {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+html.force-dark body.page-index .page-wrapper,
+html[data-theme-applied="dark"] body.page-index .page-wrapper {
+    background: #0f172a;
+}
+
+
+
+
+
+
+
+
+
+/* =====================================================
+   COMPARISON TABLE & GCT TAX REPORT PREVIEW
+===================================================== */
+
+/* 1. Plan Comparison Table */
+body.page-index .table-wrapper {
+    width: 100%;
+    max-width: 980px;
+    margin: 24px auto 48px;
+    overflow-x: auto;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+body.page-index .compare-table,
+body.page-index .table-wrapper table,
+body.page-index .section table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    background: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body.page-index .compare-table thead th,
+body.page-index .table-wrapper th,
+body.page-index .section table th {
+    padding: 18px 24px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+body.page-index .compare-table tbody td,
+body.page-index .table-wrapper td,
+body.page-index .section table td {
+    padding: 16px 24px;
+    color: #334155;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+body.page-index .compare-table tbody tr:last-child td,
+body.page-index .table-wrapper tbody tr:last-child td,
+body.page-index .section table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+body.page-index .compare-table tbody tr:hover td,
+body.page-index .table-wrapper tbody tr:hover td,
+body.page-index .section table tbody tr:hover td {
+    background: #f8fbff;
+}
+
+/* Bold the feature name column */
+body.page-index .compare-table tbody td:first-child,
+body.page-index .table-wrapper tbody td:first-child,
+body.page-index .section table tbody td:first-child {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* Highlight the "Professional" column (3rd column) */
+body.page-index .compare-table th:nth-child(3),
+body.page-index .table-wrapper th:nth-child(3),
+body.page-index .section table th:nth-child(3) {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+body.page-index .compare-table td:nth-child(3),
+body.page-index .table-wrapper td:nth-child(3),
+body.page-index .section table td:nth-child(3) {
+    color: #0f172a;
+    font-weight: 700;
+    background: rgba(239, 246, 255, 0.45);
+}
+
+/* 2. GCT Summary Report / Tax Report Preview Card */
+body.page-index .tax-preview,
+body.page-index .gct-preview,
+body.page-index .report-preview,
+body.page-index .tax-report-card,
+body.page-index .gct-card {
+    max-width: 680px;
+    margin: 28px auto 0;
+    padding: 28px 32px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+/* Fallback: Style any container directly wrapping "GCT Summary Report" */
+body.page-index div:has(> h3 + p + div strong),
+body.page-index div:has(> h4 + p + div strong) {
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+        padding: 26px 28px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    /* =====================================================
+       STARTER & PROFESSIONAL PRICING CARDS (COMPLETE)
+===================================================== */
+
+/* 1. Two-Column Side-by-Side Pricing Grid */
+html body.page-index .pricing-grid,
+html body.page-index div:has(> .pricing-card),
+html body.page-index div:has(> div > .pro-badge) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 28px !important;
+    align-items: stretch !important;
+    max-width: 980px !important;
+    margin: 32px auto 56px !important;
+}
+
+/* 2. Base Card Container (Starter & Professional) */
+html body.page-index .pricing-card,
+html body.page-index .pricing-grid > div,
+html body.page-index div:has(> .pro-badge),
+html body.page-index div:has(+ div > .pro-badge) {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 36px 32px !important;
+    border-radius: 26px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08) !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+html body.page-index .pricing-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 26px 54px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Highlight Professional ("Best Value") Card */
+html body.page-index .pricing-card.featured,
+html body.page-index .pricing-card.pro-card,
+html body.page-index .pricing-card:has(.pro-badge),
+html body.page-index div:has(> .pro-badge) {
+    border: 2px solid #2563eb !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    box-shadow: 0 24px 52px rgba(37, 99, 235, 0.14) !important;
+}
+
+/* 3. "Best Value" Pill Badge */
+html body.page-index .pro-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    align-self: flex-start !important;
+    width: fit-content !important;
+    max-width: max-content !important;
+    margin: 0 0 14px 0 !important;
+    padding: 6px 14px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, #1f7a4f 0%, #20b8b5 45%, #2f7df6 100%) !important;
+    color: #ffffff !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 10px 20px rgba(31, 122, 79, 0.22) !important;
+}
+
+/* 4. Plan Headings ("Starter" / "Professional") & Subtitles */
+html body.page-index .pricing-card h3,
+html body.page-index .pricing-card h4,
+html body.page-index div:has(> .pro-badge) h3,
+html body.page-index div:has(+ div > .pro-badge) h3 {
+    margin: 0 0 6px !important;
+    color: #0f172a !important;
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+html body.page-index .pricing-card > p:first-of-type,
+html body.page-index .index-plan-caption {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+}
+
+/* 5. Price Display ("US$0/14 days" & "US$19/mo") */
+html body.page-index .price {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    margin: 20px 0 6px !important;
+    color: #0f172a !important;
+    font-size: 2.6rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1 !important;
+}
+
+html body.page-index .price .price-period,
+html body.page-index .index-price-period {
+    font-size: 1rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+}
+
+/* Billing Note ("Evaluate the basics..." & "or US$190/year") */
+html body.page-index .index-plan-billing-note,
+html body.page-index [data-yearly-price] {
+    display: block !important;
+    margin: 0 0 16px !important;
+    text-align: left !important;
+    color: #334155 !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    line-height: 1.45 !important;
+}
+
+/* 6. Feature List (<ul> and <li>) */
+html body.page-index .pricing-card ul,
+html body.page-index div:has(> .pro-badge) ul,
+html body.page-index div:has(+ div > .pro-badge) ul {
+    list-style: none !important;
+    margin: 18px 0 22px !important;
+    padding: 18px 0 0 !important;
+    border-top: 1px solid rgba(148, 163, 184, 0.2) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    flex: 1 1 auto !important;
+}
+
+html body.page-index .pricing-card li,
+html body.page-index div:has(> .pro-badge) li,
+html body.page-index div:has(+ div > .pro-badge) li {
+    position: relative !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    color: #1e293b !important;
+    font-size: 0.94rem !important;
+    font-weight: 500 !important;
+    line-height: 1.45 !important;
+}
+
+html body.page-index .pricing-card li::before,
+html body.page-index div:has(> .pro-badge) li::before,
+html body.page-index div:has(+ div > .pro-badge) li::before {
+    content: "✓" !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-top: 1px !important;
+    border-radius: 50% !important;
+    background: rgba(39, 192, 128, 0.16) !important;
+    color: #106f49 !important;
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+}
+
+/* Automatically mute Pro-only items (5 through 12) on the Starter Card */
+html body.page-index .pricing-card:first-child ul li:nth-child(n+5),
+html body.page-index div:has(+ div > .pro-badge) ul li:nth-child(n+5),
+html body.page-index .pricing-card li.disabled,
+html body.page-index .pricing-card li.muted-feature {
+    color: #94a3b8 !important;
+    text-decoration: line-through !important;
+    font-weight: 400 !important;
+}
+
+html body.page-index .pricing-card:first-child ul li:nth-child(n+5)::before,
+html body.page-index div:has(+ div > .pro-badge) ul li:nth-child(n+5)::before,
+html body.page-index .pricing-card li.disabled::before,
+html body.page-index .pricing-card li.muted-feature::before {
+    content: "✕" !important;
+    background: rgba(148, 163, 184, 0.16) !important;
+    color: #64748b !important;
+}
+
+/* 7. Bottom Footnote Box ("Starter is a trial..." & "Includes Windows offline...") */
+html body.page-index .index-plan-footnote,
+html body.page-index .pricing-card ul + p {
+    margin: 0 0 18px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    color: #475569 !important;
+    font-size: 0.83rem !important;
+    line-height: 1.5 !important;
+}
+
+/* 8. CTA Buttons ("Start Free Trial" & "Get Pro") */
+html body.page-index .pricing-card .btn,
+html body.page-index .pricing-card .btn-upgrade,
+html body.page-index .pricing-card a[href],
+html body.page-index .pricing-card button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 52px !important;
+    margin-top: auto !important;
+    padding: 12px 20px !important;
+    border-radius: 14px !important;
+    background: #0f172a !important;
+    border: 1px solid #0f172a !important;
+    color: #ffffff !important;
+    font-size: 0.96rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16) !important;
+    box-sizing: border-box !important;
+    cursor: pointer !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
+}
+
+/* Primary Blue Gradient for "Get Pro" on the Professional Card */
+html body.page-index .pricing-card:has(.pro-badge) a[href],
+html body.page-index .pricing-card:has(.pro-badge) button,
+html body.page-index div:has(> .pro-badge) a[href],
+html body.page-index .pricing-card .btn-upgrade {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.26) !important;
+}
+
+html body.page-index .pricing-card a[href]:hover,
+html body.page-index .pricing-card button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* 9. Mobile Stack (max-width: 768px) */
+@media (max-width: 768px) {
+    html body.page-index .pricing-grid,
+    html body.page-index div:has(> .pricing-card),
+    html body.page-index div:has(> div > .pro-badge) {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    html body.page-index .pricing-card,
+    html body.page-index div:has(> .pro-badge),
+    html body.page-index div:has(+ div > .pro-badge) {
+        padding: 28px 20px !important;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =====================================================
+   BASE PRICING GRID, CARDS, BADGES & CTA BUTTONS
+===================================================== */
+body.page-index .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 28px;
+    align-items: stretch;
+    max-width: 980px;
+    margin: 32px auto;
+}
+
+body.page-index .pricing-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 36px 32px;
+    border-radius: 26px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+body.page-index .pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 26px 54px rgba(15, 23, 42, 0.12);
+}
+
+/* Highlighted Pro / Best Value Card */
+body.page-index .pricing-card.featured,
+body.page-index .pricing-card.pro-card,
+body.page-index .pricing-card:has(.pro-badge) {
+    border: 2px solid #2563eb;
+    box-shadow: 0 24px 52px rgba(37, 99, 235, 0.14);
+}
+
+/* "Best Value" Pill Badge */
+body.page-index .pro-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    width: fit-content;
+    margin-bottom: 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #1f7a4f 0%, #20b8b5 45%, #2f7df6 100%);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 20px rgba(31, 122, 79, 0.22);
+}
+
+body.page-index .pricing-card h3,
+body.page-index .pricing-card h4 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* Price Display */
+body.page-index .price {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 6px;
+    margin: 20px 0 8px;
+    color: #0f172a;
+    font-size: 2.65rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+body.page-index .price .price-period,
+body.page-index .index-price-period {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+/* Feature List */
+body.page-index .pricing-card ul {
+    list-style: none;
+    margin: 22px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
+}
+
+body.page-index .pricing-card li {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #334155;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+body.page-index .pricing-card li::before {
+    content: "✓";
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: rgba(39, 192, 128, 0.14);
+    color: #106f49;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+
+/* Muted / Disabled Features on Starter Card (if applicable) */
+body.page-index .pricing-card li.disabled,
+body.page-index .pricing-card li.muted-feature {
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+body.page-index .pricing-card li.disabled::before,
+body.page-index .pricing-card li.muted-feature::before {
+    content: "✕";
+    background: rgba(148, 163, 184, 0.14);
+    color: #64748b;
+}
+
+/* Pricing Card CTA Buttons ("Start Free Trial" / "Upgrade to Pro") */
+body.page-index .pricing-card .btn,
+body.page-index .pricing-card .btn-upgrade,
+body.page-index .pricing-card a[href] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 16px;
+    padding: 12px 20px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff !important;
+    font-size: 0.98rem;
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none !important;
+    border: 1px solid #1d4ed8;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+    box-sizing: border-box;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body.page-index .pricing-card .btn:hover,
+body.page-index .pricing-card .btn-upgrade:hover,
+body.page-index .pricing-card a[href]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.3);
+}
+
+html.force-dark body.page-index main,
+html.force-dark body.page-index .pricing-card,
+html.force-dark body.page-index .card,
+html.force-dark body.page-index .compare-table th,
+html.force-dark body.page-index .compare-table td,
+html.force-dark body.page-index .current-plan-box,
+html.force-dark body.page-index .demo-frame,
+html.force-dark body.page-index .table-wrapper,
+html.force-dark body.page-index .index-hero-copy,
+html.force-dark body.page-index .index-plan-summary,
+html[data-theme-applied="dark"] body.page-index main,
+html[data-theme-applied="dark"] body.page-index .pricing-card,
+html[data-theme-applied="dark"] body.page-index .card,
+html[data-theme-applied="dark"] body.page-index .compare-table th,
+html[data-theme-applied="dark"] body.page-index .compare-table td,
+html[data-theme-applied="dark"] body.page-index .current-plan-box,
+html[data-theme-applied="dark"] body.page-index .demo-frame,
+html[data-theme-applied="dark"] body.page-index .table-wrapper,
+html[data-theme-applied="dark"] body.page-index .index-hero-copy,
+html[data-theme-applied="dark"] body.page-index .index-plan-summary {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+    box-shadow: none;
+}
+
+html.force-dark body.page-index .card:hover,
+html[data-theme-applied="dark"] body.page-index .card:hover {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.force-dark body.page-index .index-offline-proof-card,
+html[data-theme-applied="dark"] body.page-index .index-offline-proof-card {
+    border-color: #3b82f6 !important;
+    background: linear-gradient(180deg, #1e293b 0%, #152238 100%) !important;
+}
+
+html.force-dark body.page-index .index-offline-proof-card:hover,
+html[data-theme-applied="dark"] body.page-index .index-offline-proof-card:hover {
+    border-color: #60a5fa !important;
+    box-shadow: 0 16px 36px rgba(59, 130, 246, 0.25) !important;
+}
+
+html.force-dark body.page-index h2,
+html.force-dark body.page-index h3,
+html.force-dark body.page-index h4,
+html.force-dark body.page-index .section-title,
+html.force-dark body.page-index .hero-section h2,
+html.force-dark body.page-index .price,
+html.force-dark body.page-index [data-yearly-price],
+html.force-dark body.page-index .faq summary,
+html.force-dark body.page-index .index-plan-summary strong,
+html[data-theme-applied="dark"] body.page-index h2,
+html[data-theme-applied="dark"] body.page-index h3,
+html[data-theme-applied="dark"] body.page-index h4,
+html[data-theme-applied="dark"] body.page-index .section-title,
+html[data-theme-applied="dark"] body.page-index .hero-section h2,
+html[data-theme-applied="dark"] body.page-index .price,
+html[data-theme-applied="dark"] body.page-index [data-yearly-price],
+html[data-theme-applied="dark"] body.page-index .faq summary,
+html[data-theme-applied="dark"] body.page-index .index-plan-summary strong {
+    color: #f8fafc !important;
+    text-shadow: none !important;
+}
+
+html.force-dark body.page-index .hero-section h2 span,
+html[data-theme-applied="dark"] body.page-index .hero-section h2 span {
+    color: #3b82f6 !important;
+}
+
+html.force-dark body.page-index p,
+html.force-dark body.page-index .muted,
+html.force-dark body.page-index .section-subtitle,
+html.force-dark body.page-index .pricing-card p,
+html.force-dark body.page-index .compare-table th,
+html.force-dark body.page-index .compare-table td,
+html.force-dark body.page-index .current-plan-box,
+html.force-dark body.page-index .index-hero-lead,
+html.force-dark body.page-index .index-pricing-intro p,
+html.force-dark body.page-index .index-plan-summary-meta,
+html.force-dark body.page-index .price .price-period,
+html.force-dark body.page-index .demo-unavailable span,
+html.force-dark body.page-index details p,
+html[data-theme-applied="dark"] body.page-index p,
+html[data-theme-applied="dark"] body.page-index .muted,
+html[data-theme-applied="dark"] body.page-index .section-subtitle,
+html[data-theme-applied="dark"] body.page-index .pricing-card p,
+html[data-theme-applied="dark"] body.page-index .compare-table th,
+html[data-theme-applied="dark"] body.page-index .compare-table td,
+html[data-theme-applied="dark"] body.page-index .current-plan-box,
+html[data-theme-applied="dark"] body.page-index .index-hero-lead,
+html[data-theme-applied="dark"] body.page-index .index-pricing-intro p,
+html[data-theme-applied="dark"] body.page-index .index-plan-summary-meta,
+html[data-theme-applied="dark"] body.page-index .price .price-period,
+html[data-theme-applied="dark"] body.page-index .demo-unavailable span,
+html[data-theme-applied="dark"] body.page-index details p {
+    color: #cbd5e1 !important;
+}
+
+html.force-dark body.page-index .index-proof-strip span,
+html[data-theme-applied="dark"] body.page-index .index-proof-strip span {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+}
+
+html.force-dark body.page-index .faq details,
+html[data-theme-applied="dark"] body.page-index .faq details {
+    background: #243043 !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+html.force-dark body.page-index .faq summary::after,
+html[data-theme-applied="dark"] body.page-index .faq summary::after {
+    color: #60a5fa !important;
+    background: rgba(59, 130, 246, 0.15);
+}
+
+html.force-dark body.page-index .index-currency-clarity,
+html[data-theme-applied="dark"] body.page-index .index-currency-clarity {
+    border-color: rgba(148, 163, 184, 0.24);
+    background: rgba(55, 65, 81, 0.88);
+    box-shadow: 0 16px 38px rgba(2, 8, 23, 0.32);
+}
+
+html.force-dark body.page-index .index-currency-toggle,
+html[data-theme-applied="dark"] body.page-index .index-currency-toggle {
+    border-color: rgba(148, 163, 184, 0.24);
+    background: rgba(30, 41, 59, 0.86);
+}
+
+html.force-dark body.page-index .index-currency-toggle button,
+html[data-theme-applied="dark"] body.page-index .index-currency-toggle button {
+    color: #cbd5e1;
+}
+
+html.force-dark body.page-index .index-currency-toggle button.is-active,
+html[data-theme-applied="dark"] body.page-index .index-currency-toggle button.is-active {
+    color: #f8fafc;
+    background: #1f2937;
+}
+
+html.force-dark body.page-index .index-currency-rates > span,
+html[data-theme-applied="dark"] body.page-index .index-currency-rates > span {
+    border-color: rgba(96, 165, 250, 0.16);
+    background: rgba(30, 41, 59, 0.72);
+    color: #cbd5e1;
+}
+
+html.force-dark body.page-index .index-currency-rates strong,
+html[data-theme-applied="dark"] body.page-index .index-currency-rates strong,
+html.force-dark body.page-index .index-currency-clarity small,
+html[data-theme-applied="dark"] body.page-index .index-currency-clarity small {
+    color: #f8fafc;
+}
+
+html.force-dark body.page-index .logo-pill,
+html[data-theme-applied="dark"] body.page-index .logo-pill {
+    border-color: rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.78);
+    color: #e2e8f0;
+    box-shadow: 0 8px 18px rgba(2, 8, 23, 0.24);
+}
+
+/* GCT Summary Report Table */
+body.page-index .gct-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+body.page-index .gct-summary-table th,
+body.page-index .gct-summary-table td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+body.page-index .gct-summary-table th {
+    font-weight: 700;
+    color: #334155;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(15, 23, 42, 0.03);
+}
+
+body.page-index .gct-summary-table .text-right {
+    text-align: right;
+}
+
+body.page-index .gct-summary-table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.02);
+}
+
+body.page-index .gct-summary-table .gct-subtotal td {
+    border-top: 2px solid rgba(148, 163, 184, 0.24);
+    font-weight: 600;
+    color: #1e293b;
+}
+
+body.page-index .gct-summary-table .gct-total td {
+    border-top: 3px solid var(--primary-blue, #3b82f6);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--primary-blue, #3b82f6);
+}
+
+/* Dark mode for GCT table */
+html.force-dark body.page-index .gct-summary-table th,
+html[data-theme-applied="dark"] body.page-index .gct-summary-table th {
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+html.force-dark body.page-index .gct-summary-table td,
+html[data-theme-applied="dark"] body.page-index .gct-summary-table td {
+    border-color: rgba(148, 163, 184, 0.16);
+    color: #e2e8f0;
+}
+
+html.force-dark body.page-index .gct-summary-table tbody tr:hover td,
+html[data-theme-applied="dark"] body.page-index .gct-summary-table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+html.force-dark body.page-index .gct-summary-table .gct-subtotal td,
+html[data-theme-applied="dark"] body.page-index .gct-summary-table .gct-subtotal td {
+    border-color: rgba(148, 163, 184, 0.24);
+    color: #f8fafc;
+}
+
+html.force-dark body.page-index .gct-summary-table .gct-total td,
+html[data-theme-applied="dark"] body.page-index .gct-summary-table .gct-total td {
+    border-color: var(--primary-blue, #3b82f6);
+    color: #93c5fd;
+}
+
+

@@ -1,0 +1,10 @@
+body.page-status {min-height:100vh; display:flex; flex-direction:column;}
+body.page-status footer {margin-top:auto;}
+
+
+/* =====================================================
+body.page-status .main-text {
+html.force-dark body.page-status .main-text,
+html[data-theme-applied="dark"] body.page-status .main-text {
+body.page-status {
+body.page-status .page-wrapper {

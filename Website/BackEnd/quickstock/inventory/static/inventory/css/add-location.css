@@ -1,0 +1,482 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Register Node / Add Location Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --loc-bg: #f8fafc;
+    --loc-card-bg: #ffffff;
+    --loc-text-main: #0f172a;
+    --loc-text-muted: #64748b;
+    --loc-border: #e2e8f0;
+    --loc-border-focus: #0284c7;
+    
+    /* Brand Colors */
+    --loc-primary: #0284c7;
+    --loc-primary-hover: #0369a1;
+    --loc-primary-light: #e0f2fe;
+    --loc-accent: #10b981;
+    --loc-accent-light: #ecfdf5;
+
+    /* Actions */
+    --loc-btn-cancel-bg: #f1f5f9;
+    --loc-btn-cancel-text: #475569;
+    --loc-btn-cancel-hover: #e2e8f0;
+
+    /* FX */
+    --loc-radius: 14px;
+    --loc-radius-sm: 8px;
+    --loc-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --loc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    --loc-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"], 
+.force-dark {
+    --loc-bg: #090d16;
+    --loc-card-bg: #111827;
+    --loc-text-main: #f8fafc;
+    --loc-text-muted: #94a3b8;
+    --loc-border: #1e293b;
+    --loc-border-focus: #38bdf8;
+    
+    --loc-primary: #38bdf8;
+    --loc-primary-hover: #0ea5e9;
+    --loc-primary-light: rgba(56, 189, 248, 0.12);
+    --loc-accent: #34d399;
+    --loc-accent-light: rgba(52, 211, 153, 0.12);
+
+    --loc-btn-cancel-bg: #1e293b;
+    --loc-btn-cancel-text: #cbd5e1;
+    --loc-btn-cancel-hover: #334155;
+
+    --loc-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --loc-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Container & Layout Shell
+   -------------------------------------------------------------------------- */
+.add-location-shell {
+    max-width: 1280px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Hero Banner Section
+   -------------------------------------------------------------------------- */
+.add-location-hero {
+    background-color: var(--loc-card-bg);
+    border: 1px solid var(--loc-border);
+    border-radius: var(--loc-radius);
+    padding: 2.25rem;
+    box-shadow: var(--loc-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.locations-hero-copy {
+    max-width: 680px;
+}
+
+.locations-kicker {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--loc-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.add-location-hero h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--loc-text-main);
+    margin: 0 0 0.75rem 0;
+    letter-spacing: -0.02em;
+}
+
+.locations-hero-copy p {
+    font-size: 1rem;
+    color: var(--loc-text-muted);
+    line-height: 1.6;
+    margin: 0 0 1.5rem 0;
+}
+
+.locations-chip-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.locations-chip-row span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--loc-primary-light);
+    color: var(--loc-primary);
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    border: 1px solid rgba(2, 132, 199, 0.15);
+}
+
+.locations-hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1.25rem;
+    min-width: 220px;
+}
+
+.btn-primary-action.add-location-return {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--loc-radius-sm);
+    background-color: var(--loc-primary);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--loc-transition);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary-action.add-location-return:hover {
+    background-color: var(--loc-primary-hover);
+    transform: translateY(-1px);
+}
+
+.locations-hero-note {
+    background-color: var(--loc-bg);
+    border: 1px solid var(--loc-border);
+    border-radius: var(--loc-radius-sm);
+    padding: 0.85rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-align: right;
+    width: 100%;
+}
+
+.locations-hero-note strong {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--loc-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.locations-hero-note span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--loc-accent);
+}
+
+/* --------------------------------------------------------------------------
+   4. Dual-Column Workbench (Sidepanel + Form)
+   -------------------------------------------------------------------------- */
+.add-location-workbench {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Sidepanel Cards */
+.add-location-sidepanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.add-location-sidecard {
+    background-color: var(--loc-card-bg);
+    border: 1px solid var(--loc-border);
+    border-radius: var(--loc-radius);
+    padding: 1.5rem;
+    box-shadow: var(--loc-shadow);
+}
+
+.add-location-sidecard-accent {
+    background-color: var(--loc-bg);
+    border-color: var(--loc-border);
+}
+
+.add-location-sidekicker {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--loc-primary);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.add-location-sidecard h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--loc-text-main);
+    margin: 0 0 0.5rem 0;
+}
+
+.add-location-sidecard p {
+    font-size: 0.875rem;
+    color: var(--loc-text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.add-location-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.add-location-checklist li {
+    position: relative;
+    padding-left: 1.35rem;
+    font-size: 0.85rem;
+    color: var(--loc-text-main);
+    line-height: 1.4;
+}
+
+.add-location-checklist li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--loc-accent);
+    font-weight: 800;
+}
+
+/* --------------------------------------------------------------------------
+   5. Form Container & Inputs
+   -------------------------------------------------------------------------- */
+.form-container {
+    background-color: var(--loc-card-bg);
+    border: 1px solid var(--loc-border);
+    border-radius: var(--loc-radius);
+    padding: 2.25rem;
+    box-shadow: var(--loc-shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.form-header {
+    border-bottom: 1px solid var(--loc-border);
+    padding-bottom: 1.25rem;
+}
+
+.form-eyebrow {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--loc-primary);
+    letter-spacing: 0.05em;
+    margin: 0 0 0.25rem 0;
+}
+
+.form-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--loc-text-main);
+    margin: 0 0 0.5rem 0;
+}
+
+.form-header p {
+    font-size: 0.9rem;
+    color: var(--loc-text-muted);
+    margin: 0;
+}
+
+/* Form Groups */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.input-group label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--loc-text-main);
+}
+
+.input-help {
+    font-size: 0.775rem;
+    color: var(--loc-text-muted);
+    margin-bottom: 0.2rem;
+}
+
+.input-group input[type="text"],
+.input-group input[type="number"],
+.input-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--loc-radius-sm);
+    border: 1px solid var(--loc-border);
+    background-color: var(--loc-bg);
+    color: var(--loc-text-main);
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: var(--loc-transition);
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: var(--loc-border-focus);
+    background-color: var(--loc-card-bg);
+    box-shadow: 0 0 0 3px var(--loc-primary-light);
+}
+
+/* Actions Bar */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--loc-border);
+    margin-top: 0.5rem;
+}
+
+.btn-cancel {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--loc-radius-sm);
+    background-color: var(--loc-btn-cancel-bg);
+    color: var(--loc-btn-cancel-text);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--loc-transition);
+    border: 1px solid var(--loc-border);
+}
+
+.btn-cancel:hover {
+    background-color: var(--loc-btn-cancel-hover);
+    color: var(--loc-text-main);
+}
+
+.btn-save {
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--loc-radius-sm);
+    background-color: var(--loc-primary);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: var(--loc-transition);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save:hover {
+    background-color: var(--loc-primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Messages & Alerts */
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.alert {
+    padding: 0.85rem 1.15rem;
+    border-radius: var(--loc-radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--loc-border);
+}
+
+.alert-error,
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.alert-success {
+    background-color: var(--loc-accent-light);
+    color: var(--loc-accent);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Card Footer */
+.node-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--loc-text-muted);
+    padding-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Responsive Layouts
+   -------------------------------------------------------------------------- */
+@media (max-width: 992px) {
+    .add-location-workbench {
+        grid-template-columns: 1fr;
+    }
+
+    .add-location-sidepanel {
+        order: 2;
+    }
+
+    .form-container {
+        order: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .add-location-hero {
+        padding: 1.5rem;
+        flex-direction: column;
+    }
+
+    .locations-hero-actions {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .locations-hero-note {
+        text-align: left;
+    }
+
+    .form-container {
+        padding: 1.5rem;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .actions .btn-cancel,
+    .actions .btn-save {
+        width: 100%;
+        text-align: center;
+    }
+}

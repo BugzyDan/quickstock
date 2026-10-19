@@ -1,0 +1,1384 @@
+    body.page-customer-edit,
+    body.page-add-customer,
+    body.page-customer-edit > header,
+    body.page-add-customer > header,
+    body.page-customer-edit > header .logo-area,
+    body.page-add-customer > header .logo-area,
+    body.page-customer-edit > header .logo-img,
+    body.page-customer-edit > header .app-shell-logo,
+    body.page-add-customer > header .logo-img,
+    body.page-add-customer > header .app-shell-logo,
+    body.page-customer-edit > header .logo-text-group,
+    body.page-add-customer > header .logo-text-group,
+    body.page-customer-edit > header .logo-wordmark,
+    body.page-add-customer > header .logo-wordmark,
+    body.page-customer-edit > header .slogan,
+    body.page-add-customer > header .slogan,
+    body.page-customer-edit > header .app-user-info,
+    body.page-customer-edit > header .user-info,
+    body.page-add-customer > header .app-user-info,
+    body.page-add-customer > header .user-info,
+    body.page-customer-edit > header .app-system-live-pill,
+    body.page-customer-edit > header .system-live-pill,
+    body.page-add-customer > header .app-system-live-pill,
+    body.page-add-customer > header .system-live-pill,
+    body.page-customer-edit > header .app-user-menu-btn,
+    body.page-add-customer > header .app-user-menu-btn,
+    body.page-customer-edit > header .nav-toggle,
+    body.page-add-customer > header .nav-toggle,
+    body.page-customer-edit #main-nav,
+    body.page-add-customer #main-nav,
+    body.page-customer-edit header,
+    body.page-add-customer header,
+    body.page-customer-edit .logo-area,
+    body.page-add-customer .logo-area,
+    body.page-customer-edit .logo-area img,
+    body.page-add-customer .logo-area img,
+    body.page-customer-edit .brand-text,
+    body.page-add-customer .brand-text,
+    body.page-customer-edit .user-info,
+    body.page-add-customer .user-info,
+    body.page-customer-edit .system-live-pill,
+    body.page-add-customer .system-live-pill,
+    body.page-customer-edit .user-dropdown-container,
+    body.page-add-customer .user-dropdown-container,
+    body.page-customer-edit .user-dropdown-container .dropdown-menu,
+    body.page-add-customer .user-dropdown-container .dropdown-menu,
+    body.page-customer-edit .nav-toggle,
+    body.page-add-customer .nav-toggle,
+body.page-customer-edit #main-nav,
+body.page-add-customer #main-nav {
+body.page-customer-edit #main-nav > a,
+body.page-add-customer #main-nav > a,
+body.page-customer-list #main-nav > .sales-nav-item > .sales-nav-trigger,
+body.page-customer-detail #main-nav > .sales-nav-item > .sales-nav-trigger,
+body.page-customer-edit #main-nav > .sales-nav-item > .sales-nav-trigger,
+body.page-add-customer #main-nav > .sales-nav-item > .sales-nav-trigger {
+body.page-customer-edit #main-nav > a:hover,
+body.page-add-customer #main-nav > a:hover,
+body.page-customer-list #main-nav > .sales-nav-item > .sales-nav-trigger:hover,
+body.page-customer-detail #main-nav > .sales-nav-item > .sales-nav-trigger:hover,
+body.page-customer-edit #main-nav > .sales-nav-item > .sales-nav-trigger:hover,
+body.page-add-customer #main-nav > .sales-nav-item > .sales-nav-trigger:hover {
+    color: var(--primary-blue, #3b82f6) !important;
+}
+
+body.page-customer-list #main-nav > a.active,
+body.page-customer-detail #main-nav > a.active,
+body.page-customer-edit #main-nav > a.active,
+body.page-add-customer #main-nav > a.active,
+body.page-customer-list #main-nav > .sales-nav-item.is-active > .sales-nav-trigger,
+body.page-customer-detail #main-nav > .sales-nav-item.is-active > .sales-nav-trigger,
+body.page-customer-edit #main-nav > .sales-nav-item.is-active > .sales-nav-trigger,
+body.page-add-customer #main-nav > .sales-nav-item.is-active > .sales-nav-trigger,
+body.page-customer-list #main-nav > .sales-nav-item > .sales-nav-trigger.active,
+body.page-customer-detail #main-nav > .sales-nav-item > .sales-nav-trigger.active,
+body.page-customer-edit #main-nav > .sales-nav-item > .sales-nav-trigger.active,
+body.page-add-customer #main-nav > .sales-nav-item > .sales-nav-trigger.active {
+    color: var(--primary-blue, #3b82f6) !important;
+    border-bottom-color: var(--primary-blue, #3b82f6) !important;
+}
+
+body.page-customer-list #main-nav .sales-nav-item,
+body.page-customer-detail #main-nav .sales-nav-item,
+body.page-customer-edit #main-nav .sales-nav-item,
+body.page-add-customer #main-nav .sales-nav-item {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: stretch !important;
+}
+
+body.page-customer-list #main-nav .sales-nav-menu,
+body.page-customer-detail #main-nav .sales-nav-menu,
+body.page-customer-edit #main-nav .sales-nav-menu,
+body.page-add-customer #main-nav .sales-nav-menu {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    min-width: 210px !important;
+    z-index: 1210 !important;
+}
+
+body.page-customer-list #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-customer-list #main-nav .sales-nav-menu.show,
+body.page-customer-detail #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-customer-detail #main-nav .sales-nav-menu.show,
+body.page-customer-edit #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-customer-edit #main-nav .sales-nav-menu.show,
+body.page-add-customer #main-nav .sales-nav-item.is-open .sales-nav-menu,
+body.page-add-customer #main-nav .sales-nav-menu.show {
+    display: flex !important;
+}
+
+body.page-customer-list #main-nav .sales-nav-menu a,
+body.page-customer-detail #main-nav .sales-nav-menu a,
+body.page-customer-edit #main-nav .sales-nav-menu a,
+body.page-add-customer #main-nav .sales-nav-menu a {
+body.page-customer-edit #main-nav .sales-nav-menu a:hover,
+body.page-customer-edit #main-nav .sales-nav-menu a.active,
+body.page-add-customer #main-nav .sales-nav-menu a:hover,
+body.page-add-customer #main-nav .sales-nav-menu a.active {
+    color: var(--primary-blue, #3b82f6) !important;
+    background: #f8fbff !important;
+}
+
+body.page-customer-list #main-nav .nav-search-trigger,
+body.page-customer-detail #main-nav .nav-search-trigger,
+body.page-customer-edit #main-nav .nav-search-trigger,
+body.page-add-customer #main-nav .nav-search-trigger,
+body.page-customer-list #main-nav .nav-search-right,
+body.page-customer-detail #main-nav .nav-search-right,
+body.page-customer-edit #main-nav .nav-search-right,
+body.page-add-customer #main-nav .nav-search-right,
+body.page-customer-list #main-nav .nav-search-btn,
+body.page-customer-detail #main-nav .nav-search-btn,
+body.page-customer-edit #main-nav .nav-search-btn,
+body.page-add-customer #main-nav .nav-search-btn,
+body.page-customer-list #main-nav .nav-search-link,
+body.page-customer-detail #main-nav .nav-search-link,
+body.page-customer-edit #main-nav .nav-search-link,
+body.page-add-customer #main-nav .nav-search-link {
+    position: absolute !important;
+    right: 22px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+}
+
+body.page-customer-list .nav-toggle,
+body.page-customer-detail .nav-toggle,
+body.page-customer-edit .nav-toggle,
+body.page-add-customer .nav-toggle {
+    display: none !important;
+}
+
+@media (max-width: 900px) {
+    body.page-customer-list .nav-toggle,
+    body.page-customer-detail .nav-toggle,
+    body.page-customer-edit .nav-toggle,
+    body.page-add-customer .nav-toggle {
+        display: inline-flex !important;
+        flex-direction: column;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2000;
+    }
+
+    body.page-customer-list #main-nav,
+    body.page-customer-detail #main-nav,
+    body.page-customer-edit #main-nav,
+    body.page-add-customer #main-nav {
+    body.page-customer-edit #main-nav.mobile-active,
+    body.page-add-customer #main-nav.mobile-active {
+        display: flex !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-item,
+    body.page-customer-detail #main-nav .sales-nav-item,
+    body.page-customer-edit #main-nav .sales-nav-item,
+    body.page-add-customer #main-nav .sales-nav-item {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-trigger,
+    body.page-customer-detail #main-nav .sales-nav-trigger,
+    body.page-customer-edit #main-nav .sales-nav-trigger,
+    body.page-add-customer #main-nav .sales-nav-trigger {
+        justify-content: space-between !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-menu,
+    body.page-customer-detail #main-nav .sales-nav-menu,
+    body.page-customer-edit #main-nav .sales-nav-menu,
+    body.page-add-customer #main-nav .sales-nav-menu {
+        position: static !important;
+        min-width: 0 !important;
+        width: calc(100% - 10px);
+        margin: 4px 0 0 10px !important;
+        box-shadow: none !important;
+        border: 1px solid rgba(203, 213, 225, 0.8) !important;
+        border-radius: 10px !important;
+        display: none;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-customer-detail #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-customer-edit #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-add-customer #main-nav .sales-nav-item.is-open .sales-nav-menu {
+        display: flex !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-menu a,
+    body.page-customer-detail #main-nav .sales-nav-menu a,
+    body.page-customer-edit #main-nav .sales-nav-menu a,
+    body.page-add-customer #main-nav .sales-nav-menu a {
+        width: 100% !important;
+        padding: 10px 11px !important;
+        font-size: 0.78rem !important;
+    }
+
+    body.page-customer-list #main-nav .nav-search-trigger,
+    body.page-customer-detail #main-nav .nav-search-trigger,
+    body.page-customer-edit #main-nav .nav-search-trigger,
+    body.page-add-customer #main-nav .nav-search-trigger,
+    body.page-customer-list #main-nav .nav-search-right,
+    body.page-customer-detail #main-nav .nav-search-right,
+    body.page-customer-edit #main-nav .nav-search-right,
+    body.page-add-customer #main-nav .nav-search-right,
+    body.page-customer-list #main-nav .nav-search-btn,
+    body.page-customer-detail #main-nav .nav-search-btn,
+    body.page-customer-edit #main-nav .nav-search-btn,
+    body.page-add-customer #main-nav .nav-search-btn,
+    body.page-customer-list #main-nav .nav-search-link,
+    body.page-customer-detail #main-nav .nav-search-link,
+    body.page-customer-edit #main-nav .nav-search-link,
+    body.page-add-customer #main-nav .nav-search-link {
+        position: static !important;
+        transform: none !important;
+        margin-left: auto !important;
+        padding: 0 4px !important;
+    }
+}
+
+/* Final mobile shell alignment for dashboard parity pages. */
+@media (max-width: 900px) {
+    body.page-customer-list > header,
+    body.page-customer-detail > header,
+    body.page-customer-edit > header,
+    body.page-add-customer > header,
+    body.page-customer-edit > header .logo-area,
+    body.page-add-customer > header .logo-area,
+    body.page-customer-edit > header .logo-img,
+    body.page-add-customer > header .logo-img,
+    body.page-support > header .logo-img,
+    body.page-summary > header .logo-img,
+    body.page-customer-list > header .app-shell-logo,
+    body.page-customer-detail > header .app-shell-logo,
+    body.page-customer-edit > header .app-shell-logo,
+    body.page-add-customer > header .app-shell-logo,
+    body.page-support > header .app-shell-logo,
+    body.page-summary > header .app-shell-logo {
+        width: 100px !important;
+        height: 100px !important;
+        max-width: 100px !important;
+        max-height: 100px !important;
+        flex: 0 0 100px !important;
+        object-fit: cover !important;
+        border-radius: 10px !important;
+    }
+
+    body.page-customer-list > header .logo-wordmark,
+    body.page-customer-detail > header .logo-wordmark,
+    body.page-customer-edit > header .logo-wordmark,
+    body.page-add-customer > header .logo-wordmark,
+    body.page-support > header .logo-wordmark,
+    body.page-summary > header .logo-wordmark {
+        font-size: 1.2rem !important;
+        line-height: 1.05 !important;
+        white-space: nowrap !important;
+    }
+
+    body.page-customer-list > header .slogan,
+    body.page-customer-detail > header .slogan,
+    body.page-customer-edit > header .slogan,
+    body.page-add-customer > header .slogan,
+    body.page-support > header .slogan,
+    body.page-summary > header .slogan {
+        margin-top: 7px !important;
+        padding: 4px 8px !important;
+        font-size: 0.6rem !important;
+        line-height: 1 !important;
+        letter-spacing: 2px !important;
+        white-space: nowrap !important;
+    }
+
+    body.page-customer-list > header .app-user-info,
+    body.page-customer-detail > header .app-user-info,
+    body.page-customer-edit > header .app-user-info,
+    body.page-add-customer > header .app-user-info,
+    body.page-support > header .app-user-info,
+    body.page-summary > header .app-user-info,
+    body.page-customer-list > header .user-info,
+    body.page-customer-detail > header .user-info,
+    body.page-customer-edit > header .user-info,
+    body.page-add-customer > header .user-info,
+    body.page-customer-edit > header .app-system-live-pill,
+    body.page-add-customer > header .app-system-live-pill,
+    body.page-support > header .app-system-live-pill,
+    body.page-summary > header .app-system-live-pill,
+    body.page-customer-list > header .system-live-pill,
+    body.page-customer-detail > header .system-live-pill,
+    body.page-customer-edit > header .system-live-pill,
+    body.page-add-customer > header .system-live-pill,
+    body.page-customer-edit > header .user-dropdown-container,
+    body.page-add-customer > header .user-dropdown-container,
+    body.page-support > header .user-dropdown-container,
+    body.page-summary > header .user-dropdown-container {
+        flex: 1 1 58% !important;
+        min-width: 0 !important;
+    }
+
+    body.page-customer-list > header .app-user-menu-btn,
+    body.page-customer-detail > header .app-user-menu-btn,
+    body.page-customer-edit > header .app-user-menu-btn,
+    body.page-add-customer > header .app-user-menu-btn,
+    body.page-customer-edit > header .nav-toggle,
+    body.page-add-customer > header .nav-toggle,
+    body.page-customer-edit > header .nav-toggle span,
+    body.page-add-customer > header .nav-toggle span,
+    body.page-support > header .nav-toggle span,
+    body.page-summary > header .nav-toggle span {
+        display: none !important;
+    }
+
+    body.page-customer-list > header .nav-toggle::before,
+    body.page-customer-detail > header .nav-toggle::before,
+    body.page-customer-edit > header .nav-toggle::before,
+    body.page-add-customer > header .nav-toggle::before,
+    body.page-support > header .nav-toggle::before,
+    body.page-summary > header .nav-toggle::before {
+        content: "\2630" !important;
+        display: block !important;
+        color: #ffffff !important;
+        font-size: 1.45rem !important;
+        line-height: 1 !important;
+        font-weight: 800 !important;
+    }
+
+    body.page-customer-list > header .nav-toggle.is-open::before,
+    body.page-customer-detail > header .nav-toggle.is-open::before,
+    body.page-customer-edit > header .nav-toggle.is-open::before,
+    body.page-add-customer > header .nav-toggle.is-open::before,
+    body.page-support > header .nav-toggle.is-open::before,
+    body.page-summary > header .nav-toggle.is-open::before {
+        content: "\00d7" !important;
+        font-size: 1.9rem !important;
+    }
+
+    body.page-customer-list #main-nav,
+    body.page-customer-detail #main-nav,
+    body.page-customer-edit #main-nav,
+    body.page-add-customer #main-nav,
+    body.page-customer-edit #main-nav.mobile-active,
+    body.page-add-customer #main-nav.mobile-active,
+    body.page-support #main-nav.mobile-active,
+    body.page-summary #main-nav.mobile-active {
+        display: flex !important;
+    }
+
+    body.page-customer-list #main-nav > a,
+    body.page-customer-detail #main-nav > a,
+    body.page-customer-edit #main-nav > a,
+    body.page-add-customer #main-nav > a,
+    body.page-support #main-nav > a,
+    body.page-summary #main-nav > a,
+    body.page-customer-list #main-nav .sales-nav-trigger,
+    body.page-customer-detail #main-nav .sales-nav-trigger,
+    body.page-customer-edit #main-nav .sales-nav-trigger,
+    body.page-add-customer #main-nav .sales-nav-trigger,
+    body.page-customer-edit #main-nav .sales-nav-item,
+    body.page-add-customer #main-nav .sales-nav-item,
+    body.page-support #main-nav .sales-nav-item,
+    body.page-summary #main-nav .sales-nav-item {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        position: relative !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-menu,
+    body.page-customer-detail #main-nav .sales-nav-menu,
+    body.page-customer-edit #main-nav .sales-nav-menu,
+    body.page-add-customer #main-nav .sales-nav-menu,
+    body.page-customer-edit #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-add-customer #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-support #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-summary #main-nav .sales-nav-item.is-open .sales-nav-menu,
+    body.page-customer-list #main-nav .sales-nav-item.open .sales-nav-menu,
+    body.page-customer-detail #main-nav .sales-nav-item.open .sales-nav-menu,
+    body.page-customer-edit #main-nav .sales-nav-item.open .sales-nav-menu,
+    body.page-add-customer #main-nav .sales-nav-item.open .sales-nav-menu,
+    body.page-support #main-nav .sales-nav-item.open .sales-nav-menu,
+    body.page-summary #main-nav .sales-nav-item.open .sales-nav-menu {
+        display: flex !important;
+    }
+
+    body.page-customer-list #main-nav .sales-nav-menu a,
+    body.page-customer-detail #main-nav .sales-nav-menu a,
+    body.page-customer-edit #main-nav .sales-nav-menu a,
+    body.page-add-customer #main-nav .sales-nav-menu a,
+    body.page-customer-edit #main-nav .nav-search-trigger,
+    body.page-add-customer #main-nav .nav-search-trigger,
+    body.page-support #main-nav .nav-search-trigger,
+    body.page-summary #main-nav .nav-search-trigger,
+    body.page-customer-list #main-nav .nav-search-right,
+    body.page-customer-detail #main-nav .nav-search-right,
+    body.page-customer-edit #main-nav .nav-search-right,
+    body.page-add-customer #main-nav .nav-search-right,
+    body.page-support #main-nav .nav-search-right,
+    body.page-summary #main-nav .nav-search-right,
+    body.page-customer-list #main-nav .nav-search-btn,
+    body.page-customer-detail #main-nav .nav-search-btn,
+    body.page-customer-edit #main-nav .nav-search-btn,
+    body.page-add-customer #main-nav .nav-search-btn,
+    body.page-support #main-nav .nav-search-btn,
+    body.page-summary #main-nav .nav-search-btn,
+    body.page-customer-list #main-nav .nav-search-link,
+    body.page-customer-detail #main-nav .nav-search-link,
+    body.page-customer-edit #main-nav .nav-search-link,
+    body.page-add-customer #main-nav .nav-search-link,
+    body.page-customer-edit > header,
+    body.page-add-customer > header,
+    body.page-support > header,
+    body.page-summary > header {
+        padding-left: 18px !important;
+        padding-right: 18px !important;
+    }
+
+    body.page-customer-list > header .logo-area,
+    body.page-customer-detail > header .logo-area,
+    body.page-customer-edit > header .logo-area,
+    body.page-add-customer > header .logo-area,
+    body.page-support > header .logo-area,
+    body.page-summary > header .logo-area {
+        justify-content: flex-start !important;
+        gap: 12px !important;
+    }
+
+    body.page-customer-list > header .logo-img,
+    body.page-customer-detail > header .logo-img,
+    body.page-customer-edit > header .logo-img,
+    body.page-add-customer > header .logo-img,
+    body.page-support > header .logo-img,
+    body.page-summary > header .logo-img,
+    body.page-customer-list > header .app-shell-logo,
+    body.page-customer-detail > header .app-shell-logo,
+    body.page-customer-edit > header .app-shell-logo,
+    body.page-add-customer > header .app-shell-logo,
+    body.page-support > header .app-shell-logo,
+    body.page-summary > header .app-shell-logo {
+        width: 88px !important;
+        height: 88px !important;
+        flex-basis: 88px !important;
+    }
+
+    body.page-customer-list > header .logo-wordmark,
+    body.page-customer-detail > header .logo-wordmark,
+    body.page-customer-edit > header .logo-wordmark,
+    body.page-add-customer > header .logo-wordmark,
+body.page-add-customer .form-card {
+            max-width: 600px;
+            margin: 40px auto;
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        body.page-add-customer .form-group { margin-bottom: 20px; }
+        body.page-add-customer .form-label { display: block; font-weight: 800; font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; }
+        body.page-add-customer .form-input {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--surface-muted); font-family: inherit; font-size: 1rem;
+        }
+        body.page-add-customer .btn-group { display: flex; gap: 15px; margin-top: 30px; }
+
+
+=====================================================
+
+body.page-customer-edit .customer-edit-shell {
+    max-width: 1320px;
+}
+
+body.page-customer-edit .customer-edit-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+    gap: 20px;
+    margin-bottom: 24px;
+    border-radius: 28px;
+    padding: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 30%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.94));
+    color: #f8fafc;
+    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.16);
+}
+
+body.page-customer-edit .customer-edit-breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 0.86rem;
+}
+
+body.page-customer-edit .customer-edit-breadcrumbs .row-link {
+    color: #bfdbfe;
+    text-decoration: none;
+}
+
+body.page-customer-edit .customer-edit-breadcrumbs .row-link:visited {
+    color: #bfdbfe;
+}
+
+body.page-customer-edit .customer-edit-breadcrumbs .row-link:hover,
+body.page-customer-edit .customer-edit-breadcrumbs .row-link:focus-visible {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+body.page-customer-edit .customer-edit-kicker,
+body.page-customer-edit .customer-edit-section-kicker {
+    margin: 0 0 10px;
+    color: rgba(191, 219, 254, 0.92);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+}
+
+body.page-customer-edit .customer-edit-hero h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 0.96;
+}
+
+body.page-customer-edit .customer-edit-subtitle {
+    margin: 14px 0 0;
+    max-width: 60ch;
+    color: rgba(226, 232, 240, 0.9);
+    line-height: 1.6;
+}
+
+body.page-customer-edit .customer-edit-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+body.page-customer-edit .customer-edit-chip {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+body.page-customer-edit .customer-edit-hero-meta {
+    display: grid;
+    gap: 14px;
+}
+
+body.page-customer-edit .customer-edit-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.page-customer-edit .customer-edit-stat-label {
+    color: rgba(191, 219, 254, 0.88);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+body.page-customer-edit .customer-edit-stat strong {
+    font-size: 1.02rem;
+    line-height: 1.35;
+}
+
+body.page-customer-edit .customer-edit-stat small {
+    color: rgba(226, 232, 240, 0.82);
+    line-height: 1.45;
+}
+
+body.page-customer-edit .customer-edit-alert {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid #fecaca;
+    background: #fff1f2;
+    color: #9f1239;
+}
+
+body.page-customer-edit .customer-edit-alert p {
+    margin: 6px 0 0;
+}
+
+body.page-customer-edit .customer-edit-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+    gap: 22px;
+    align-items: start;
+}
+
+body.page-customer-edit .edit-form-panel,
+body.page-customer-edit .customer-note-card,
+body.page-customer-detail .customer-note-history-panel {
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 24px 50px rgba(55, 65, 81, 0.06);
+}
+
+body.page-customer-edit .edit-form-panel {
+    padding: 32px;
+}
+
+body.page-customer-edit .customer-note-card,
+body.page-customer-detail .customer-note-history-panel {
+    padding: 24px;
+}
+
+body.page-customer-edit .customer-edit-section-head,
+body.page-customer-detail .customer-note-history-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+body.page-customer-edit .customer-edit-section-head {
+    margin-bottom: 22px;
+}
+
+body.page-customer-edit .customer-edit-section-head-compact {
+    margin-bottom: 18px;
+}
+
+body.page-customer-edit .customer-edit-section-head h3,
+body.page-customer-detail .customer-note-history-panel .panel-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+body.page-customer-edit .customer-edit-section-head p,
+body.page-customer-detail .customer-note-history-panel .panel-header p {
+    margin: 0;
+    max-width: 34ch;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+body.page-customer-edit .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+body.page-customer-edit .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+body.page-customer-edit .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+body.page-customer-edit .field-hint {
+    margin: 0 0 10px;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+body.page-customer-edit .form-group input,
+body.page-customer-edit .form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #d7e2ee;
+    border-radius: 16px;
+    font-size: 1rem;
+    background: #f8fafc;
+    color: #0f172a;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+body.page-customer-edit .form-group input:focus,
+body.page-customer-edit .form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+body.page-customer-edit .errorlist {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+body.page-customer-edit .customer-edit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+body.page-customer-edit .btn-save {
+    min-height: 56px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+    color: #ffffff;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(21, 128, 61, 0.22);
+}
+
+body.page-customer-edit .btn-cancel {
+body.page-customer-edit .customer-detail-shell {
+body.page-add-customer .customer-create-shell {
+    max-width: 1220px;
+}
+
+body.page-add-customer .customer-create-hero .ops-hero-copy h2 {
+    text-transform: none;
+}
+
+body.page-add-customer .customer-create-hero {
+    align-items: stretch;
+}
+
+body.page-add-customer .customer-create-hero-side {
+    display: grid;
+    gap: 12px;
+    min-width: min(100%, 320px);
+    align-content: start;
+}
+
+body.page-add-customer .customer-create-hero-stat {
+    display: grid;
+    gap: 8px;
+    padding: 20px;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+}
+
+body.page-add-customer .customer-create-hero-label,
+body.page-add-customer .customer-create-section-kicker {
+    margin: 0;
+    color: rgba(191, 219, 254, 0.92);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+body.page-add-customer .customer-create-hero-stat strong {
+    color: #ffffff;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+
+body.page-add-customer .customer-create-hero-stat small {
+    color: rgba(226, 232, 240, 0.84);
+    line-height: 1.55;
+}
+
+body.page-add-customer .customer-create-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(226, 232, 240, 0.94);
+    background: rgba(255, 255, 255, 0.96);
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+body.page-add-customer .customer-create-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.28fr) minmax(280px, 0.72fr);
+    gap: 22px;
+    align-items: start;
+}
+
+body.page-add-customer .customer-create-panel {
+    padding: 30px;
+    border-radius: 26px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 24px 52px rgba(55, 65, 81, 0.06);
+}
+
+body.page-add-customer .customer-create-panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+body.page-add-customer .customer-create-panel h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.6rem, 2vw, 2rem);
+}
+
+body.page-add-customer .customer-create-subtitle {
+    margin: 0;
+    max-width: 34ch;
+    color: #64748b;
+    line-height: 1.65;
+}
+
+body.page-add-customer .customer-create-form {
+    display: grid;
+    gap: 22px;
+}
+
+body.page-add-customer .customer-create-panel .form-group {
+    display: grid;
+    gap: 10px;
+}
+
+body.page-add-customer .customer-create-panel .form-label {
+    color: #334155;
+    font-size: 0.84rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.page-add-customer .customer-create-field-hint {
+    margin: -4px 0 0;
+    color: #64748b;
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+body.page-add-customer .customer-create-panel input,
+body.page-add-customer .customer-create-panel textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #d7e2ee;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 1rem;
+}
+
+body.page-add-customer .customer-create-panel input:focus,
+body.page-add-customer .customer-create-panel textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+body.page-add-customer .customer-create-field-error {
+    margin: 0;
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+body.page-add-customer .customer-create-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+body.page-add-customer .customer-create-submit,
+body.page-add-customer .customer-create-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: 0 22px;
+    border-radius: 16px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+body.page-add-customer .customer-create-submit {
+    border: 0;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.2);
+}
+
+body.page-add-customer .customer-create-cancel {
+    border: 1px solid #dbe3ef;
+    background: #f8fafc;
+    color: #475569;
+}
+
+body.page-add-customer .customer-create-side {
+    display: grid;
+    gap: 16px;
+}
+
+body.page-add-customer .customer-create-side-card {
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 48px rgba(55, 65, 81, 0.06);
+}
+
+body.page-add-customer .customer-create-side-card h3 {
+    margin: 8px 0 10px;
+    color: #0f172a;
+    font-size: 1.3rem;
+    line-height: 1.2;
+}
+
+body.page-add-customer .customer-create-side-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.65;
+}
+
+body.page-add-customer .customer-create-side-card-soft {
+    background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+}
+
+body.page-add-customer .customer-create-side-card-dark {
+    background: linear-gradient(160deg, #0f172a 0%, #102543 100%);
+    border-color: rgba(30, 41, 59, 0.82);
+}
+
+body.page-add-customer .customer-create-side-card-dark h3,
+body.page-add-customer .customer-create-side-card-dark p,
+body.page-add-customer .customer-create-side-card-dark .customer-create-section-kicker {
+    color: #f8fafc;
+}
+
+body.page-add-customer .customer-create-side-card-dark .customer-create-section-kicker {
+    color: #93c5fd;
+}
+
+body.page-add-customer .customer-create-checklist {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: #475569;
+    display: grid;
+    gap: 10px;
+    line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+    body.page-customer-detail .customer-profile-hero,
+    body.page-customer-detail .customer-profile-stats,
+    body.page-customer-edit .customer-edit-hero,
+    body.page-customer-edit .customer-edit-layout {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-customer-detail .customer-records-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-add-customer .customer-create-layout {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-add-customer .customer-create-panel-head {
+        flex-direction: column;
+    }
+
+    body.page-customer-detail .customer-profile-stat-card-wide {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    body.page-customer-detail .customer-detail-shell,
+    body.page-customer-edit .customer-detail-shell {
+        padding: 18px 12px 36px;
+    }
+
+    body.page-customer-detail .customer-profile-hero,
+    body.page-customer-detail .customer-records-panel,
+    body.page-customer-edit .edit-form-panel,
+    body.page-customer-edit .customer-note-card,
+    body.page-customer-detail .customer-note-history-panel {
+        padding: 22px;
+    }
+
+    body.page-customer-edit .form-row,
+    body.page-customer-edit .customer-edit-section-head,
+    body.page-customer-detail .customer-records-panel-header,
+    body.page-customer-detail .customer-note-history-panel .panel-header,
+    .customer-note-meta {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    body.page-customer-detail .customer-profile-contact-row,
+    body.page-add-customer .customer-create-actions,
+    body.page-add-customer .customer-create-submit,
+    body.page-add-customer .customer-create-cancel {
+        width: 100%;
+    }
+
+    body.page-add-customer .customer-create-hero-side {
+        min-width: 0;
+    }
+
+    body.page-customer-list .customer-directory-actions-cell {
+        white-space: normal;
+    }
+
+    body.page-add-customer .customer-create-panel {
+        padding: 22px 18px;
+    }
+
+    body.page-customer-edit .customer-edit-actions {
+        flex-direction: column;
+    }
+
+    body.page-customer-edit .btn-save,
+    body.page-customer-edit .btn-cancel {
+    body.page-customer-edit header,
+    body.page-add-customer header {
+    body.page-customer-edit header .logo-area,
+    body.page-add-customer header .logo-area {
+    body.page-customer-edit header .logo-img,
+    body.page-add-customer header .logo-img {
+        width: 130px !important;
+        height: 130px !important;
+        max-width: 130px !important;
+        max-height: 130px !important;
+        flex: 0 0 130px !important;
+        object-fit: cover !important;
+        border-radius: 10px !important;
+    }
+
+    body.page-profile header .logo-text-group,
+    body.page-support header .logo-text-group,
+    body.page-customer-list header .logo-text-group,
+    body.page-customer-detail header .logo-text-group,
+    body.page-customer-edit header .logo-text-group,
+    body.page-add-customer header .logo-text-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        min-width: 0 !important;
+    }
+
+    body.page-profile header .logo-wordmark,
+    body.page-support header .logo-wordmark,
+    body.page-customer-list header .logo-wordmark,
+    body.page-customer-detail header .logo-wordmark,
+    body.page-customer-edit header .logo-wordmark,
+    body.page-add-customer header .logo-wordmark {
+        font-size: clamp(1.05rem, 4vw, 1.35rem) !important;
+        line-height: 1.05 !important;
+        white-space: nowrap !important;
+    }
+
+    body.page-profile header .slogan,
+    body.page-support header .slogan,
+    body.page-customer-list header .slogan,
+    body.page-customer-detail header .slogan,
+    body.page-customer-edit header .slogan,
+    body.page-add-customer header .slogan {
+        width: auto !important;
+        margin: 8px 0 0 !important;
+        padding: 4px 8px !important;
+        font-size: 0.6rem !important;
+        line-height: 1 !important;
+        letter-spacing: 2px !important;
+        white-space: nowrap !important;
+    }
+
+    body.page-profile header .app-user-info,
+    body.page-support header .app-user-info,
+    body.page-customer-list header .app-user-info,
+    body.page-customer-detail header .app-user-info,
+    body.page-customer-edit header .app-user-info,
+    body.page-add-customer header .app-user-info,
+    body.page-profile header .user-info,
+    body.page-support header .user-info,
+    body.page-customer-list header .user-info,
+    body.page-customer-detail header .user-info,
+    body.page-customer-edit header .user-info,
+    body.page-add-customer header .user-info {
+    body.page-customer-edit header .app-system-live-pill,
+    body.page-add-customer header .app-system-live-pill,
+    body.page-profile header .system-live-pill,
+    body.page-support header .system-live-pill,
+    body.page-customer-list header .system-live-pill,
+    body.page-customer-detail header .system-live-pill,
+    body.page-customer-edit header .system-live-pill,
+    body.page-add-customer header .system-live-pill {
+    body.page-customer-edit header .user-dropdown-container,
+    body.page-add-customer header .user-dropdown-container {
+        flex: 1 1 58% !important;
+        min-width: 0 !important;
+        position: relative !important;
+    }
+
+    body.page-profile header .app-user-menu-btn,
+    body.page-support header .app-user-menu-btn,
+    body.page-customer-list header .app-user-menu-btn,
+    body.page-customer-detail header .app-user-menu-btn,
+    body.page-customer-edit header .app-user-menu-btn,
+    body.page-add-customer header .app-user-menu-btn {
+    body.page-customer-edit header .nav-toggle,
+    body.page-add-customer header .nav-toggle {
+    body.page-customer-edit header .nav-toggle span,
+    body.page-add-customer header .nav-toggle span {
+        display: none !important;
+    }
+
+    body.page-profile header .nav-toggle::before,
+    body.page-support header .nav-toggle::before,
+    body.page-customer-list header .nav-toggle::before,
+    body.page-customer-detail header .nav-toggle::before,
+    body.page-customer-edit header .nav-toggle::before,
+    body.page-add-customer header .nav-toggle::before {
+        content: "\2630" !important;
+        display: block !important;
+        color: #ffffff !important;
+        font-size: 1.45rem !important;
+        line-height: 1 !important;
+        font-weight: 800 !important;
+    }
+
+    body.page-profile header .nav-toggle.is-open::before,
+    body.page-support header .nav-toggle.is-open::before,
+    body.page-customer-list header .nav-toggle.is-open::before,
+    body.page-customer-detail header .nav-toggle.is-open::before,
+    body.page-customer-edit header .nav-toggle.is-open::before,
+    body.page-add-customer header .nav-toggle.is-open::before {
+    body.page-customer-edit > header,
+    body.page-add-customer > header {
+    body.page-customer-edit > header .logo-area,
+    body.page-add-customer > header .logo-area {
+    body.page-customer-edit > header .logo-img,
+    body.page-add-customer > header .logo-img,
+    body.page-customer-list > header .app-shell-logo,
+    body.page-customer-detail > header .app-shell-logo,
+    body.page-customer-edit > header .app-shell-logo,
+    body.page-add-customer > header .app-shell-logo {
+        width: 130px !important;
+        height: 130px !important;
+        max-width: 130px !important;
+        max-height: 130px !important;
+        flex: 0 0 130px !important;
+        object-fit: cover !important;
+        border-radius: 10px !important;
+    }
+
+    body.page-customer-list > header .logo-text-group,
+    body.page-customer-detail > header .logo-text-group,
+    body.page-customer-edit > header .logo-text-group,
+    body.page-add-customer > header .logo-text-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        min-width: 0 !important;
+    }
+
+    body.page-customer-list > header .logo-wordmark,
+    body.page-customer-detail > header .logo-wordmark,
+    body.page-customer-edit > header .logo-wordmark,
+    body.page-add-customer > header .logo-wordmark {
+        font-size: clamp(1.05rem, 4vw, 1.35rem) !important;
+        line-height: 1.05 !important;
+        white-space: nowrap !important;
+    }
+
+    body.page-customer-list > header .slogan,
+    body.page-customer-detail > header .slogan,
+    body.page-customer-edit > header .slogan,
+    body.page-add-customer > header .slogan {
+        width: auto !important;
+        margin: 8px 0 0 !important;
+        padding: 4px 8px !important;
+        font-size: 0.6rem !important;
+        line-height: 1 !important;
+        letter-spacing: 2px !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    body.page-customer-list > header .app-user-info,
+    body.page-customer-detail > header .app-user-info,
+    body.page-customer-edit > header .app-user-info,
+    body.page-add-customer > header .app-user-info,
+    body.page-customer-list > header .user-info,
+    body.page-customer-detail > header .user-info,
+    body.page-customer-edit > header .user-info,
+    body.page-add-customer > header .user-info {
+    body.page-customer-edit > header .app-system-live-pill,
+    body.page-add-customer > header .app-system-live-pill,
+    body.page-customer-list > header .system-live-pill,
+    body.page-customer-detail > header .system-live-pill,
+    body.page-customer-edit > header .system-live-pill,
+    body.page-add-customer > header .system-live-pill {
+    body.page-customer-edit > header .user-dropdown-container,
+    body.page-add-customer > header .user-dropdown-container {
+        flex: 1 1 58% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        position: relative !important;
+    }
+
+    body.page-customer-list > header .app-user-menu-btn,
+    body.page-customer-detail > header .app-user-menu-btn,
+    body.page-customer-edit > header .app-user-menu-btn,
+    body.page-add-customer > header .app-user-menu-btn {
+    body.page-customer-edit > header .nav-toggle,
+    body.page-add-customer > header .nav-toggle {
+    body.page-customer-edit > header .nav-toggle::before,
+    body.page-add-customer > header .nav-toggle::before,
+    body.page-customer-list > header .mobile-nav-toggle::before,
+    body.page-customer-detail > header .mobile-nav-toggle::before,
+    body.page-customer-edit > header .mobile-nav-toggle::before,
+    body.page-add-customer > header .mobile-nav-toggle::before {
+        content: none !important;
+        display: none !important;
+    }
+
+    body.page-customer-list > header .nav-toggle span,
+    body.page-customer-detail > header .nav-toggle span,
+    body.page-customer-edit > header .nav-toggle span,
+    body.page-add-customer > header .nav-toggle span,
+    body.page-customer-list > header .mobile-nav-toggle span,
+    body.page-customer-detail > header .mobile-nav-toggle span,
+    body.page-customer-edit > header .mobile-nav-toggle span,
+    body.page-add-customer > header .mobile-nav-toggle span {
+body.page-customer-edit .customer-note-composer {
+    display: grid;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(255, 255, 255, 0.98));
+}
+
+body.page-customer-edit .customer-note-composer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+body.page-customer-edit .customer-note-composer-head label {
+    margin-bottom: 6px;
+}
+
+body.page-customer-edit .customer-note-composer-badge {
+body.page-customer-edit .customer-note-composer textarea {
+    min-height: 122px;
+    resize: vertical;
+    background: #ffffff;
+    font-size: 0.98rem;
+    line-height: 1.5;
+}
+
+body.page-customer-edit .customer-note-composer-actions {
+    display: grid;
+    grid-template-columns: minmax(190px, auto) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+}
+
+body.page-customer-edit .btn-post-note {
+body.page-customer-edit .customer-note-composer-actions span {
+    color: #64748b;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+body.page-customer-edit .customer-edit-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
+    gap: 12px;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+body.page-customer-edit .btn-save,
+body.page-customer-edit .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 56px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    line-height: 1.1;
+}
+
+body.page-customer-edit .btn-save {
+    background: linear-gradient(135deg, #2563eb, #0891b2);
+    box-shadow: 0 18px 36px rgba(37, 99, 235, 0.18);
+}
+
+body.page-customer-edit .btn-cancel {
+    max-width: 160px;
+}
+
+@media (max-width: 640px) {
+    body.page-customer-edit .customer-note-composer {
+        padding: 16px;
+    }
+
+    body.page-customer-edit .customer-note-composer-head,
+    body.page-customer-edit .customer-note-composer-actions,
+    body.page-customer-edit .customer-edit-actions {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-customer-edit .customer-note-composer-head {
+        display: grid;
+    }
+
+    body.page-customer-edit .customer-note-composer-badge {
+        justify-self: start;
+    }
+
+    body.page-customer-edit .btn-cancel {
+        max-width: 100%;
+    }

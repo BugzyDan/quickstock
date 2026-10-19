@@ -1,0 +1,532 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Sales Quotation Detail Stylesheet
+   File: static/inventory/css/sales-quotation-detail.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg-main: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Accent Colors */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    /* Button Variations */
+    --qs-btn-emerald: #059669;
+    --qs-btn-emerald-hover: #047857;
+    --qs-btn-slate: #475569;
+    --qs-btn-slate-hover: #334155;
+
+    /* Status & Alerts */
+    --qs-success: #16a34a;
+    --qs-success-bg: #f0fdf4;
+    --qs-warning: #d97706;
+    --qs-warning-bg: #fffbeb;
+    
+    --danger-red: #ef4444;
+    --danger-bg: #fef2f2;
+
+    /* Styling Properties */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg-main: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-btn-emerald: #10b981;
+    --qs-btn-emerald-hover: #059669;
+    --qs-btn-slate: #64748b;
+    --qs-btn-slate-hover: #475569;
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Layout & Page Shell
+   -------------------------------------------------------------------------- */
+.sales-document-main {
+    max-width: 1350px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Flash Alerts */
+.qs-alert {
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--qs-radius-md);
+    background-color: var(--qs-primary-soft);
+    border: 1px solid var(--qs-primary);
+    color: var(--qs-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Document Hero Header & Action Menu
+   -------------------------------------------------------------------------- */
+.sales-document-hero {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.ops-hero-copy {
+    max-width: 650px;
+}
+
+.ops-kicker {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--qs-primary);
+    margin: 0 0 0.35rem 0;
+}
+
+.sales-page-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+}
+
+.sales-page-subtitle {
+    font-size: 0.95rem;
+    color: var(--qs-text-muted);
+    margin: 0 0 1.25rem 0;
+}
+
+.ops-chip-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ops-chip {
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Action Dropdown Menu */
+.sales-document-action-cluster {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.sales-document-action-menu summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.sales-document-action-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.sales-document-menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 220px;
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    box-shadow: var(--qs-shadow-lg);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 50;
+}
+
+.sales-document-menu-action,
+.sales-document-menu-button {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    color: var(--qs-text-main);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.sales-document-menu-action:hover,
+.sales-document-menu-button:hover {
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-primary);
+}
+
+/* Buttons */
+.qs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--qs-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+    border: 1px solid transparent;
+}
+
+.qs-btn-secondary {
+    background-color: var(--qs-card-elevated);
+    border-color: var(--qs-border);
+    color: var(--qs-text-main);
+}
+
+.qs-btn-secondary:hover {
+    background-color: var(--qs-border);
+}
+
+.qs-btn-primary {
+    background-color: var(--qs-primary);
+    color: #ffffff;
+}
+
+.qs-btn-primary:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+.qs-btn-emerald {
+    background-color: var(--qs-btn-emerald);
+    color: #ffffff;
+}
+
+.qs-btn-emerald:hover {
+    background-color: var(--qs-btn-emerald-hover);
+}
+
+.qs-btn-slate {
+    background-color: var(--qs-btn-slate);
+    color: #ffffff;
+}
+
+.qs-btn-slate:hover {
+    background-color: var(--qs-btn-slate-hover);
+}
+
+/* --------------------------------------------------------------------------
+   4. Premium Grid & Quotation Cards
+   -------------------------------------------------------------------------- */
+.sales-detail-grid-premium {
+    display: grid;
+    grid-template-columns: 1fr 440px;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.sales-card-premium {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.sales-card-title {
+    font-size: 1.1font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.75rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. Quotation Items Table
+   -------------------------------------------------------------------------- */
+.sales-table-wrap {
+    overflow-x: auto;
+}
+
+.sales-table-premium {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.sales-table-premium th {
+    background-color: var(--qs-card-elevated);
+    color: var(--qs-text-muted);
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    text-transform: uppercase;
+    font-size: 0.725rem;
+    letter-spacing: 0.05em;
+}
+
+.sales-table-premium td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--qs-border);
+    color: var(--qs-text-main);
+}
+
+.sales-table-premium tr:last-child td {
+    border-bottom: none;
+}
+
+/* --------------------------------------------------------------------------
+   6. Summary Rows & Status Badges
+   -------------------------------------------------------------------------- */
+.summary-row-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--qs-border);
+}
+
+.summary-row-premium:last-of-type {
+    border-bottom: none;
+}
+
+.summary-row-premium span {
+    color: var(--qs-text-muted);
+}
+
+.summary-row-premium strong {
+    color: var(--qs-text-main);
+    font-weight: 700;
+}
+
+/* Status Chips */
+.qs-chip {
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.725rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.status-converted,
+.status-approved {
+    background-color: var(--qs-success-bg);
+    color: var(--qs-success);
+}
+
+.status-draft,
+.status-sent {
+    background-color: var(--qs-warning-bg);
+    color: var(--qs-warning);
+}
+
+.status-cancelled,
+.status-expired {
+    background-color: var(--danger-bg);
+    color: var(--danger-red);
+}
+
+/* --------------------------------------------------------------------------
+   7. Interactive Panels & Conversion Engine
+   -------------------------------------------------------------------------- */
+.sales-document-email-panel,
+.conversion-engine-container {
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sales-document-email-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.sales-document-email-eyebrow {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-primary);
+}
+
+.sales-document-email-head h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0;
+}
+
+.sales-document-email-badge {
+    font-size: 0.7rem;
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    color: var(--qs-text-muted);
+}
+
+.sales-document-email-copy {
+    font-size: 0.825rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+/* Forms */
+.sales-document-email-form,
+.conversion-engine-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sales-document-email-form label,
+.conversion-engine-container label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--qs-text-muted);
+}
+
+.sales-document-email-form input,
+.conversion-engine-container input,
+.conversion-engine-container select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--qs-radius-sm);
+    border: 1px solid var(--qs-border-strong);
+    background-color: var(--qs-card-bg);
+    color: var(--qs-text-main);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--qs-transition);
+}
+
+.sales-document-email-form input:focus,
+.conversion-engine-container input:focus,
+.conversion-engine-container select:focus {
+    border-color: var(--qs-primary);
+    box-shadow: 0 0 0 2px var(--qs-primary-soft);
+}
+
+.sales-document-email-help {
+    font-size: 0.75rem;
+    color: var(--qs-text-muted);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   8. Footer & Print Optimization
+   -------------------------------------------------------------------------- */
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--qs-text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 992px) {
+    .sales-detail-grid-premium {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-document-hero {
+        flex-direction: column;
+    }
+
+    .sales-document-action-cluster {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .sales-document-action-menu {
+        width: 100%;
+    }
+
+    .sales-document-menu-panel {
+        width: 100%;
+        left: 0;
+    }
+}
+
+@media print {
+    #main-nav,
+    .app-shell-header,
+    .sales-document-actions,
+    .sales-document-email-panel,
+    .conversion-engine-container,
+    footer {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .sales-document-main {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .sales-detail-grid-premium {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sales-card-premium,
+    .sales-document-hero {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}

@@ -1,0 +1,164 @@
+/* Shared, scoped refinements for the Operations closeout workflow. */
+body.page-operations-suite {
+    --ops-ink: var(--text-heading, #10233f);
+    --ops-muted: var(--text-muted, #5e6f85);
+    --ops-line: var(--border-color, #dbe4ee);
+    --ops-panel: var(--bg-card, #fff);
+    --ops-subtle: var(--bg-elevated, #f6f9fc);
+    --ops-blue: var(--primary-blue, #1d63d8);
+    --ops-teal: #087d73;
+    --ops-teal-bg: #e6f5f2;
+    --ops-amber: #a95a00;
+    --ops-amber-bg: #fff4db;
+}
+
+body.page-operations-suite :is(a, button, input, textarea, select):focus-visible {
+    outline: 3px solid var(--ops-blue);
+    outline-offset: 3px;
+}
+
+/* A quiet control surface keeps audit data, not decoration, at the forefront. */
+.page-operations-suite .ops-suite-hero,
+.page-operations-suite .ops-hero-bar {
+    background: var(--ops-panel);
+    border: 1px solid var(--ops-line);
+    border-left: 5px solid var(--ops-blue);
+    border-radius: 0;
+    box-shadow: 0 8px 22px rgba(15, 35, 63, .06);
+    color: var(--ops-ink);
+}
+.page-operations-suite .ops-suite-hero h1,
+.page-operations-suite .ops-hero-bar h2 { color: var(--ops-ink); }
+.page-operations-suite .ops-suite-hero .ops-hero-copy > p,
+.page-operations-suite .ops-hero-bar .summary-meta { color: var(--ops-muted); }
+.page-operations-suite .ops-hero-kicker,
+.page-operations-suite .ops-kicker { border-radius: 0; color: var(--ops-blue); background: var(--ops-subtle); border-color: var(--ops-line); }
+.page-operations-suite .ops-hero-tags span,
+.page-operations-suite .summary-hero-tags span { color: var(--ops-ink); background: var(--ops-subtle); border-color: var(--ops-line); border-radius: 0; }
+.page-operations-suite .ops-hero-tags span::before { background: var(--ops-teal); }
+.page-operations-suite .ops-status-chip { background: var(--ops-subtle); border-color: var(--ops-line); border-radius: 0; }
+.page-operations-suite .ops-status-chip span { color: var(--ops-muted); }
+.page-operations-suite .ops-status-chip strong { color: var(--ops-ink); }
+.page-operations-suite .ops-status-chip small { color: var(--ops-muted); }
+
+/* Daily Summary's count and audit panel inherits the selected colour theme. */
+.page-operations-suite .daily-recon-header { border-bottom: 1px solid var(--ops-line); margin-bottom: 1.25rem; padding-bottom: .9rem; }
+.page-operations-suite .daily-recon-header h3 { border: 0; margin: 0; padding: 0; }
+.page-operations-suite .daily-recon-header p,
+.page-operations-suite .daily-recon-label { color: var(--ops-muted); font-size: .75rem; font-weight: 800; letter-spacing: .05em; margin: .35rem 0 0; text-transform: uppercase; }
+.page-operations-suite .daily-recon-layout { display: grid; gap: 1rem; }
+.page-operations-suite .daily-recon-count { border-bottom: 1px solid var(--ops-line); min-width: 0; overflow-x: auto; padding-bottom: .8rem; }
+.page-operations-suite .daily-recon-table { width: 100%; }
+.page-operations-suite .daily-recon-col-denomination { width: 58%; }
+.page-operations-suite .daily-recon-col-quantity { width: 19%; }
+.page-operations-suite .daily-recon-col-total { width: 23%; }
+.page-operations-suite .daily-recon-table th,
+.page-operations-suite .daily-recon-table td { color: var(--ops-ink); padding: .4rem .5rem; }
+.page-operations-suite .daily-recon-table th { background: var(--ops-subtle); }
+.page-operations-suite .daily-recon-input { background: var(--ops-panel); border: 1px solid var(--ops-line); border-radius: 0; color: var(--ops-ink); font: inherit; font-weight: 700; max-width: 100%; padding: .45rem .55rem; }
+.page-operations-suite .daily-recon-table .daily-recon-input { width: 72px; }
+.page-operations-suite .daily-recon-total { border-bottom: 0; padding: 0; }
+.page-operations-suite .daily-recon-total > div { background: var(--ops-subtle); color: var(--ops-ink); display: flex; font-weight: 900; gap: 1rem; justify-content: space-between; padding: .75rem .65rem; width: 77%; }
+.page-operations-suite .daily-recon-fields { display: grid; gap: .65rem; grid-template-columns: 1fr 1fr; margin-top: .75rem; }
+.page-operations-suite .daily-recon-fields label { color: var(--ops-muted); display: flex; flex-direction: column; font-size: .75rem; font-weight: 800; gap: .3rem; text-transform: uppercase; }
+.page-operations-suite .daily-recon-fields .daily-recon-input { width: 100%; }
+.page-operations-suite .daily-recon-submit { background: var(--ops-blue); border: 1px solid var(--ops-blue); border-radius: 0; color: #fff; cursor: pointer; font: inherit; font-weight: 900; margin-top: .75rem; padding: .65rem .8rem; text-transform: uppercase; width: 100%; }
+.page-operations-suite .daily-recon-summary { align-self: stretch; background: var(--ops-subtle); border: 1px solid var(--ops-line); border-radius: 0; display: flex; flex-direction: column; gap: .85rem; padding: 1rem; text-align: left; }
+.page-operations-suite .daily-recon-amount { color: var(--ops-ink); font-size: 1.4rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+.page-operations-suite .daily-recon-breakdown { color: var(--ops-ink); display: grid; font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 700; gap: .35rem; margin-top: .55rem; }
+.page-operations-suite .daily-recon-breakdown > div { display: flex; gap: .65rem; justify-content: space-between; }
+.page-operations-suite .daily-recon-notes { color: var(--ops-muted); display: grid; font-size: .78rem; gap: .35rem; margin-top: .75rem; }
+.page-operations-suite .daily-recon-notes strong { color: var(--ops-ink); }
+.page-operations-suite .daily-recon-summary hr { border: 0; border-top: 1px solid var(--ops-line); margin: 0; width: 100%; }
+.page-operations-suite .daily-recon-variance { color: var(--ops-amber); font-size: 1.7rem; font-variant-numeric: tabular-nums; font-weight: 900; }
+.page-operations-suite .daily-recon-audit { margin-top: auto; }
+.page-operations-suite .daily-recon-status { border: 1px solid; font-size: .92rem; font-weight: 900; margin-top: .4rem; padding: .6rem; text-align: center; }
+.page-operations-suite .daily-recon-status.is-balanced { background: var(--ops-teal-bg); border-color: #92d4ca; color: var(--ops-teal); }
+.page-operations-suite .daily-recon-status.is-review { background: var(--ops-amber-bg); border-color: #f3c770; color: var(--ops-amber); }
+
+.page-operations-suite .ops-progress-rail {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--ops-panel);
+    border: 1px solid var(--ops-line);
+    border-left: 4px solid var(--ops-blue);
+    box-shadow: 0 8px 22px rgba(15, 35, 63, .06);
+}
+
+.page-operations-suite .ops-progress-label { min-width: 190px; }
+.page-operations-suite .ops-progress-label span,
+.page-operations-suite .ops-progress-rail small {
+    display: block;
+    color: var(--ops-muted);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.page-operations-suite .ops-progress-label strong { color: var(--ops-ink); font-size: .88rem; line-height: 1.35; }
+.page-operations-suite .ops-progress-rail ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    gap: .5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+}
+.page-operations-suite .ops-progress-rail li { position: relative; min-width: 0; }
+.page-operations-suite .ops-progress-rail li:not(:last-child)::after {
+    background: var(--ops-line);
+    content: "";
+    height: 1px;
+    left: calc(50% + 24px);
+    position: absolute;
+    right: calc(-50% + 24px);
+    top: 18px;
+}
+.page-operations-suite .ops-progress-rail a {
+    align-items: flex-start;
+    color: var(--ops-muted);
+    display: flex;
+    gap: .6rem;
+    position: relative;
+    text-decoration: none;
+    z-index: 1;
+}
+.page-operations-suite .ops-progress-rail b {
+    align-items: center;
+    background: var(--ops-subtle);
+    border: 1px solid var(--ops-line);
+    border-radius: 50%;
+    color: var(--ops-muted);
+    display: inline-flex;
+    flex: 0 0 36px;
+    font-size: .82rem;
+    height: 36px;
+    justify-content: center;
+}
+.page-operations-suite .ops-progress-rail span { color: inherit; font-size: .88rem; font-weight: 800; line-height: 1.15; }
+.page-operations-suite .ops-progress-rail small { margin-top: .22rem; font-size: .64rem; }
+.page-operations-suite .ops-progress-rail .is-current a { color: var(--ops-blue); }
+.page-operations-suite .ops-progress-rail .is-current b { background: var(--ops-blue); border-color: var(--ops-blue); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--ops-blue) 15%, transparent); }
+.page-operations-suite .ops-progress-rail .is-complete b { background: var(--ops-teal-bg); border-color: #92d4ca; color: var(--ops-teal); }
+.page-operations-suite .ops-progress-rail .is-complete:not(:last-child)::after { background: #92d4ca; }
+
+.page-operations-suite .ops-suite-toolbar,
+.page-operations-suite .recon-toolbar { border-left: 3px solid var(--ops-blue); }
+.page-operations-suite .ops-card-primary { border-top-color: var(--ops-blue); }
+.page-operations-suite .recon-status-badge.is-success { background: var(--ops-teal-bg); color: var(--ops-teal); border-color: #92d4ca; }
+.page-operations-suite .recon-status-badge.is-danger { background: var(--ops-amber-bg); color: var(--ops-amber); border-color: #f3c770; }
+.page-operations-suite .recon-value.is-variance { color: var(--ops-amber); }
+.page-operations-suite .ops-card .data-row strong { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 760px) {
+    .page-operations-suite .ops-progress-rail { align-items: flex-start; flex-direction: column; gap: .8rem; padding: 1rem; }
+    .page-operations-suite .ops-progress-label { min-width: 0; }
+    .page-operations-suite .ops-progress-rail ol { width: 100%; }
+}
+@media (max-width: 480px) {
+    .page-operations-suite .ops-progress-rail ol { display: flex; flex-direction: column; gap: .7rem; }
+    .page-operations-suite .ops-progress-rail li:not(:last-child)::after { bottom: -12px; height: 14px; left: 17px; right: auto; top: 36px; width: 1px; }
+}

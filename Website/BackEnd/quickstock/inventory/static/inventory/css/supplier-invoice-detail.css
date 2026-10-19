@@ -1,0 +1,356 @@
+/* ==========================================================================
+   QUICKSTOCK JA - Supplier Invoice Detail Stylesheet
+   File: static/inventory/css/supplier-invoice-detail.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & Theme Variables
+   -------------------------------------------------------------------------- */
+:root {
+    --qs-bg: #f8fafc;
+    --qs-card-bg: #ffffff;
+    --qs-card-elevated: #f1f5f9;
+    --qs-text-main: #0f172a;
+    --qs-text-muted: #64748b;
+    --qs-border: #e2e8f0;
+    --qs-border-strong: #cbd5e1;
+
+    /* Brand Primary Accent */
+    --qs-primary: #0284c7;
+    --qs-primary-hover: #0369a1;
+    --qs-primary-soft: rgba(2, 132, 199, 0.1);
+
+    /* Semantic Feedback Colors */
+    --qs-success: #10b981;
+    --qs-success-bg: rgba(16, 185, 129, 0.12);
+    --qs-warning: #f59e0b;
+    --qs-warning-bg: rgba(245, 158, 11, 0.12);
+    --qs-danger: #ef4444;
+    --qs-danger-bg: rgba(239, 68, 68, 0.12);
+
+    /* Tokens */
+    --qs-radius-sm: 6px;
+    --qs-radius-md: 10px;
+    --qs-radius-lg: 14px;
+    --qs-radius-xl: 18px;
+    --qs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --qs-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --qs-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+html.force-dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    --qs-bg: #090d16;
+    --qs-card-bg: #111827;
+    --qs-card-elevated: #1e293b;
+    --qs-text-main: #f8fafc;
+    --qs-text-muted: #94a3b8;
+    --qs-border: #1e293b;
+    --qs-border-strong: #334155;
+
+    --qs-primary: #38bdf8;
+    --qs-primary-hover: #0ea5e9;
+    --qs-primary-soft: rgba(56, 189, 248, 0.12);
+
+    --qs-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    --qs-shadow-lg: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Container Shell & Card
+   -------------------------------------------------------------------------- */
+.supplier-invoice-shell {
+    max-width: 900px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+}
+
+.supplier-invoice-card {
+    background-color: var(--qs-card-bg);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--qs-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Header Section & Brand Identification
+   -------------------------------------------------------------------------- */
+.supplier-invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--qs-border);
+    flex-wrap: wrap;
+}
+
+.supplier-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.supplier-invoice-logo {
+    max-height: 60px;
+    max-width: 160px;
+    object-fit: contain;
+    border-radius: var(--qs-radius-sm);
+}
+
+.supplier-header-copy {
+    display: flex;
+    flex-direction: column;
+}
+
+.supplier-invoice-kicker {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: var(--qs-primary);
+    margin: 0 0 0.2rem 0;
+}
+
+.supplier-header-copy h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.02em;
+}
+
+.client-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+}
+
+/* Header Right Financial Metric */
+.supplier-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.currency-label {
+    font-size: 0.725rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--qs-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.total-amount {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--qs-text-main);
+    line-height: 1.1;
+}
+
+.due-date-text {
+    font-size: 0.775rem;
+    color: var(--qs-text-muted);
+    margin-top: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. Fact Grid Matrix
+   -------------------------------------------------------------------------- */
+.supplier-invoice-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    background-color: var(--qs-card-elevated);
+    border: 1px solid var(--qs-border);
+    border-radius: var(--qs-radius-md);
+    padding: 1.5rem;
+}
+
+.supplier-invoice-fact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.supplier-invoice-fact .label {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+    letter-spacing: 0.05em;
+}
+
+.supplier-invoice-fact .value {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+}
+
+/* Status Chips */
+.supplier-invoice-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.725rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.supplier-invoice-status-paid {
+    background-color: var(--qs-success-bg);
+    color: var(--qs-success);
+}
+
+.supplier-invoice-status-pending,
+.supplier-invoice-status-unpaid {
+    background-color: var(--qs-warning-bg);
+    color: var(--qs-warning);
+}
+
+.supplier-invoice-status-void,
+.supplier-invoice-status-cancelled {
+    background-color: var(--qs-danger-bg);
+    color: var(--qs-danger);
+}
+
+/* --------------------------------------------------------------------------
+   5. Financial Summary Breakdown Pane
+   -------------------------------------------------------------------------- */
+.supplier-invoice-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--qs-border);
+}
+
+.supplier-invoice-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.supplier-invoice-summary-row span {
+    color: var(--qs-text-muted);
+}
+
+.supplier-invoice-summary-row strong {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--qs-text-main);
+}
+
+.supplier-invoice-warning-row span,
+.supplier-invoice-warning-row strong {
+    color: var(--qs-danger);
+    font-weight: 800;
+}
+
+/* --------------------------------------------------------------------------
+   6. Footer Action Bar & Buttons
+   -------------------------------------------------------------------------- */
+.supplier-invoice-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--qs-border);
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.supplier-invoice-back {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--qs-text-muted);
+    text-decoration: none;
+    transition: var(--qs-transition);
+}
+
+.supplier-invoice-back:hover {
+    color: var(--qs-text-main);
+}
+
+.supplier-invoice-print {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--qs-radius-sm);
+    background-color: var(--qs-primary);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: var(--qs-transition);
+}
+
+.supplier-invoice-print:hover {
+    background-color: var(--qs-primary-hover);
+}
+
+/* --------------------------------------------------------------------------
+   7. Media Breakpoints & Print Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .supplier-invoice-shell {
+        margin: 1rem auto;
+        padding: 0 1rem;
+    }
+
+    .supplier-invoice-card {
+        padding: 1.5rem;
+    }
+
+    .supplier-invoice-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .supplier-header-right {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .supplier-invoice-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .supplier-invoice-print {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media print {
+    #main-nav,
+    .app-shell-header,
+    .supplier-invoice-actions {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .supplier-invoice-shell {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .supplier-invoice-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+}

@@ -1,0 +1,794 @@
+    /* =====================================================================
+   QUICKSTOCK JA — VISUAL REFINEMENT LAYER
+   ---------------------------------------------------------------------
+   This sheet is intentionally additive. It loads after style.css and
+   page styles so it can smooth the shared surfaces (header, navigation,
+   cards, tables, forms, buttons, login) without re-lighting any single
+   page. Nothing here moves layout structure: the goal is calm, legible,
+   consistent detail.
+
+   Rules of engagement:
+   - Every rule is scoped to a body page class, or is a token-level rule.
+   - Dark mode is handled through the same html.force-dark /
+     html[data-theme-applied="dark"] selectors the rest of the app uses.
+   - No JS hooks are required; nothing here hides content.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. DESIGN TOKENS
+   ------------------------------------------------------------------ */
+:root {
+  --qs-refine-radius-sm: 8px;
+  --qs-refine-radius-md: 12px;
+  --qs-refine-radius-lg: 16px;
+  --qs-refine-radius-xl: 22px;
+
+  --qs-refine-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --qs-refine-duration: 180ms;
+
+  --qs-refine-surface: #ffffff;
+  --qs-refine-surface-muted: #f8fafc;
+  --qs-refine-surface-sunken: #f1f5f9;
+  --qs-refine-line: rgba(15, 23, 42, 0.08);
+  --qs-refine-line-strong: rgba(15, 23, 42, 0.14);
+
+  --qs-refine-ink: #0f172a;
+  --qs-refine-ink-soft: #475569;
+  --qs-refine-ink-muted: #64748b;
+
+  --qs-refine-accent: #2563eb;
+  --qs-refine-accent-soft: rgba(37, 99, 235, 0.08);
+
+  --qs-refine-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --qs-refine-shadow-sm:
+    0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --qs-refine-shadow-md:
+    0 10px 24px -12px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --qs-refine-shadow-lg:
+    0 24px 48px -24px rgba(15, 23, 42, 0.3), 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+html.force-dark,
+html[data-theme-applied="dark"] {
+  --qs-refine-surface: #111b2e;
+  --qs-refine-surface-muted: #0f172a;
+  --qs-refine-surface-sunken: #0b1220;
+  --qs-refine-line: rgba(148, 163, 184, 0.16);
+  --qs-refine-line-strong: rgba(148, 163, 184, 0.28);
+
+  --qs-refine-ink: #e2e8f0;
+  --qs-refine-ink-soft: #cbd5e1;
+  --qs-refine-ink-muted: #94a3b8;
+
+  --qs-refine-accent: #60a5fa;
+  --qs-refine-accent-soft: rgba(96, 165, 250, 0.14);
+
+  --qs-refine-shadow-xs: 0 1px 2px rgba(2, 8, 23, 0.5);
+  --qs-refine-shadow-sm: 0 2px 8px rgba(2, 8, 23, 0.45);
+  --qs-refine-shadow-md: 0 14px 30px -16px rgba(2, 8, 23, 0.8);
+  --qs-refine-shadow-lg: 0 28px 56px -28px rgba(2, 8, 23, 0.9);
+}
+
+/* Opt the document into smoother scroll/anchor behaviour and better
+   numeral rendering, which is what makes the money columns read cleanly. */
+html {
+  scroll-padding-top: 96px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--qs-refine-accent-soft);
+  color: var(--qs-refine-ink);
+}
+
+/* A single, thin, unobtrusive scrollbar language for every scroll pane. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+}
+
+html.force-dark,
+html[data-theme-applied="dark"] {
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+/* ---------------------------------------------------------------------
+   2. SHARED SURFACES
+   Cards across the product use a wide mix of radii and shadow values.
+   Normalising them is the single biggest visual win per line of CSS.
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(
+    .settings-card,
+    .ops-card,
+    .ops-panel,
+    .summary-card,
+    .metric-card,
+    .stat-card,
+    .activity-card,
+    .profile-card,
+    .detail-card,
+    .customer-card,
+    .recon-card,
+    .receive-ops-card,
+    .receive-form-section,
+    .ledger-card,
+    .report-card,
+    .sales-card,
+    .quotation-card
+  ) {
+  border-radius: var(--qs-refine-radius-lg);
+  border-color: var(--qs-refine-line);
+  box-shadow: var(--qs-refine-shadow-sm);
+}
+
+/* Cards and panels lift very slightly, never jump. */
+body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(
+    .summary-card,
+    .metric-card,
+    .stat-card,
+    .customer-card,
+    .ledger-card,
+    .sales-card
+  ) {
+  transition:
+    transform var(--qs-refine-duration) var(--qs-refine-ease),
+    box-shadow var(--qs-refine-duration) var(--qs-refine-ease),
+    border-color var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body:not(.page-cash-register):not(.page-login):not(.page-signup)
+    :is(
+      .summary-card,
+      .metric-card,
+      .stat-card,
+      .customer-card,
+      .ledger-card,
+      .sales-card
+    ):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--qs-refine-shadow-md);
+    border-color: var(--qs-refine-line-strong);
+  }
+}
+
+/* Dark-mode surfaces: several pages still paint literal white cards.
+   This keeps them consistent in the Terminal theme without touching
+   each page's own stylesheet. */
+html.force-dark
+  body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(
+    .settings-card,
+    .ops-card,
+    .ops-panel,
+    .summary-card,
+    .metric-card,
+    .stat-card,
+    .activity-card,
+    .profile-card,
+    .recent-activity-card,
+    .account-card,
+    .dashboard-card
+  ),
+html[data-theme-applied="dark"]
+  body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(
+    .settings-card,
+    .ops-card,
+    .ops-panel,
+    .summary-card,
+    .metric-card,
+    .stat-card,
+    .activity-card,
+    .profile-card,
+    .recent-activity-card,
+    .account-card,
+    .dashboard-card
+  ) {
+  background: var(--qs-refine-surface);
+  border-color: var(--qs-refine-line);
+  color: var(--qs-refine-ink);
+}
+
+/* ---------------------------------------------------------------------
+   3. PAGE TYPOGRAPHY
+   Section headings currently use several unrelated weights/sizes.
+   ------------------------------------------------------------------ */
+
+/* Heroes render a navy gradient in BOTH themes, so their copy must stay
+   light. A late `body h1..h6 { color: var(--qs-text-strong) }` rule in
+   style.css otherwise repaints these headings dark and makes them
+   unreadable. Scoped to the hero containers only. */
+/* IMPORTANT: scope hero colour overrides with the FULL selector path
+   (.ops-hero .ops-hero-copy h2), not just the container. Using an
+   :is() wrapper caps specificity at 0,1,0 and loses to the page's own
+   rules; the explicit compound selector wins cleanly. */
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) .ops-hero-copy h1,
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) .ops-hero-copy h2,
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) .ops-hero-copy h3 {
+    color: #ffffff;
+}
+
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) > h1,
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) > h2 {
+    color: #ffffff;
+}
+
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) .ops-hero-copy > p,
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner, .ops-hero-bar) .hero-copy > p {
+    color: rgba(226, 232, 240, 0.92);
+}
+
+body:not(.page-cash-register) :is(.ops-hero, .hero-banner) .ops-hero-copy .ops-kicker,
+body:not(.page-cash-register) .ops-suite-hero .ops-hero-kicker {
+    color: #bfdbfe;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    display: inline-block;
+    width: auto;
+}
+
+body:not(.page-cash-register) :is(main, .page-wrapper, .content) h2,
+body.page-settings .settings-card > h2 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--qs-refine-ink);
+}
+
+body:not(.page-cash-register) :is(main, .page-wrapper, .content) h3,
+body.page-settings .settings-card > h3 {
+  font-weight: 750;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+  color: var(--qs-refine-ink);
+}
+
+body:not(.page-cash-register) :is(main, .page-wrapper, .content) h2 + p,
+body:not(.page-cash-register) :is(main, .page-wrapper, .content) h3 + p {
+  color: var(--qs-refine-ink-muted);
+}
+
+/* Hairline separators — thin, low-contrast, never heavy black rules. */
+body:not(.page-cash-register) :is(main, .page-wrapper, .settings-card) hr {
+  border: 0;
+  height: 1px;
+  margin: 26px 0;
+  background: linear-gradient(to right, var(--qs-refine-line), transparent 82%);
+}
+
+/* Kicker/eyebrow labels keep the uppercase feel but lose the shouting.
+   (Heroes keep their own light treatment, defined above.) */
+body:not(.page-cash-register) :is(.section-kicker, .eyebrow) {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    font-weight: 800;
+}
+
+/* ---------------------------------------------------------------------
+   4. NAVIGATION & HEADER POLISH
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register) #main-nav {
+  box-shadow:
+    0 1px 0 var(--qs-refine-line),
+    0 12px 24px -20px rgba(15, 23, 42, 0.35);
+}
+
+body:not(.page-cash-register) #main-nav > a,
+body:not(.page-cash-register) #main-nav .sales-nav-trigger {
+  border-radius: var(--qs-refine-radius-sm);
+  transition:
+    background-color var(--qs-refine-duration) var(--qs-refine-ease),
+    color var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+/* ---------------------------------------------------------------------
+   5. TABLES
+   The product's data tables are the most-read thing on screen. Align
+   numerics, calm the row borders, and give the header a real baseline.
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  ) {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  th {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--qs-refine-ink-muted);
+  border-bottom: 1px solid var(--qs-refine-line-strong);
+  padding-block: 12px;
+}
+
+body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  td {
+  border-bottom: 1px solid var(--qs-refine-line);
+  padding-block: 12px;
+}
+
+body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  tbody
+  tr {
+  transition: background-color var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body:not(.page-cash-register)
+    :is(
+      .staff-table,
+      .inventory-table,
+      .customer-table,
+      .sales-table,
+      .report-table,
+      .ledger-table,
+      .data-table,
+      .audit-table,
+      .settings-table
+    )
+    tbody
+    tr:hover {
+    background-color: var(--qs-refine-accent-soft);
+  }
+}
+
+/* In dark mode, table chrome inherits the refined ink and lines. */
+html.force-dark
+  body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  th,
+html[data-theme-applied="dark"]
+  body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  th {
+  color: var(--qs-refine-ink-soft);
+  border-bottom-color: var(--qs-refine-line-strong);
+}
+
+html.force-dark
+  body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  td,
+html[data-theme-applied="dark"]
+  body:not(.page-cash-register)
+  :is(
+    .staff-table,
+    .inventory-table,
+    .customer-table,
+    .sales-table,
+    .report-table,
+    .ledger-table,
+    .data-table,
+    .audit-table,
+    .settings-table
+  )
+  td {
+  border-bottom-color: var(--qs-refine-line);
+  color: var(--qs-refine-ink);
+}
+
+/* ---------------------------------------------------------------------
+   6. FORMS
+   Give inputs one shared height, radius, and a quiet focus treatment.
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register)
+  :is(
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .preference-group input,
+    .preference-group select,
+    .settings-card input[type="text"],
+    .settings-card input[type="email"],
+    .settings-card input[type="number"],
+    .settings-card input[type="password"],
+    .settings-card select
+  ) {
+  border-radius: var(--qs-refine-radius-md) !important;
+  border: 1px solid var(--qs-refine-line-strong) !important;
+  background: var(--qs-refine-surface) !important;
+  color: var(--qs-refine-ink) !important;
+  transition:
+    border-color var(--qs-refine-duration) var(--qs-refine-ease),
+    box-shadow var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+body:not(.page-cash-register)
+  :is(
+    .form-group input,
+    .form-group select,
+    .preference-group input,
+    .preference-group select,
+    .settings-card input[type="text"],
+    .settings-card input[type="email"],
+    .settings-card input[type="number"],
+    .settings-card input[type="password"],
+    .settings-card select
+  ) {
+  min-height: 44px;
+}
+
+body:not(.page-cash-register)
+  :is(
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .preference-group input,
+    .preference-group select
+  ):focus {
+  border-color: var(--qs-refine-accent) !important;
+  box-shadow: 0 0 0 4px var(--qs-refine-accent-soft) !important;
+  outline: none;
+}
+
+body:not(.page-cash-register) :is(.form-group label, .preference-group label) {
+  color: var(--qs-refine-ink-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+html.force-dark
+  body:not(.page-cash-register)
+  :is(
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .preference-group input,
+    .preference-group select,
+    .settings-card input[type="text"],
+    .settings-card input[type="email"],
+    .settings-card input[type="number"],
+    .settings-card input[type="password"],
+    .settings-card select
+  ),
+html[data-theme-applied="dark"]
+  body:not(.page-cash-register)
+  :is(
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .preference-group input,
+    .preference-group select,
+    .settings-card input[type="text"],
+    .settings-card input[type="email"],
+    .settings-card input[type="number"],
+    .settings-card input[type="password"],
+    .settings-card select
+  ) {
+  background: var(--qs-refine-surface-sunken) !important;
+  color: var(--qs-refine-ink) !important;
+  border-color: var(--qs-refine-line-strong) !important;
+}
+
+/* ---------------------------------------------------------------------
+   7. BUTTONS
+   Page styles register `button`/`.btn` with wildly different padding.
+   Normalise the shared action buttons, not the bespoke ones.
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-apply,
+    .btn-filter,
+    .btn-export
+  ):not([class*="icon"]):not([class*="social"]) {
+  border-radius: var(--qs-refine-radius-md);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition:
+    transform var(--qs-refine-duration) var(--qs-refine-ease),
+    box-shadow var(--qs-refine-duration) var(--qs-refine-ease),
+    background-color var(--qs-refine-duration) var(--qs-refine-ease),
+    border-color var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body:not(.page-cash-register):not(.page-login):not(.page-signup)
+    :is(.btn, .btn-primary, .btn-secondary, .btn-apply, .btn-filter):not(
+      :disabled
+    ):not([aria-disabled="true"]):hover {
+    transform: translateY(-1px);
+    box-shadow: var(--qs-refine-shadow-sm);
+  }
+}
+
+body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  :is(.btn, .btn-primary, .btn-secondary, .btn-apply, .btn-filter):not(
+    :disabled
+  ):not([aria-disabled="true"]):active {
+  transform: translateY(0);
+  box-shadow: var(--qs-refine-shadow-xs);
+}
+
+/* Secondary buttons should read as a quiet outline, never washed out. */
+body:not(.page-cash-register):not(.page-login):not(.page-signup)
+  .btn-secondary {
+  background: var(--qs-refine-surface);
+  color: var(--qs-refine-ink);
+  border: 1px solid var(--qs-refine-line-strong);
+}
+
+html.force-dark body:not(.page-cash-register) .btn-secondary,
+html[data-theme-applied="dark"] body:not(.page-cash-register) .btn-secondary {
+  background: var(--qs-refine-surface);
+  color: var(--qs-refine-ink);
+  border-color: var(--qs-refine-line-strong);
+}
+
+/* ---------------------------------------------------------------------
+   8. FEEDBACK (messages, badges, flash)
+   ------------------------------------------------------------------ */
+body:not(.page-cash-register) :is(.messages li, .message, .alert, .flash) {
+  border-radius: var(--qs-refine-radius-md);
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: var(--qs-refine-shadow-xs);
+}
+
+/* ---------------------------------------------------------------------
+   9. LOGIN / SIGNUP
+   One centred card, a calmer brand block, and inputs that match the
+   internal app. No layout ownership is taken from the page itself.
+   ------------------------------------------------------------------ */
+body.auth-body {
+  min-height: 100dvh;
+}
+
+body.auth-body .auth-brand {
+  margin-bottom: 18px;
+}
+
+body.auth-body .auth-logo {
+  width: 116px;
+  height: 116px;
+  object-fit: contain;
+  border-radius: var(--qs-refine-radius-xl);
+  background: var(--qs-refine-surface);
+  padding: 8px;
+  box-shadow: var(--qs-refine-shadow-sm);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.auth-body .auth-logo:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+body.auth-body .auth-card {
+  border-radius: var(--qs-refine-radius-xl);
+  border: 1px solid var(--qs-refine-line);
+  box-shadow: var(--qs-refine-shadow-lg);
+  background: var(--qs-refine-surface);
+}
+
+body.auth-body .auth-intro h2 {
+  letter-spacing: -0.025em;
+}
+
+body.auth-body .auth-intro p {
+  color: var(--qs-refine-ink-muted);
+}
+
+body.auth-body .form-group input {
+  border-radius: var(--qs-refine-radius-md);
+  border: 1px solid var(--qs-refine-line-strong);
+  background: var(--qs-refine-surface-muted);
+  color: var(--qs-refine-ink);
+  transition:
+    border-color var(--qs-refine-duration) var(--qs-refine-ease),
+    box-shadow var(--qs-refine-duration) var(--qs-refine-ease),
+    background-color var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+body.auth-body .form-group input:focus {
+  background: var(--qs-refine-surface);
+  border-color: var(--qs-refine-accent);
+  box-shadow: 0 0 0 4px var(--qs-refine-accent-soft);
+}
+
+/* The page sets the submit colour inline; keep the shape consistent and
+   give it the same lift as every other primary action in the product. */
+body.auth-body .btn-primary {
+  border-radius: var(--qs-refine-radius-md);
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  transition:
+    transform var(--qs-refine-duration) var(--qs-refine-ease),
+    box-shadow var(--qs-refine-duration) var(--qs-refine-ease),
+    filter var(--qs-refine-duration) var(--qs-refine-ease);
+}
+
+body.auth-body .btn-primary:not(.auth-social-button-disabled):hover {
+  filter: brightness(1.06);
+  box-shadow: var(--qs-refine-shadow-md);
+}
+
+/* Social sign-in is secondary to the real form: outline, not a second
+   primary. Disabled providers read as clearly unavailable. */
+body.auth-body .auth-social-button {
+  background: var(--qs-refine-surface) !important;
+  color: var(--qs-refine-ink-soft) !important;
+  border: 1px solid var(--qs-refine-line-strong) !important;
+  box-shadow: none !important;
+  font-weight: 650;
+}
+
+body.auth-body .auth-social-button:not(.auth-social-button-disabled):hover {
+  background: var(--qs-refine-surface-muted) !important;
+  color: var(--qs-refine-ink) !important;
+}
+
+body.auth-body .auth-social-button-disabled {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+body.auth-body .auth-footer,
+body.auth-body .auth-page-footer {
+  color: var(--qs-refine-ink-muted);
+}
+
+body.auth-body .auth-page-footer {
+  border-top: 1px solid var(--qs-refine-line);
+  padding-top: 16px;
+}
+
+/* Dark-mode login: the page's pale gradients need to give way. */
+html.force-dark body.auth-body,
+html[data-theme-applied="dark"] body.auth-body {
+  background:
+    radial-gradient(
+      circle at 15% 12%,
+      rgba(37, 99, 235, 0.22),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 85% 88%,
+      rgba(8, 145, 178, 0.18),
+      transparent 40%
+    ),
+    linear-gradient(160deg, #070c18 0%, #0b1220 60%, #0a1526 100%);
+}
+
+html.force-dark body.auth-body .auth-card,
+html[data-theme-applied="dark"] body.auth-body .auth-card {
+  background: var(--qs-refine-surface);
+  border-color: var(--qs-refine-line-strong);
+}
+
+html.force-dark body.auth-body .auth-intro h2,
+html[data-theme-applied="dark"] body.auth-body .auth-intro h2,
+html.force-dark body.auth-body .form-group label,
+html[data-theme-applied="dark"] body.auth-body .form-group label {
+  color: var(--qs-refine-ink);
+}
+
+html.force-dark body.auth-body .form-group input,
+html[data-theme-applied="dark"] body.auth-body .form-group input {
+  background: var(--qs-refine-surface-sunken);
+  color: var(--qs-refine-ink);
+  border-color: var(--qs-refine-line-strong);
+}
+
+html.force-dark body.auth-body .auth-social-button,
+html[data-theme-applied="dark"] body.auth-body .auth-social-button {
+  background: var(--qs-refine-surface-sunken) !important;
+  color: var(--qs-refine-ink-soft) !important;
+  border-color: var(--qs-refine-line-strong) !important;
+}
+
+/* ---------------------------------------------------------------------
+   10. MOTION SAFETY
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  body:not(.page-cash-register)
+    :is(
+      .summary-card,
+      .metric-card,
+      .stat-card,
+      .customer-card,
+      .ledger-card,
+      .sales-card,
+      .btn,
+      .btn-primary,
+      .btn-secondary,
+      .btn-apply,
+      .btn-filter,
+      .auth-logo,
+      .staff-table tbody tr
+    ) {
+    transition: none !important;
+    transform: none !important;
+  }
+}

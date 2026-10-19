@@ -10,6 +10,7 @@
     <title>{% if item %}Update {{ item.name }}{% else %}Add Item{% endif %} | QuickStock JA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'inventory/css/refinement.css' %}?v=refinement-1">
     <script id="quickstockTerminalConfig" type="application/json">
         {"isUpdate": {% if item %}true{% else %}false{% endif %}, "existingSku": "{{ item.sku|default:''|escapejs }}"}
     </script>
